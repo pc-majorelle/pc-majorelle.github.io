@@ -154,6 +154,8 @@
   <div class="hrow"><a href="prof.html" class="nc-home" aria-label="Espace prof">‹ Espace prof</a>
     <h1>👩‍🏫 Gestion <span class="sub">classes &amp; progression — Plateforme PC · Majorelle</span></h1>
     <div class="spacer"></div>
+    <label class="small muted">Année</label>
+    <select id="activeAnnee"></select>
     <label class="small muted">Classe active</label>
     <select id="activeClass"></select>
     <button class="mini ghost" id="btnSave" title="Enregistrer (télécharger l'état)">💾 Enregistrer</button>
@@ -481,14 +483,39 @@ const NODES = GD.nodes;
 
 /* ===================== ÉTAT + PERSISTANCE ===================== */
 const LSKEY = "gestion_majorelle_v01";
+const ANNEES = ["2025-2026","2026-2027"];
+const PREF_ANNEE = "gestion_majorelle_annee";
+function lsKey(a){return LSKEY+"__"+a;}
+let ANNEE = (function(){try{const a=localStorage.getItem(PREF_ANNEE); return (a&&ANNEES.indexOf(a)>=0)?a:"2025-2026";}catch(e){return "2025-2026";}})();
+const CLASSES_PAR_ANNEE = {"2025-2026":[
+ {"id":"2G3","niveau":"Seconde","libelle":"2de G3","effectif":null,"emploi_du_temps_pc":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"vendredi","debut":"14:30","duree_min":90}],"note":"2de G3 (Agénor) — TP dédoublé mardi + classe vendredi. Créneaux réels EDT 2025-26."},
+ {"id":"2G6","niveau":"Seconde","libelle":"2de G6","effectif":null,"emploi_du_temps_pc":[{"jour":"mercredi","debut":"09:00","duree_min":90},{"jour":"mercredi","debut":"10:30","duree_min":90},{"jour":"jeudi","debut":"14:30","duree_min":90}],"note":"2de G6 (Agénor) — TP dédoublé mercredi + classe jeudi."},
+ {"id":"1PC","niveau":"Première","libelle":"1re spé PC","effectif":null,"emploi_du_temps_pc":[{"jour":"jeudi","debut":"08:00","duree_min":120},{"jour":"mardi","debut":"15:30","duree_min":120}],"note":"1re spé PC gr.2 (Agénor). 2h jeudi matin + 2h mardi après-midi."},
+ {"id":"TSTI2D","niveau":"Terminale","libelle":"Tale STI2D","effectif":null,"emploi_du_temps_pc":[{"jour":"jeudi","debut":"10:00","duree_min":120},{"jour":"vendredi","debut":"08:00","duree_min":120}],"note":"Tale STI2D (Agénor). 2h jeudi + 2h vendredi."},
+ {"id":"TG5","niveau":"Terminale","libelle":"Tale G5 ens.sci.","effectif":null,"emploi_du_temps_pc":[{"jour":"vendredi","debut":"10:00","duree_min":60}],"note":"Tale G5 — enseignement scientifique (partie physique), 1h vendredi."},
+ {"id":"TG6","niveau":"Terminale","libelle":"Tale G6 ens.sci.","effectif":null,"emploi_du_temps_pc":[{"jour":"vendredi","debut":"11:00","duree_min":60}],"note":"Tale G6 — enseignement scientifique (partie physique), 1h vendredi."}
+],"2026-2027":[
+ {"id":"2G3","niveau":"Seconde","libelle":"2de G3","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — à ajuster à la rentrée (Secondes provisoires, créneaux à renseigner)."},
+ {"id":"2G6","niveau":"Seconde","libelle":"2de G6","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."},
+ {"id":"1PC","niveau":"Première","libelle":"1re spé PC","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."},
+ {"id":"TSTI2D","niveau":"Terminale","libelle":"Tale STI2D","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."},
+ {"id":"TG5","niveau":"Terminale","libelle":"Tale G5 ens.sci.","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."},
+ {"id":"TG6","niveau":"Terminale","libelle":"Tale G6 ens.sci.","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."}
+]};
+const CAL_PAR_ANNEE = {"2025-2026":{"meta":{"annee_scolaire":"2025-2026","zone":"B","academie":"Nancy-Metz","commune":"Toul (54)","source":"Officiel Zone B (vacances-scolaires-gouv.com), vérifié 2026-08-10 par le MAÎTRE.","note":"Dates réelles Zone B. 'reprise' = lundi de reprise des cours."},"prerentree_enseignants":"2025-08-29","rentree_eleves":"2025-09-01","fin_des_cours":"2026-07-03","debut_vacances_ete":"2026-07-04","vacances":[{"nom":"Toussaint","dernier_jour_cours":"2025-10-17","debut":"2025-10-18","reprise":"2025-11-03"},{"nom":"Noël","dernier_jour_cours":"2025-12-19","debut":"2025-12-20","reprise":"2026-01-05"},{"nom":"Hiver","dernier_jour_cours":"2026-02-13","debut":"2026-02-14","reprise":"2026-03-02"},{"nom":"Printemps","dernier_jour_cours":"2026-04-10","debut":"2026-04-11","reprise":"2026-04-27"},{"nom":"Été","dernier_jour_cours":"2026-07-03","debut":"2026-07-04","reprise":"2026-09-01 (prévisionnel)"}],"jours_feries":[{"nom":"Toussaint","date":"2025-11-01","en_classe":false,"raison":"week-end + vacances"},{"nom":"Armistice 1918","date":"2025-11-11","en_classe":true},{"nom":"Noël","date":"2025-12-25","en_classe":false,"raison":"vacances de Noël"},{"nom":"Jour de l'an","date":"2026-01-01","en_classe":false,"raison":"vacances de Noël"},{"nom":"Lundi de Pâques","date":"2026-04-06","en_classe":true},{"nom":"Fête du travail","date":"2026-05-01","en_classe":true},{"nom":"Victoire 1945","date":"2026-05-08","en_classe":true},{"nom":"Ascension","date":"2026-05-14","en_classe":true},{"nom":"Lundi de Pentecôte","date":"2026-05-25","en_classe":true}],"ponts":[{"nom":"Pont de l'Ascension","date":"2026-05-15","note":"classe vaquante (vendredi après l'Ascension)"}]},"2026-2027":GD.cal};
+function calOf(a){return CAL_PAR_ANNEE[a]||GD.cal;}
+function migrateOldLS(){try{const old=localStorage.getItem(LSKEY); if(old && !localStorage.getItem(lsKey("2025-2026"))) localStorage.setItem(lsKey("2025-2026"), old);}catch(e){}}
+function refreshAnneeSelector(){const sel=document.getElementById("activeAnnee"); if(!sel) return; sel.innerHTML=ANNEES.map(a=>`<option value="${a}">${a}</option>`).join(""); sel.value=ANNEE; sel.onchange=function(){switchAnnee(sel.value);};}
+function switchAnnee(a){if(a===ANNEE||ANNEES.indexOf(a)<0) return; save(); ANNEE=a; try{localStorage.setItem(PREF_ANNEE,a);}catch(e){} applyCalendar(ANNEE); state=defaultState(ANNEE); tryLoadLS(); if(!Array.isArray(state.materiel)) state.materiel=[]; if(!state.progressions) state.progressions={}; if(!state.evalComp) state.evalComp={}; if(!state.baremeComp) state.baremeComp={A:1,B:0.75,C:0.5,D:0.25}; refreshAnneeSelector(); refreshClassSelector(); const t=(document.querySelector(".tab.on")&&document.querySelector(".tab.on").dataset.t)||"semaine"; switchTab(t);}
 const JOURS = {dimanche:0,lundi:1,mardi:2,mercredi:3,jeudi:4,vendredi:5,samedi:6};
 const JOURS_ORD = ["lundi","mardi","mercredi","jeudi","vendredi","samedi"];
 const NIVMAP = {"Seconde":"2nde","Première":"1ere","1ère":"1ere","Terminale":"tale"};
 
 function progKeyOf(niveau,matiere,filiere){return `${niveau}|${matiere}|${filiere||"ens"}`;}
 
-function defaultState(){
-  const classes = (GD.classes.classes||[]).map(c=>{
+function defaultState(annee){
+  const _cal = calOf(annee);
+  const classes = ((CLASSES_PAR_ANNEE[annee]||GD.classes.classes)||[]).map(c=>{
     const niv = NIVMAP[c.niveau]||"2nde";
     const pk = progKeyOf(niv,"pc","gen");
     return {
@@ -502,29 +529,31 @@ function defaultState(){
       eleves:[], groupes_tp:[], evaluations:[]
     };
   });
-  return {classes, prev:{}, suivi:{}, refDate:GD.cal.rentree_eleves, materiel:[]};
+  return {annee, classes, prev:{}, suivi:{}, refDate:_cal.rentree_eleves, materiel:[], progressions:{}, evalComp:{}, baremeComp:{A:1,B:0.75,C:0.5,D:0.25}};
 }
-let state = defaultState();
+let state = defaultState(ANNEE);
 
 function save(){
-  try{localStorage.setItem(LSKEY, JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
+  try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
 }
 function tryLoadLS(){
-  try{const s=localStorage.getItem(LSKEY); if(s){const o=JSON.parse(s); if(o&&o.classes) state=o;}}catch(e){}
+  try{const s=localStorage.getItem(lsKey(ANNEE)); if(s){const o=JSON.parse(s); if(o&&o.classes) state=o;}}catch(e){}
 }
 
 /* ===================== DATES & CALENDRIER (données réelles Zone B) ===================== */
 function parseD(s){return new Date(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10));}
 function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function frDate(s){const d=parseD(s);return d.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"short"});}
-const CAL = GD.cal;
-const R0 = parseD(CAL.rentree_eleves), R1 = parseD(CAL.fin_des_cours);
-// périodes de vacances (exclusion) : [debut, reprise)
-const VAC = (CAL.vacances||[]).map(v=>({nom:v.nom,d0:parseD(v.debut),d1:v.reprise&&v.reprise.length>=10?parseD(v.reprise):null}));
-// jours ôtés en semaine de classe : fériés en_classe + ponts
-const OFF = {};
-(CAL.jours_feries||[]).forEach(f=>{if(f.en_classe) OFF[f.date]={nom:f.nom,type:"férié"};});
-(CAL.ponts||[]).forEach(p=>{OFF[p.date]={nom:p.nom,type:"pont"};});
+let CAL, R0, R1, VAC, OFF;
+function applyCalendar(a){
+  CAL = calOf(a);
+  R0 = parseD(CAL.rentree_eleves); R1 = parseD(CAL.fin_des_cours);
+  VAC = (CAL.vacances||[]).map(v=>({nom:v.nom,d0:parseD(v.debut),d1:v.reprise&&v.reprise.length>=10?parseD(v.reprise):null}));
+  OFF = {};
+  (CAL.jours_feries||[]).forEach(f=>{if(f.en_classe) OFF[f.date]={nom:f.nom,type:"férié"};});
+  (CAL.ponts||[]).forEach(p=>{OFF[p.date]={nom:p.nom,type:"pont"};});
+}
+applyCalendar(ANNEE);
 
 function inVacances(d){return VAC.some(v=>v.d1 && d>=v.d0 && d<v.d1);}
 function isSchoolDay(d){
@@ -1620,11 +1649,13 @@ document.getElementById("fileIn").addEventListener("change",e=>{
 });
 
 /* ===================== BOOT ===================== */
+migrateOldLS();
 tryLoadLS();
 if(!Array.isArray(state.materiel)) state.materiel=[];
 if(!state.progressions) state.progressions={};
 if(!state.evalComp) state.evalComp={};
 if(!state.baremeComp) state.baremeComp={A:1,B:0.75,C:0.5,D:0.25};
+refreshAnneeSelector();
 refreshClassSelector();
 switchTab("semaine");
 </script>
