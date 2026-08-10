@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324a">
+<title>Grille TP par compétences — PC Majorelle</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#15202b; --muted:#5c6b7a; --line:#dbe2ea;
+    --accent:#12324a; --accentink:#fff;
+    --A:#4caf6d; --Ai:#0f3d20; --B:#e0a53a; --Bi:#3a2a06; --C:#e8853a; --Ci:#3a1e06; --D:#e2554f; --Di:#3a1010;
+    --APP:#3b82c4; --ANA:#7c5cd0; --REA:#d97a2b; --VAL:#2fa36b; --COM:#c04f7a;
+    --shadow:0 1px 2px rgba(20,40,60,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    padding:0 10px calc(88px + env(safe-area-inset-bottom)); -webkit-text-size-adjust:100%}
+  header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--accentink);margin:0 -10px 10px;
+    padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  header b{font-size:15px;font-weight:600}
+  header .moy{font-size:14px;background:rgba(255,255,255,.15);padding:4px 9px;border-radius:8px;white-space:nowrap}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;box-shadow:var(--shadow)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;font-weight:600}
+  label{font-size:13px;color:var(--muted)}
+  input,textarea,button,select{font:inherit;color:inherit}
+  input[type=text],input[type=date],textarea,select{width:100%;background:transparent;border:1px solid var(--line);border-radius:8px;
+    padding:9px 10px;color:var(--ink)}
+  textarea{min-height:64px;resize:vertical}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px;cursor:pointer;color:var(--ink);font-size:14px;min-height:40px}
+  .btn:active{transform:scale(.98)}
+  .btn.acc{background:var(--accent);color:var(--accentink);border-color:var(--accent)}
+  .crit{border-top:1px solid var(--line);padding:8px 0}
+  .crit:first-of-type{border-top:0}
+  .crit .r1{display:flex;gap:6px;align-items:center}
+  .crit .idx{min-width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex:0 0 auto}
+  .crit .lab{flex:1}
+  .crit .r2{display:flex;gap:6px;align-items:center;margin-top:6px}
+  .crit select{width:auto;flex:1;padding:7px 8px}
+  .crit .coef{width:66px;flex:0 0 auto;text-align:center;padding:7px 6px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink)}
+  .crit .del{border:0;background:transparent;color:var(--muted);font-size:18px;cursor:pointer;flex:0 0 auto}
+  .bar{display:flex;gap:8px;flex-wrap:wrap}
+  .bar label{display:flex;align-items:center;gap:4px}
+  .bar input{width:58px;padding:6px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--ink);text-align:center}
+  .wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{border-collapse:collapse;width:100%}
+  th{font-size:12px;color:var(--muted);font-weight:600;padding:4px 3px;text-align:center}
+  th.el,td.el{text-align:left;white-space:nowrap;position:sticky;left:0;background:var(--card);z-index:1}
+  td{padding:5px 3px;border-top:1px solid var(--line);text-align:center;vertical-align:middle}
+  .chd{display:inline-block;min-width:26px;border-radius:6px;color:#fff;font-weight:700;font-size:12px;padding:2px 5px}
+  .cyc{min-width:38px;height:42px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:700;font-size:15px;cursor:pointer;padding:0}
+  .cyc[data-lv=A]{background:var(--A);color:var(--Ai);border-color:var(--A)}
+  .cyc[data-lv=B]{background:var(--B);color:var(--Bi);border-color:var(--B)}
+  .cyc[data-lv=C]{background:var(--C);color:var(--Ci);border-color:var(--C)}
+  .cyc[data-lv=D]{background:var(--D);color:var(--Di);border-color:var(--D)}
+  .note{font-weight:700;white-space:nowrap}
+  .note.part{color:var(--B)}
+  .nom{border:0;background:transparent;color:var(--ink);font-size:14px;width:8.2em;padding:2px 0}
+  .del2{border:0;background:transparent;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px}
+  .pill{display:inline-block;min-width:1.6em;text-align:center;border-radius:5px;font-size:12px;font-weight:700;padding:1px 5px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend b{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px}
+  .foot{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:6}
+  .foot .btn{flex:1}
+  .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+  .msg{font-size:13px;margin-top:8px}
+</style>
+</head>
+<body>
+<header><b>Grille TP — compétences</b><span class="moy" id="moy">—</span></header>
+
+<div class="card">
+  <h2>Évaluation</h2>
+  <div class="row" style="gap:10px">
+    <div style="flex:1;min-width:120px"><label>Classe</label><input type="text" id="classe" placeholder="ex. 2de G3"></div>
+    <div style="flex:1;min-width:120px"><label>Date</label><input type="date" id="date"></div>
+  </div>
+  <div style="margin-top:8px"><label>Titre du TP</label><input type="text" id="titre" placeholder="ex. Masse volumique d'un solide"></div>
+</div>
+
+<div class="card">
+  <h2>Critères évalués</h2>
+  <div id="crits"></div>
+  <div class="row" style="margin-top:8px"><button class="btn" id="addCrit">+ un critère</button></div>
+  <p class="hint">Chaque critère = une capacité observable, sa catégorie (APP/ANA/RÉA/VAL/COM) et son poids (points).</p>
+</div>
+
+<div class="card">
+  <h2>Barème (niveau → fraction du poids)</h2>
+  <div class="bar" id="bar">
+    <label>A<input type="number" step="0.05" min="0" max="1" id="bA" value="1"></label>
+    <label>B<input type="number" step="0.05" min="0" max="1" id="bB" value="0.75"></label>
+    <label>C<input type="number" step="0.05" min="0" max="1" id="bC" value="0.5"></label>
+    <label>D<input type="number" step="0.05" min="0" max="1" id="bD" value="0.25"></label>
+  </div>
+  <div class="legend">
+    <span><b style="background:var(--A)"></b> A acquis</span>
+    <span><b style="background:var(--B)"></b> B en cours</span>
+    <span><b style="background:var(--C)"></b> C fragile</span>
+    <span><b style="background:var(--D)"></b> D non acquis</span>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Notation par élève</h2>
+  <div class="wrap"><table id="grid"></table></div>
+  <div style="margin-top:10px">
+    <label>Coller une liste (un élève par ligne — « Nom Prénom » ou « Nom, Prénom »)</label>
+    <textarea id="paste" placeholder="Durand Alice&#10;Bernard Hugo&#10;Petit, Léa"></textarea>
+    <div class="row" style="margin-top:6px">
+      <button class="btn" id="addPaste">Charger la liste</button>
+      <button class="btn" id="addOne">+ un élève</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Profil par compétence</h2>
+  <div class="wrap"><table id="prof"></table></div>
+  <p class="hint">Moyenne par catégorie (toutes lignes de cette grille) — 🟢 acquis · 🟡 en cours · 🟠 fragile · 🔴 non acquis.</p>
+</div>
+
+<div class="foot">
+  <button class="btn acc" id="exp">Exporter</button>
+  <button class="btn" id="imp">Importer</button>
+  <button class="btn" id="clr">Effacer</button>
+  <input type="file" id="file" accept="application/json" style="display:none">
+</div>
+<div class="card" id="msgcard" style="display:none"><div class="msg" id="msg"></div></div>
+
+<script>
+"use strict";
+var LS="grille_tp_competences_v19";
+var CATS=[["APP","APP"],["ANA","ANA"],["REA","RÉA"],["VAL","VAL"],["COM","COM"]];
+var CATCOL={APP:"#3b82c4",ANA:"#7c5cd0",REA:"#d97a2b",VAL:"#2fa36b",COM:"#c04f7a"};
+var LVL=["A","B","C","D",""];
+var LVLCOL={A:["#4caf6d","#0f3d20"],B:["#e0a53a","#3a2a06"],C:["#e8853a","#3a1e06"],D:["#e2554f","#3a1010"]};
+var st, cc=0;
+
+function cid(){ cc++; return "c"+Date.now().toString(36)+cc; }
+function fresh(){ return { classe:"", titre:"", date:"",
+  criteres:[ {id:cid(),label:"Analyser / proposer une démarche",comp:"ANA",coeff:1},
+             {id:cid(),label:"Réaliser / mesurer",comp:"REA",coeff:1},
+             {id:cid(),label:"Valider / conclure",comp:"VAL",coeff:1} ],
+  bareme:{A:1,B:0.75,C:0.5,D:0.25}, eleves:[] }; }
+function load(){ try{var s=localStorage.getItem(LS); st=s?JSON.parse(s):fresh();}catch(e){st=fresh();}
+  if(!Array.isArray(st.criteres))st.criteres=[]; if(!Array.isArray(st.eleves))st.eleves=[]; if(!st.bareme)st.bareme={A:1,B:0.75,C:0.5,D:0.25}; }
+function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} }
+function el(id){return document.getElementById(id);}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
+function frac(lv){ var b=st.bareme; return (lv&&b[lv]!=null)?b[lv]:null; }
+function catDisp(k){ var f=CATS.find(function(c){return c[0]===k;}); return f?f[1]:k; }
+
+function note(e){ var num=0,den=0,nb=0,tot=0;
+  st.criteres.forEach(function(cr){ var coeff=+cr.coeff||0; if(coeff<=0)return; tot++;
+    var lv=(e.niv||{})[cr.id], fr=frac(lv); if(lv&&fr!=null){num+=coeff*fr;den+=coeff;nb++;} });
+  if(den<=0)return{txt:"—",part:false,val:null};
+  return{txt:(20*num/den).toFixed(1).replace(".",",")+"/20", part:(nb!==tot&&tot>0), val:20*num/den}; }
+function profCat(e,cat){ var num=0,den=0;
+  st.criteres.forEach(function(cr){ if(cr.comp!==cat)return; var coeff=+cr.coeff||0; if(coeff<=0)return;
+    var lv=(e.niv||{})[cr.id], fr=frac(lv); if(lv&&fr!=null){num+=coeff*fr;den+=coeff;} });
+  return den>0?num/den:null; }
+function fracToNiv(fr){ if(fr==null)return ""; var b=st.bareme, o=["A","B","C","D"];
+  for(var i=0;i<o.length-1;i++){ if(fr>=((b[o[i]]+b[o[i+1]])/2))return o[i]; } return "D"; }
+function pastilleTxt(nv){ return {A:"🟢",B:"🟡",C:"🟠",D:"🔴"}[nv]||"·"; }
+
+function renderCrits(){
+  var h="";
+  st.criteres.forEach(function(cr,i){ var col=CATCOL[cr.comp]||"#888";
+    h+='<div class="crit"><div class="r1"><span class="idx" style="background:'+col+'">C'+(i+1)+'</span>'+
+       '<input class="lab" type="text" value="'+esc(cr.label)+'" placeholder="capacité observée" data-lab="'+cr.id+'"></div>'+
+       '<div class="r2"><select data-cat="'+cr.id+'">'+
+         CATS.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cr.comp?" selected":"")+'>'+c[1]+'</option>';}).join("")+
+       '</select>'+
+       '<span class="hint" style="margin:0">poids</span><input class="coef" type="number" min="0" step="1" value="'+(+cr.coeff)+'" data-coef="'+cr.id+'">'+
+       '<button class="del" data-delc="'+cr.id+'" aria-label="supprimer">🗑</button></div></div>';
+  });
+  if(!st.criteres.length) h='<p class="hint">Aucun critère — ajoute-en avec « + un critère ».</p>';
+  el("crits").innerHTML=h;
+}
+
+function renderGrid(){
+  var t=el("grid"), cr=st.criteres;
+  var h='<thead><tr><th class="el">Élève</th>';
+  cr.forEach(function(c,i){ h+='<th title="'+esc(c.label)+'"><span class="chd" style="background:'+(CATCOL[c.comp]||"#888")+'">C'+(i+1)+'</span><br><span style="font-weight:400">'+catDisp(c.comp)+' ×'+(+c.coeff)+'</span></th>'; });
+  h+='<th>Note</th><th></th></tr></thead><tbody>';
+  if(!st.eleves.length){ h+='<tr><td class="el" colspan="'+(cr.length+3)+'"><span class="hint">Aucun élève — colle une liste ci-dessous.</span></td></tr>'; }
+  st.eleves.forEach(function(e,ri){
+    h+='<tr><td class="el"><input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom"></td>';
+    cr.forEach(function(c){ var lv=(e.niv||{})[c.id]||"";
+      h+='<td><button class="cyc" data-r="'+ri+'" data-c="'+c.id+'" data-lv="'+lv+'">'+(lv||"·")+'</button></td>'; });
+    var n=note(e);
+    h+='<td class="note'+(n.part?" part":"")+'">'+n.txt+(n.part?" *":"")+'</td>';
+    h+='<td><button class="del2" data-del="'+ri+'" aria-label="supprimer">✕</button></td></tr>';
+  });
+  h+='</tbody>'; t.innerHTML=h; updMoy();
+}
+function renderProf(){
+  var t=el("prof"); var cats=CATS.map(function(c){return c[0];}).filter(function(k){return st.criteres.some(function(cr){return cr.comp===k;});});
+  var h='<thead><tr><th class="el">Élève</th>';
+  cats.forEach(function(k){ h+='<th><span class="chd" style="background:'+CATCOL[k]+'">'+catDisp(k)+'</span></th>'; });
+  h+='</tr></thead><tbody>';
+  if(!st.eleves.length||!cats.length){ h+='<tr><td class="el" colspan="'+(cats.length+1)+'"><span class="hint">—</span></td></tr>'; }
+  st.eleves.forEach(function(e){ h+='<tr><td class="el">'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'</td>';
+    cats.forEach(function(k){ var fr=profCat(e,k); var nv=fracToNiv(fr);
+      h+='<td>'+(fr!=null?('<span class="pill">'+pastilleTxt(nv)+'</span> <span class="hint" style="margin:0">'+Math.round(fr*100)+'%</span>'):'<span class="hint" style="margin:0">·</span>')+'</td>'; });
+    h+='</tr>'; });
+  h+='</tbody>'; t.innerHTML=h;
+}
+function updMoy(){ var sn=0,cn=0; st.eleves.forEach(function(e){var n=note(e);if(n.val!=null){sn+=n.val;cn++;}});
+  el("moy").textContent=cn?("moy "+(sn/cn).toFixed(1).replace(".",",")):"—"; }
+function renderHead(){ el("classe").value=st.classe||""; el("titre").value=st.titre||""; el("date").value=st.date||"";
+  el("bA").value=st.bareme.A; el("bB").value=st.bareme.B; el("bC").value=st.bareme.C; el("bD").value=st.bareme.D; }
+function renderAll(){ renderCrits(); renderGrid(); renderProf(); }
+function refreshDeps(){ renderGrid(); renderProf(); }
+
+function parseLine(l){ l=l.trim(); if(!l)return null;
+  if(l.indexOf(",")>=0){ var p=l.split(","); return {nom:p[0].trim(),prenom:(p[1]||"").trim(),niv:{}}; }
+  var parts=l.split(/\s+/); var nom=parts.shift(); return {nom:nom,prenom:parts.join(" "),niv:{}}; }
+function critById(id){ return st.criteres.find(function(c){return c.id===id;}); }
+function flash(m){ el("msgcard").style.display="block"; el("msg").innerHTML=m; }
+
+document.addEventListener("input",function(ev){ var t=ev.target;
+  if(t.id==="classe"){st.classe=t.value;save();}
+  else if(t.id==="titre"){st.titre=t.value;save();}
+  else if(t.id==="date"){st.date=t.value;save();}
+  else if(/^b[ABCD]$/.test(t.id)){ var v=parseFloat(String(t.value).replace(",",".")); st.bareme[t.id[1]]=isNaN(v)?0:v; save(); refreshDeps(); }
+  else if(t.dataset.lab!=null){ var c=critById(t.dataset.lab); if(c){c.label=t.value;save();} }
+  else if(t.dataset.coef!=null){ var c2=critById(t.dataset.coef); if(c2){var x=parseInt(t.value,10);c2.coeff=(isNaN(x)||x<0)?0:x;save();refreshDeps();} }
+  else if(t.dataset.nom!=null){ var e=st.eleves[+t.dataset.nom]; var pl=parseLine(t.value)||{nom:t.value,prenom:""}; e.nom=pl.nom;e.prenom=pl.prenom;save();renderProf(); }
+});
+document.addEventListener("change",function(ev){ var t=ev.target;
+  if(t.dataset.cat!=null){ var c=critById(t.dataset.cat); if(c){c.comp=t.value;save();renderCrits();refreshDeps();} }
+});
+document.addEventListener("click",function(ev){ var t=ev.target;
+  if(t.id==="addCrit"){ st.criteres.push({id:cid(),label:"",comp:"REA",coeff:1}); save(); renderCrits(); refreshDeps(); return; }
+  var dc=t.dataset&&t.dataset.delc; if(dc){ st.criteres=st.criteres.filter(function(c){return c.id!==dc;});
+    st.eleves.forEach(function(e){ if(e.niv)delete e.niv[dc]; }); save(); renderCrits(); refreshDeps(); return; }
+  if(t.classList&&t.classList.contains("cyc")){ var e=st.eleves[+t.dataset.r]; if(!e.niv)e.niv={}; var cur=e.niv[t.dataset.c]||"";
+    var nx=LVL[(LVL.indexOf(cur)+1)%LVL.length]; if(nx)e.niv[t.dataset.c]=nx; else delete e.niv[t.dataset.c];
+    t.dataset.lv=nx; t.textContent=nx||"·"; var n=note(e);
+    var cell=t.closest("tr").querySelector(".note"); cell.textContent=n.txt+(n.part?" *":""); cell.className="note"+(n.part?" part":"");
+    updMoy(); renderProf(); save(); return; }
+  if(t.dataset.del!=null){ st.eleves.splice(+t.dataset.del,1); save(); renderGrid(); renderProf(); return; }
+  if(t.id==="addPaste"){ var add=0; el("paste").value.split("\n").forEach(function(l){var p=parseLine(l);if(p){st.eleves.push(p);add++;}});
+    el("paste").value=""; save(); renderGrid(); renderProf(); if(add)flash(add+" élève(s) ajouté(s)."); return; }
+  if(t.id==="addOne"){ st.eleves.push({nom:"",prenom:"",niv:{}}); save(); renderGrid(); renderProf();
+    var last=el("grid").querySelector("tbody tr:last-child .nom"); if(last)last.focus(); return; }
+  if(t.id==="exp"){ doExport(); return; }
+  if(t.id==="imp"){ el("file").click(); return; }
+  if(t.id==="clr"){ if(confirm("Effacer toute la saisie en cours ?")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
+});
+el("file").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
+  r.onload=function(){ try{ importState(JSON.parse(r.result)); }catch(e){ flash("Fichier illisible."); } };
+  r.readAsText(f); ev.target.value=""; });
+
+function importState(o){
+  if(o._saisie){ var s=o._saisie; st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
+    if(Array.isArray(s.criteres))st.criteres=s.criteres; if(Array.isArray(s.eleves))st.eleves=s.eleves; if(s.bareme)st.bareme=s.bareme; }
+  else if(o.evalComp){ var arr=o.evalComp.__ACTIVE__||o.evalComp[Object.keys(o.evalComp)[0]]||[]; var ev=arr[0];
+    if(ev){ st.titre=ev.titre||st.titre; st.date=ev.date||st.date;
+      st.criteres=(ev.criteres||[]).map(function(c){return {id:c.id||cid(),label:c.label||"",comp:c.comp||"REA",coeff:c.coeff!=null?c.coeff:1,bo:c.bo};});
+      var byk={}; (o._eleves||[]).forEach(function(e){byk[keyOf(e)]=e;});
+      var keys=Object.keys(ev.niveaux||{}); var seen={};
+      st.eleves=[]; (o._eleves||[]).forEach(function(e){ var k=keyOf(e); seen[k]=1; st.eleves.push({nom:e.nom,prenom:e.prenom,niv:(ev.niveaux||{})[k]||{}}); });
+      keys.forEach(function(k){ if(seen[k])return; var p=k.split("|"); st.eleves.push({nom:cap(p[0]),prenom:cap(p[1]||""),niv:ev.niveaux[k]}); });
+      if(o._classeLabel)st.classe=o._classeLabel; } }
+  if(o.baremeComp)st.bareme=o.baremeComp;
+  save(); renderHead(); renderAll(); flash("Grille importée.");
+}
+function cap(s){ s=String(s||""); return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
+
+function doExport(){
+  var ev={ id:"mob"+Date.now().toString(36), titre:st.titre||"", date:st.date||"",
+    criteres:st.criteres.map(function(c){return {id:c.id,label:c.label,comp:c.comp,coeff:c.coeff,bo:c.bo};}), niveaux:{} };
+  var eleves=[];
+  st.eleves.forEach(function(e){ if(!(e.nom||e.prenom))return; var k=keyOf(e); eleves.push({nom:e.nom,prenom:e.prenom});
+    if(e.niv&&Object.keys(e.niv).length)ev.niveaux[k]=e.niv; });
+  var payload={ _type:"gestion_notation_competences", version:"v19-mobile-criteres",
+    _classeLabel:st.classe||"", _eleves:eleves, baremeComp:st.bareme,
+    evalComp:{ "__ACTIVE__":[ev] },
+    _saisie:{ classe:st.classe, titre:st.titre, date:st.date, criteres:st.criteres, eleves:st.eleves, bareme:st.bareme } };
+  var name=("grille_"+(st.classe||"classe")+"_"+(st.titre||"tp")).replace(/[^\w\-]+/g,"_").toLowerCase()+".json";
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  flash("Exporté : <b>"+esc(name)+"</b>. Dans le gestionnaire : choisis la classe → onglet Compétences → Importer.");
+}
+
+load(); renderHead(); renderAll();
+</script>
+</body>
+</html>
