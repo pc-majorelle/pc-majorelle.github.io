@@ -22,7 +22,7 @@
 </style>
 </head>
 <body>
-<header><a class="home" href="index.html" aria-label="Portail">‹</a><h1>Espace prof</h1></header>
+<header><a class="home" href="index.html" aria-label="Portail">‹</a><div><h1 id="h1">Espace prof — PC</h1><small id="cls" style="display:block;font-weight:400;opacity:.85;font-size:12px;margin-top:2px"></small></div></header>
 <div class="grid">
   <a class="tile" href="gestion_v0.1.html">
     <span class="ic">📊</span>
@@ -42,5 +42,13 @@
   </a>
 </div>
 <p class="note">Espace enseignant. Plus tard : inscription/compte (phase 2). Pour l'instant, tes données restent sur cet appareil.</p>
+<script>(function(){
+  var LS="pcmajo_acces",a=null;
+  try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
+  if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
+  if(a&&a.role==="prof"&&a.cl&&a.cl.length){
+    document.getElementById("cls").textContent="Classes : "+a.cl.join(" · ");
+  }
+})();</script>
 </body>
 </html>

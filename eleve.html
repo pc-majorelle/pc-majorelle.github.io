@@ -40,6 +40,12 @@
   </a>
 </div>
 <p class="note">Bientôt : accès direct au portail de ta classe par QR.</p>
-<script>(function(){var p=new URLSearchParams(location.search);var c=p.get("classe");if(!c){try{var s=JSON.parse(localStorage.getItem("pcmajo_acces"));if(s&&s.role==="eleve")c=s.code;}catch(e){}}if(c)document.getElementById("h1").textContent="Espace élève — "+c;})();</script>
+<script>(function(){
+  var LAB={"1PC":"1re spé PC","2G3":"2nde G3","2G6":"2nde G6","TSTI2D":"Tale STI2D","TG5":"Tale G5","TG6":"Tale G6"};
+  var LS="pcmajo_acces";
+  var p=new URLSearchParams(location.search);var c=p.get("classe");
+  if(!c){var s=null;try{s=JSON.parse(sessionStorage.getItem(LS));}catch(e){} if(!s){try{s=JSON.parse(localStorage.getItem(LS));}catch(e){}} if(s&&s.role==="eleve")c=s.code;}
+  if(c)document.getElementById("h1").textContent="Espace élève — PC · "+(LAB[c]||c);
+})();</script>
 </body>
 </html>
