@@ -24,7 +24,7 @@
 </style>
 </head>
 <body>
-<header><a class="home" href="index.html" aria-label="Portail">‹</a><h1>Espace élève</h1></header>
+<header><a class="home" href="index.html" aria-label="Portail">‹</a><h1 id="h1">Espace élève</h1></header>
 <div class="grid">
   <a class="tile" href="revision_sti2d_tale.html">
     <span class="ic">🎯</span>
@@ -40,5 +40,6 @@
   </a>
 </div>
 <p class="note">Bientôt : accès direct au portail de ta classe par QR.</p>
+<script>(function(){var p=new URLSearchParams(location.search);var c=p.get("classe");if(!c){try{var s=JSON.parse(localStorage.getItem("pcmajo_acces"));if(s&&s.role==="eleve")c=s.code;}catch(e){}}if(c)document.getElementById("h1").textContent="Espace élève — "+c;})();</script>
 </body>
 </html>
