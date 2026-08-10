@@ -8,8 +8,7 @@
 <style>
   :root{
     --bg:#f4f6f9; --card:#fff; --ink:#15202b; --muted:#5c6b7a; --line:#dbe2ea; --accent:#12324a; --accentink:#fff;
-    --ok:#2fa36b; --okbg:#e7f6ee; --warn:#e0a53a; --warnbg:#fbf3e0; --bad:#e2554f; --badbg:#fdeceb;
-    --new:#8a94a6; --newbg:#eef1f5;
+    --ok:#2fa36b; --okbg:#e7f6ee; --warn:#e0a53a; --warnbg:#fbf3e0; --bad:#e2554f; --badbg:#fdeceb; --new:#8a94a6; --newbg:#eef1f5;
   }
   @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;
     --okbg:#12352a;--warnbg:#352a12;--badbg:#3a1a18;--newbg:#1c2836;}}
@@ -18,7 +17,7 @@
     padding:0 12px calc(24px + env(safe-area-inset-bottom))}
   header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--accentink);margin:0 -12px 12px;
     padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
-  header .home{color:#fff;text-decoration:none;font-size:14px;opacity:.92;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:3px 8px;white-space:nowrap}
+  header .home{color:#fff;text-decoration:none;font-size:16px;opacity:.92;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:3px 9px;white-space:nowrap}
   header .ttl{font-size:15px;font-weight:600;text-align:center;line-height:1.2;flex:1}
   header .ttl small{display:block;font-weight:400;opacity:.8;font-size:12px}
   .streak{background:rgba(255,255,255,.15);border-radius:9px;padding:4px 9px;font-size:14px;white-space:nowrap}
@@ -32,28 +31,23 @@
   .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:11px;padding:13px 14px;font-size:16px;margin:0 0 9px;cursor:pointer}
   .opt.good{border-color:var(--ok);background:var(--okbg)}
   .opt.bad{border-color:var(--bad);background:var(--badbg)}
-  .opt:active{transform:scale(.995)}
   .btn{border:none;background:var(--accent);color:#fff;border-radius:11px;padding:13px 16px;font-size:16px;font-weight:600;cursor:pointer;width:100%}
   .btn.sec{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
   .fb{margin-top:12px;border-radius:11px;padding:12px 14px;font-size:15px}
-  .fb.ok{background:var(--okbg);color:var(--ok)}
-  .fb.mid{background:var(--warnbg);color:var(--warn)}
+  .fb.ok{background:var(--okbg);color:var(--ok)} .fb.mid{background:var(--warnbg);color:var(--warn)}
   .badge{display:inline-block;font-size:12px;border-radius:8px;padding:2px 8px;margin-bottom:8px}
-  .badge.jour{background:var(--accent);color:#fff}
-  .badge.rev{background:var(--warnbg);color:var(--warn)}
-  .prog{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:2px 0 14px}
-  .prog>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
-  .carte{display:flex;flex-wrap:wrap;gap:7px;margin-top:6px}
+  .badge.jour{background:var(--accent);color:#fff} .badge.rev{background:var(--warnbg);color:var(--warn)}
+  .prog{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:2px 0 14px} .prog>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .carte{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
   .cc{font-size:13px;border-radius:8px;padding:5px 10px;border:1px solid transparent}
-  .cc.v{background:var(--okbg);color:var(--ok);border-color:var(--ok)}
-  .cc.o{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}
-  .cc.r{background:var(--badbg);color:var(--bad);border-color:var(--bad)}
-  .cc.n{background:var(--newbg);color:var(--new);border-color:var(--line)}
+  .cc.v{background:var(--okbg);color:var(--ok);border-color:var(--ok)} .cc.o{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}
+  .cc.r{background:var(--badbg);color:var(--bad);border-color:var(--bad)} .cc.n{background:var(--newbg);color:var(--new);border-color:var(--line)}
   .leg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
   .leg b{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px}
-  .hint{color:var(--muted);font-size:13px}
-  .center{text-align:center}
-  .big{font-size:34px;line-height:1}
+  .stats{display:flex;gap:10px;margin-top:8px}
+  .stat{flex:1;background:var(--newbg);border-radius:10px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:20px} .stat span{font-size:11px;color:var(--muted)}
+  .hint{color:var(--muted);font-size:13px} .center{text-align:center} .big{font-size:34px;line-height:1}
   svg{display:block;max-width:100%;height:auto;margin:4px auto}
 </style>
 </head>
@@ -63,141 +57,117 @@
   <div class="ttl">Révision du jour<small>Terminale STI2D · Énergie interne</small></div>
   <span class="streak" id="streak">🔥 0</span>
 </header>
-
 <div id="app"></div>
-
 <script>
 "use strict";
-var LS="revision_sti2d_tale_v1";
+var LS="revision_sti2d_tale_v2";
 
 /* ---------- contenu ---------- */
-// Concepts du chapitre du jour (énergie interne) — les "vrais"
-var CONCEPTS_JOUR=["puissance","énergie","temps","variation de température","palier de température","états de l'eau","capacité thermique","chaleur latente","transfert thermique"];
-// Intrus venant d'AUTRES chapitres
-var INTRUS=["force","vitesse","accélération","tension électrique","fréquence","quantité de matière","résistance","longueur d'onde"];
-
-// Items "du jour" (chapitre énergie interne) — reconnaissance
 var ITEMS_JOUR=[
-  {id:"ej_concepts", type:"multi", concept:"reconnaître les grandeurs", q:"Parmi ces grandeurs, coche celles qui relèvent de l'énergie interne (échauffement, changements d'état) :",
+  {id:"ej_concepts", chap:"energie", concept:"reconnaître les grandeurs", type:"multi",
+    q:"Parmi ces grandeurs, coche celles qui relèvent de l'énergie interne (échauffement, changements d'état) :",
     pool:["puissance","énergie","température","palier de température","chaleur latente","force","fréquence","tension électrique","longueur d'onde","masse"],
     good:["puissance","énergie","température","palier de température","chaleur latente","masse"]},
-  {id:"ej_u_energie", type:"single", concept:"unité de l'énergie", q:"Quelle est l'unité d'une énergie ?",
-    options:["J (joule)","W (watt)","K (kelvin)","N (newton)"], correct:0},
-  {id:"ej_u_puiss", type:"single", concept:"unité de la puissance", q:"Quelle est l'unité d'une puissance ?",
-    options:["J (joule)","W (watt)","J·K⁻¹","kW·h"], correct:1},
-  {id:"ej_eq_ept", type:"single", concept:"relation E–P–t", q:"Quelle relation lie l'énergie E, la puissance P et le temps t ?",
-    options:["E = P × t","E = P / t","P = E × t","E = P + t"], correct:0},
-  {id:"ej_eq_mcdt", type:"single", concept:"échauffement Q=mcΔT", q:"Pour chauffer de l'eau SANS changement d'état, quelle énergie ?",
-    options:["Q = m × c × ΔT","Q = m × L","Q = m × g × h","Q = ½ × m × v²"], correct:0},
-  {id:"ej_schema", type:"schema", concept:"palier = changement d'état", q:"Sur cette courbe température–temps, que représente le PALIER (partie plate) ?",
-    options:["Un changement d'état (fusion / ébullition)","Une hausse de température","Une perte d'énergie","Une accélération"], correct:0}
+  {id:"ej_u_energie", chap:"energie", concept:"unité de l'énergie", type:"single", q:"Quelle est l'unité d'une énergie ?", options:["J (joule)","W (watt)","K (kelvin)","N (newton)"], correct:0},
+  {id:"ej_u_puiss", chap:"energie", concept:"unité de la puissance", type:"single", q:"Quelle est l'unité d'une puissance ?", options:["J (joule)","W (watt)","J·K⁻¹","kW·h"], correct:1},
+  {id:"ej_eq_ept", chap:"energie", concept:"relation E–P–t", type:"single", q:"Quelle relation lie l'énergie E, la puissance P et le temps t ?", options:["E = P × t","E = P / t","P = E × t","E = P + t"], correct:0},
+  {id:"ej_eq_mcdt", chap:"energie", concept:"échauffement Q=mcΔT", type:"single", q:"Pour chauffer de l'eau SANS changement d'état, quelle énergie ?", options:["Q = m × c × ΔT","Q = m × L","Q = m × g × h","Q = ½ × m × v²"], correct:0},
+  {id:"ej_schema", chap:"energie", concept:"palier = changement d'état", type:"schema", q:"Sur cette courbe température–temps, que représente le PALIER (partie plate) ?", options:["Un changement d'état (fusion / ébullition)","Une hausse de température","Une perte d'énergie","Une accélération"], correct:0}
 ];
-
-// Items "révision" — chapitres antérieurs (mécanique) ; maîtrise simulée aléatoirement
 var ITEMS_MECA=[
-  {id:"me_u_force", concept:"unité de force", q:"Quelle est l'unité d'une force ?", options:["N (newton)","J (joule)","W (watt)","kg"], correct:0},
-  {id:"me_newton2", concept:"2e loi de Newton", q:"Quelle relation traduit la 2ᵉ loi de Newton ?", options:["Σ F = m × a","F = m × v","E = ½ m v²","p = m × v"], correct:0},
-  {id:"me_ec", concept:"énergie cinétique", q:"Quelle est l'expression de l'énergie cinétique ?", options:["Ec = ½ × m × v²","Ec = m × g × h","Ec = m × v","Ec = F × d"], correct:0},
-  {id:"me_u_v", concept:"unité de vitesse", q:"Quelle est l'unité d'une vitesse ?", options:["m·s⁻¹","m·s⁻²","m","s"], correct:0},
-  {id:"me_poids", concept:"poids", q:"Quelle est l'expression du poids d'un objet ?", options:["P = m × g","P = m × a","P = F × d","P = ½ m v²"], correct:0},
-  {id:"me_travail", concept:"travail d'une force", q:"Quel est le travail d'une force constante sur une distance d (force alignée) ?", options:["W = F × d","W = F / d","W = m × g","W = ½ m v²"], correct:0}
+  {id:"me_u_force", chap:"meca", concept:"unité de force", type:"single", q:"Quelle est l'unité d'une force ?", options:["N (newton)","J (joule)","W (watt)","kg"], correct:0},
+  {id:"me_newton2", chap:"meca", concept:"2e loi de Newton", type:"single", q:"Quelle relation traduit la 2ᵉ loi de Newton ?", options:["Σ F = m × a","F = m × v","E = ½ m v²","p = m × v"], correct:0},
+  {id:"me_ec", chap:"meca", concept:"énergie cinétique", type:"single", q:"Quelle est l'expression de l'énergie cinétique ?", options:["Ec = ½ × m × v²","Ec = m × g × h","Ec = m × v","Ec = F × d"], correct:0},
+  {id:"me_u_v", chap:"meca", concept:"unité de vitesse", type:"single", q:"Quelle est l'unité d'une vitesse ?", options:["m·s⁻¹","m·s⁻²","m","s"], correct:0},
+  {id:"me_poids", chap:"meca", concept:"poids", type:"single", q:"Quelle est l'expression du poids d'un objet ?", options:["P = m × g","P = m × a","P = F × d","P = ½ m v²"], correct:0},
+  {id:"me_travail", chap:"meca", concept:"travail d'une force", type:"single", q:"Travail d'une force constante sur une distance d (alignée) ?", options:["W = F × d","W = F / d","W = m × g","W = ½ m v²"], correct:0}
 ];
+var ALL={}; ITEMS_JOUR.concat(ITEMS_MECA).forEach(function(it){ ALL[it.concept]=it; });
 
-var BOX_DAYS=[0,1,3,7,16];               // Leitner : intervalle (jours) par boîte
-function boxColor(b){ return b<=0?"r":(b<=2?"o":"v"); }
-function boxLabel(b){ return b<=0?"à revoir":(b<=2?"fragile":"acquis"); }
+var BOX_DAYS=[0,1,3,7,16];
+function boxColor(b){ return b<0?"n":(b===0?"r":(b<=2?"o":"v")); }
+function boxLabel(b){ return b<0?"nouveau":(b===0?"à revoir":(b<=2?"fragile":"acquis")); }
 
-/* ---------- état (local, avec init simulée) ---------- */
+/* ---------- carnet (mémoire par concept, local) ---------- */
 var st;
 function todayNum(){ return Math.floor(Date.now()/86400000); }
 function load(){
   try{ st=JSON.parse(localStorage.getItem(LS)); }catch(e){ st=null; }
   if(!st){
-    st={ streak:0, lastDay:null, meca:{}, jour:{}, seenIntro:false };
-    // maîtrise mécanique simulée aléatoirement + "dernière révision" aléatoire
-    ITEMS_MECA.forEach(function(it){
-      var box=Math.floor(Math.random()*5);
-      var daysAgo=Math.floor(Math.random()*12);
-      st.meca[it.id]={box:box, last: todayNum()-daysAgo};
-    });
-    CONCEPTS_JOUR.forEach(function(){});
+    st={ streak:0, lastDay:null, concepts:{}, totalSessions:0, totalReact:0 };
+    // démo : mécanique déjà travaillée (maîtrise simulée) ; énergie interne = nouveau
+    ITEMS_MECA.forEach(function(it){ st.concepts[it.concept]={box:Math.floor(Math.random()*5), last: todayNum()-Math.floor(Math.random()*12)}; });
     save();
   }
-  if(!st.jour) st.jour={};
+  if(!st.concepts) st.concepts={};
 }
 function save(){ try{ localStorage.setItem(LS, JSON.stringify(st)); }catch(e){} }
-
-function dueMeca(){
-  return ITEMS_MECA.filter(function(it){ var m=st.meca[it.id]; var due=(todayNum()-m.last)>=BOX_DAYS[m.box]; return due; });
-}
+function rec(concept){ return st.concepts[concept]; }
+function boxOf(concept){ var c=rec(concept); return c?c.box:-1; }
+function isDue(it){ var c=rec(it.concept); if(!c) return true; return (todayNum()-c.last)>=BOX_DAYS[c.box]; }
+function nextDueDays(concept){ var c=rec(concept); if(!c) return 0; return Math.max(0, BOX_DAYS[c.box]-(todayNum()-c.last)); }
+function update(concept, good){ var c=rec(concept)||(st.concepts[concept]={box:0,last:todayNum()}); c.box=good?Math.min(4,c.box+1):0; c.last=todayNum(); save(); }
 
 /* ---------- rendu ---------- */
 var app=document.getElementById("app");
 function setStreak(){ document.getElementById("streak").textContent="🔥 "+(st.streak||0); }
-
-function ccSpan(cls,label,titre){ return '<span class="cc '+cls+'" title="'+titre+'">'+label+'</span>'; }
-function grp(title, inner){ return '<div class="hint" style="margin:8px 0 3px">'+title+'</div><div class="carte">'+inner+'</div>'; }
+function ccSpan(concept){ var b=boxOf(concept); var nd=nextDueDays(concept);
+  return '<span class="cc '+boxColor(b)+'" title="'+boxLabel(b)+(b>=0?' · à revoir dans '+nd+' j':'')+'">'+concept+'</span>'; }
+function grp(title, items){ return '<div class="hint" style="margin:8px 0 3px">'+title+'</div><div class="carte">'+items.map(function(it){return ccSpan(it.concept);}).join("")+'</div>'; }
 function carteHTML(){
-  var jour=ITEMS_JOUR.map(function(it){ var s=st.jour[it.concept]; var cls=s?boxColor(s.box):"n"; return ccSpan(cls, it.concept, s?boxLabel(s.box):"nouveau"); }).join("");
-  var meca=ITEMS_MECA.map(function(it){ var b=st.meca[it.id].box; return ccSpan(boxColor(b), it.concept, boxLabel(b)); }).join("");
-  return grp("Aujourd'hui · énergie interne", jour)+grp("Révisions · mécanique", meca)
+  return grp("Aujourd'hui · énergie interne", ITEMS_JOUR)+grp("Révisions · mécanique", ITEMS_MECA)
     +'<div class="leg"><span><b style="background:var(--ok)"></b>acquis</span><span><b style="background:var(--warn)"></b>fragile</span><span><b style="background:var(--bad)"></b>à revoir</span><span><b style="background:var(--new)"></b>nouveau</span></div>';
+}
+function statsHTML(){
+  return '<div class="stats"><div class="stat"><b>'+(st.totalSessions||0)+'</b><span>entraînements</span></div>'
+    +'<div class="stat"><b>'+(st.totalReact||0)+'</b><span>concepts réactivés</span></div>'
+    +'<div class="stat"><b>🔥 '+(st.streak||0)+'</b><span>jours de série</span></div></div>';
 }
 
 function screenIntro(){
-  var due=dueMeca().length;
+  var due=ITEMS_MECA.filter(isDue).length;
   app.innerHTML=
-    '<div class="card center">'
-    +'<div class="big">🔥 '+(st.streak||0)+'</div>'
+    '<div class="card center"><div class="big">🔥 '+(st.streak||0)+'</div>'
     +'<h2 style="margin-top:6px">'+(st.streak? 'Série de '+st.streak+' jour'+(st.streak>1?'s':'')+' — continue !':'Prêt à démarrer ta série ?')+'</h2>'
     +'<p class="sub">2 minutes suffisent. Ce qui est bien su revient rarement : ta séance reste courte.</p>'
-    +'<button class="btn" id="go">Commencer ('+(ITEMS_JOUR.length+Math.min(due,3))+' cartes)</button>'
-    +'</div>'
-    +'<div class="card"><h2>Ta carte des concepts</h2><p class="sub">Colorée selon ce que tu maîtrises déjà — repère tes points forts et là où être attentif.</p>'+carteHTML()+'</div>';
+    +statsHTML()
+    +'<button class="btn" id="go" style="margin-top:12px">Commencer ('+(ITEMS_JOUR.length+Math.min(due,4))+' cartes)</button></div>'
+    +'<div class="card"><h2>Ton carnet de concepts</h2><p class="sub">Coloré selon ta maîtrise, avec la prochaine révision de chacun. Repère tes points forts et là où être attentif.</p>'+carteHTML()+'</div>';
   document.getElementById("go").onclick=startSession;
 }
 
-/* file de la session : items du jour + révisions dues (les faibles d'abord), temps ~constant */
 var queue, qi, session;
 function startSession(){
-  var due=dueMeca().sort(function(a,b){ return st.meca[a.id].box - st.meca[b.id].box; }).slice(0,3);
-  queue=[];
-  ITEMS_JOUR.forEach(function(it){ queue.push({it:it, kind:"jour"}); });
-  due.forEach(function(it){ queue.push({it:it, kind:"meca"}); });
-  qi=0; session={done:0, concepts:0};
+  var reviews=ITEMS_MECA.filter(isDue).sort(function(a,b){ return boxOf(a.concept)-boxOf(b.concept); }).slice(0,4);
+  queue=ITEMS_JOUR.map(function(it){return {it:it,kind:"jour"};}).concat(reviews.map(function(it){return {it:it,kind:"meca"};}));
+  qi=0; session={react:0};
   renderCard();
 }
-
 function heatingSVG(){
   return '<svg viewBox="0 0 300 150" role="img" aria-label="courbe température-temps avec palier">'
     +'<line x1="30" y1="130" x2="290" y2="130" stroke="var(--line)"/><line x1="30" y1="10" x2="30" y2="130" stroke="var(--line)"/>'
     +'<text x="150" y="146" font-size="11" fill="var(--muted)" text-anchor="middle">temps</text>'
-    +'<text x="10" y="70" font-size="11" fill="var(--muted)" transform="rotate(-90 10,70)" text-anchor="middle">T (°C)</text>'
+    +'<text x="12" y="70" font-size="11" fill="var(--muted)" transform="rotate(-90 12,70)" text-anchor="middle">T (°C)</text>'
     +'<polyline points="30,120 90,70 170,70 250,25" fill="none" stroke="var(--accent)" stroke-width="3"/>'
     +'<rect x="90" y="62" width="80" height="16" fill="none" stroke="var(--warn)" stroke-dasharray="4 3"/>'
     +'<text x="130" y="58" font-size="11" fill="var(--warn)" text-anchor="middle">palier</text></svg>';
 }
+function nextBtn(){ var b=document.createElement("button"); b.className="btn"; b.style.marginTop="12px"; b.textContent=(qi+1>=queue.length?"Voir mon bilan":"Suivant"); b.onclick=function(){ qi++; renderCard(); }; return b; }
 
 function renderCard(){
   if(qi>=queue.length){ return screenEnd(); }
-  var cur=queue[qi]; var it=cur.it;
-  var pct=Math.round(100*qi/queue.length);
-  var badge=cur.kind==="jour"?'<span class="badge jour">Chapitre du jour</span>':'<span class="badge rev">Révision · '+boxLabel(st.meca[it.id].box)+'</span>';
+  var cur=queue[qi], it=cur.it, pct=Math.round(100*qi/queue.length);
+  var badge=cur.kind==="jour"?'<span class="badge jour">Chapitre du jour</span>':'<span class="badge rev">Révision · '+boxLabel(boxOf(it.concept))+'</span>';
   var h='<div class="card">'+badge+'<div class="prog"><i style="width:'+pct+'%"></i></div>';
   if(it.type==="multi"){
-    h+='<p class="q">'+it.q+'</p><div class="chips" id="chips">'
-      +it.pool.map(function(o,i){ return '<span class="chip" data-i="'+i+'">'+o+'</span>'; }).join("")
+    h+='<p class="q">'+it.q+'</p><div class="chips" id="chips">'+it.pool.map(function(o,i){return '<span class="chip" data-i="'+i+'">'+o+'</span>';}).join("")
       +'</div><button class="btn" id="valid" style="margin-top:14px">Valider</button><div id="fb"></div>';
   } else {
-    var opts=(it.type==="schema")?(heatingSVG()+'<p class="q">'+it.q+'</p>'):('<p class="q">'+it.q+'</p>');
-    h+=opts+'<div id="opts">'+it.options.map(function(o,i){ return '<button class="opt" data-i="'+i+'">'+o+'</button>'; }).join("")+'</div><div id="fb"></div>';
+    h+=(it.type==="schema"?heatingSVG():"")+'<p class="q">'+it.q+'</p><div id="opts">'+it.options.map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>';}).join("")+'</div><div id="fb"></div>';
   }
-  h+='</div>';
-  app.innerHTML=h;
+  h+='</div>'; app.innerHTML=h;
   if(it.type==="multi") bindMulti(cur); else bindSingle(cur);
 }
-
-function nextBtn(){ var b=document.createElement("button"); b.className="btn"; b.style.marginTop="12px"; b.textContent=(qi+1>=queue.length?"Voir mon bilan":"Suivant"); b.onclick=function(){ qi++; renderCard(); }; return b; }
 
 function bindMulti(cur){
   var it=cur.it, sel={};
@@ -206,57 +176,41 @@ function bindMulti(cur){
     var chosen=Object.keys(sel).map(function(i){return it.pool[i];});
     var goodHit=it.good.filter(function(g){return chosen.indexOf(g)>=0;}).length;
     var wrong=chosen.filter(function(x){return it.good.indexOf(x)<0;}).length;
-    // colorie les chips
     document.querySelectorAll("#chips .chip").forEach(function(c){ var o=it.pool[c.dataset.i]; c.style.cursor="default";
       if(it.good.indexOf(o)>=0){ c.style.borderColor="var(--ok)"; c.style.background="var(--okbg)"; c.style.color="var(--ok)"; }
       else if(sel[c.dataset.i]){ c.style.borderColor="var(--bad)"; c.style.background="var(--badbg)"; c.style.color="var(--bad)"; } });
     document.getElementById("valid").style.display="none";
-    session.concepts+=goodHit;
-    var ok=(goodHit>=it.good.length-1 && wrong<=1);
-    var fb=document.getElementById("fb");
-    fb.className="fb "+(ok?"ok":"mid");
-    fb.innerHTML=(ok?"👏 Bien vu — ":"On avance quand même — ")+"tu as reconnu <b>"+goodHit+"</b> grandeur(s) d'énergie interne"+(wrong?(", et évité "+(it.pool.length-it.good.length-wrong)+" intrus"):"")+". <span class='hint'>Les vertes sont les bonnes.</span>";
-    setJourConcept(it, ok);
+    var ok=(goodHit>=it.good.length-1 && wrong<=1); update(it.concept, ok); session.react+=goodHit;
+    var fb=document.getElementById("fb"); fb.className="fb "+(ok?"ok":"mid");
+    fb.innerHTML=(ok?"👏 Bien vu — ":"On avance quand même — ")+"tu as reconnu <b>"+goodHit+"</b> grandeur(s), évité "+(it.pool.length-it.good.length-wrong)+" intrus. <span class='hint'>Prochaine révision de ce point dans "+nextDueDays(it.concept)+" j.</span>";
     fb.appendChild(nextBtn());
-    session.done++;
   };
 }
-
 function bindSingle(cur){
   var it=cur.it;
   document.getElementById("opts").addEventListener("click",function(e){ var b=e.target.closest(".opt"); if(!b)return;
-    var i=+b.dataset.i; var good=(i===it.correct);
+    var i=+b.dataset.i, good=(i===it.correct);
     document.querySelectorAll("#opts .opt").forEach(function(x,j){ x.style.pointerEvents="none"; if(j===it.correct)x.classList.add("good"); else if(j===i)x.classList.add("bad"); });
-    var fb=document.getElementById("fb");
-    if(cur.kind==="meca"){
-      var m=st.meca[it.id]; m.box=good?Math.min(4,m.box+1):0; m.last=todayNum();
-      fb.className="fb "+(good?"ok":"mid");
-      fb.innerHTML=(good?"✅ Acquis — ":"À revoir — pas grave ! ")+"prochaine révision dans <b>"+BOX_DAYS[m.box]+" j</b>."+(good?" <span class='hint'>Ça s'espace : ça te prendra de moins en moins de temps.</span>":" <span class='hint'>On te la repropose vite.</span>");
-    } else {
-      setJourConcept(it, good);
-      if(good) session.concepts++;
-      fb.className="fb "+(good?"ok":"mid");
-      fb.innerHTML=good?"✅ Exact.":"Pas encore — la bonne réponse est surlignée en vert. On la reverra.";
-    }
-    document.getElementById("opts").insertAdjacentElement("afterend",nextBtn());
-    session.done++; save();
+    update(it.concept, good); if(good) session.react++;
+    var fb=document.getElementById("fb"); fb.className="fb "+(good?"ok":"mid");
+    var nd=nextDueDays(it.concept);
+    fb.innerHTML=(good?"✅ Acquis — ":"À revoir, pas grave ! ")+"prochaine révision dans <b>"+nd+" j</b>."
+      +(good?" <span class='hint'>Ça s'espace : de moins en moins de temps.</span>":" <span class='hint'>On te la repropose vite.</span>");
+    fb.appendChild(nextBtn());
   });
 }
 
-function setJourConcept(it, good){ var c=it.concept; if(!st.jour[c]) st.jour[c]={box:0}; st.jour[c].box=good?Math.min(4,st.jour[c].box+1):Math.max(0,st.jour[c].box); save(); }
-
 function screenEnd(){
-  // série : +1 une fois par jour
   var t=todayNum();
-  if(st.lastDay!==t){ st.streak=(st.lastDay===t-1||st.lastDay===null)?(st.streak+1):1; if(st.lastDay===null)st.streak=1; st.lastDay=t; save(); }
-  setStreak();
-  var pal=(st.streak%7===0)?" 🏅 Palier de "+st.streak+" jours atteint !":"";
-  app.innerHTML='<div class="card center">'
-    +'<div class="big">🔥 '+st.streak+'</div>'
+  if(st.lastDay!==t){ st.streak=(st.lastDay===t-1)?(st.streak+1):1; st.lastDay=t; st.totalSessions=(st.totalSessions||0)+1; }
+  st.totalReact=(st.totalReact||0)+session.react; save(); setStreak();
+  var pal=(st.streak%7===0 && st.streak>0)?" 🏅 Palier de "+st.streak+" jours !":"";
+  app.innerHTML='<div class="card center"><div class="big">🔥 '+st.streak+'</div>'
     +'<h2 style="margin-top:6px">Série entretenue — bravo !'+pal+'</h2>'
-    +'<p class="sub">Tu as <b>réactivé '+session.concepts+' concept(s)</b> aujourd\'hui. C\'est exactement ce que ta mémoire adore — même court, même imparfait, ça compte.</p>'
-    +'<button class="btn sec" id="again">Revenir demain (ou rejouer)</button></div>'
-    +'<div class="card"><h2>Ta carte des concepts</h2><p class="sub">Elle bouge à chaque passage : vise à tout faire passer au vert, sans te presser.</p>'+carteHTML()+'</div>';
+    +'<p class="sub">Tu as <b>réactivé '+session.react+' concept(s)</b> aujourd\'hui. Même court, même imparfait, ça compte — c\'est exactement ce que ta mémoire adore.</p>'
+    +statsHTML()
+    +'<button class="btn sec" id="again" style="margin-top:12px">Revenir demain (ou rejouer)</button></div>'
+    +'<div class="card"><h2>Ton carnet de concepts</h2><p class="sub">Il évolue à chaque passage. Chaque concept a sa prochaine échéance de révision.</p>'+carteHTML()+'</div>';
   document.getElementById("again").onclick=screenIntro;
 }
 
