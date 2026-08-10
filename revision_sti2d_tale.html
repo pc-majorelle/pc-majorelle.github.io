@@ -135,12 +135,13 @@ function dueMeca(){
 var app=document.getElementById("app");
 function setStreak(){ document.getElementById("streak").textContent="🔥 "+(st.streak||0); }
 
+function ccSpan(cls,label,titre){ return '<span class="cc '+cls+'" title="'+titre+'">'+label+'</span>'; }
+function grp(title, inner){ return '<div class="hint" style="margin:8px 0 3px">'+title+'</div><div class="carte">'+inner+'</div>'; }
 function carteHTML(){
-  var h='<div class="carte">';
-  ITEMS_MECA.forEach(function(it){ var b=st.meca[it.id].box; h+='<span class="cc '+boxColor(b)+'" title="'+boxLabel(b)+'">'+it.concept+'</span>'; });
-  CONCEPTS_JOUR.slice(0,6).forEach(function(c){ var seen=st.jour[c]; var cls=seen?boxColor(seen.box):"n"; h+='<span class="cc '+cls+'">'+c+'</span>'; });
-  h+='</div><div class="leg"><span><b style="background:var(--ok)"></b>acquis</span><span><b style="background:var(--warn)"></b>fragile</span><span><b style="background:var(--bad)"></b>à revoir</span><span><b style="background:var(--new)"></b>nouveau</span></div>';
-  return h;
+  var jour=ITEMS_JOUR.map(function(it){ var s=st.jour[it.concept]; var cls=s?boxColor(s.box):"n"; return ccSpan(cls, it.concept, s?boxLabel(s.box):"nouveau"); }).join("");
+  var meca=ITEMS_MECA.map(function(it){ var b=st.meca[it.id].box; return ccSpan(boxColor(b), it.concept, boxLabel(b)); }).join("");
+  return grp("Aujourd'hui · énergie interne", jour)+grp("Révisions · mécanique", meca)
+    +'<div class="leg"><span><b style="background:var(--ok)"></b>acquis</span><span><b style="background:var(--warn)"></b>fragile</span><span><b style="background:var(--bad)"></b>à revoir</span><span><b style="background:var(--new)"></b>nouveau</span></div>';
 }
 
 function screenIntro(){
