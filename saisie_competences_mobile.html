@@ -23,6 +23,8 @@
   header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--accentink);margin:0 -10px 10px;
     padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
   header b{font-size:15px;font-weight:600}
+  header .home{color:var(--accentink);text-decoration:none;font-size:14px;opacity:.92;white-space:nowrap;padding:4px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px}
+  header .home:active{opacity:.7}
   header .moy{font-size:14px;background:rgba(255,255,255,.15);padding:4px 9px;border-radius:8px;white-space:nowrap}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;box-shadow:var(--shadow)}
   .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 8px;font-weight:600}
@@ -72,7 +74,7 @@
 </style>
 </head>
 <body>
-<header><b>Grille TP — compétences</b><span class="moy" id="moy">—</span></header>
+<header><a href="index.html" class="home" aria-label="Retour à l'accueil">‹ Accueil</a><b>Grille TP</b><span class="moy" id="moy">—</span></header>
 
 <div class="card">
   <h2>Évaluation</h2>
