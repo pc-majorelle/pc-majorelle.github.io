@@ -19,6 +19,8 @@
   .ic{width:46px;height:46px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:23px;background:var(--accent);color:#fff}
   .tile b{display:block;font-size:16px;font-weight:600} .tile span{font-size:13px;color:var(--muted)}
   .note{max-width:620px;margin:18px auto 0;font-size:12px;color:var(--muted);text-align:center}
+  #cls{margin-top:4px}
+  .clschip{display:inline-block;color:#fff;font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:2px 9px;margin:3px 4px 0 0}
 </style>
 </head>
 <body>
@@ -46,9 +48,13 @@
   var LS="pcmajo_acces",a=null;
   try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
   if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
-  if(a&&a.role==="prof"&&a.cl&&a.cl.length){
-    document.getElementById("cls").textContent="Classes : "+a.cl.join(" · ");
-  }
+  if(!a||a.role!=="prof") return;
+  var list=(a.classes&&a.classes.length)?a.classes:((a.cl||[]).map(function(l){return {id:l,libelle:l};}));
+  if(!list.length) return;
+  function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
+  document.getElementById("cls").innerHTML=list.map(function(c){
+    return '<span class="clschip" style="background:hsl('+hue(c.id||c.libelle)+',55%,42%)">'+(c.libelle||c.id)+'</span>';
+  }).join("");
 })();</script>
 </body>
 </html>
