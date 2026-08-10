@@ -49,8 +49,12 @@
 "use strict";
 var LS="pcmajo_acces";
 /* ======= CODES D'ACCÈS (modifiable — Laurent) ======= */
-var PROFS   = { "prof-majo":"Enseignant" };            // codes profs (ajoute-en autant que de collègues)
-var CLASSES = ["2G3","2G5","1G4","TSTI2D","1STI2D"];   // codes élèves = classes
+var PROFS   = { "agenor":"Agénor" };                   // codes profs (ajoute-en autant que de collègues)
+var ANNEES  = {                                        // classes par rentrée (ajoute une année ici)
+  "2025-2026": ["2G3","2G6","1PC","TSTI2D","TG5","TG6"]
+};
+var ANNEE_COURANTE = "2025-2026";                      // année en cours (à changer chaque rentrée)
+var CLASSES = ANNEES[ANNEE_COURANTE] || [];            // codes élèves = classes de l'année courante
 /* ==================================================== */
 
 function resolve(raw){
@@ -72,6 +76,16 @@ function connect(){
 }
 document.getElementById("go").onclick=connect;
 document.getElementById("code").addEventListener("keydown",function(e){ if(e.key==="Enter") connect(); });
+
+/* connexion directe par lien / QR : ?code=CLASSE (&eleve=CODE) */
+(function(){
+  var p=new URLSearchParams(location.search);
+  var code=p.get("code"); if(!code) return;
+  var r=resolve(code); if(!r.role) return;
+  var el=p.get("eleve"); if(el) r.eleve=el;
+  try{ localStorage.setItem(LS, JSON.stringify(r)); }catch(e){}
+  goTo(r);
+})();
 
 /* profil mémorisé -> proposer "Continuer" (pas de redirection auto, pour pouvoir changer) */
 (function(){

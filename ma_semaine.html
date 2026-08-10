@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324a">
+<title>Ma semaine — Agénor · PC Majorelle</title>
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#12324a;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:0 12px 30px}
+  header{background:var(--accent);color:#fff;margin:0 -12px 14px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;display:flex;align-items:center;gap:10px}
+  header .home{color:#fff;text-decoration:none;font-size:16px;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:2px 9px}
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header small{display:block;font-weight:400;opacity:.85;font-size:12px}
+  .wrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card);border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--line);padding:0;text-align:center;height:46px;vertical-align:middle}
+  th{background:#eef1f5;color:var(--muted);font-size:13px;font-weight:600;height:34px}
+  td.h{background:#eef1f5;color:var(--muted);font-size:12px;width:52px;font-weight:600}
+  .s{display:block;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;line-height:1.2}
+  .s small{font-weight:400;opacity:.9;font-size:11px}
+  td.off{background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,.04) 6px,rgba(0,0,0,.04) 12px);color:var(--muted);font-size:12px}
+  .leg{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;font-size:12px}
+  .leg span{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+  .leg b{width:14px;height:14px;border-radius:4px;display:inline-block}
+  .note{font-size:12px;color:var(--muted);margin-top:10px}
+</style>
+</head>
+<body>
+<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1>Ma semaine<small>Agénor · 2025-2026 (données réelles EDT)</small></h1></header>
+<div class="leg" id="leg"></div>
+<div class="wrap"><table id="edt"></table></div>
+<p class="note">Extrait de ton EDT 2025-26 (lundi libre conservé). Les TP dédoublés apparaissent en (gr.1)/(gr.2). Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
+<script>
+var JOURS=["lundi","mardi","mercredi","jeudi","vendredi"];
+var HEURES=["8h","9h","10h","11h","12h","13h","14h","15h","16h","17h"];
+var COL={"2G3":"#2b6cb0","2G6":"#7c5cd0","1PC":"#d97a2b","TSTI2D":"#2fa36b","TG5":"#c04f7a","TG6":"#b0872b"};
+var S=[
+ {j:"mardi",h:"9h",c:"2G3",t:"gr.1"},{j:"mardi",h:"11h",c:"2G3",t:"gr.2"},{j:"mardi",h:"16h",c:"1PC",t:""},
+ {j:"mercredi",h:"9h",c:"2G6",t:"gr.1"},{j:"mercredi",h:"11h",c:"2G6",t:"gr.2"},
+ {j:"jeudi",h:"8h",c:"1PC",t:""},{j:"jeudi",h:"10h",c:"TSTI2D",t:""},{j:"jeudi",h:"15h",c:"2G6",t:""},
+ {j:"vendredi",h:"8h",c:"TSTI2D",t:""},{j:"vendredi",h:"10h",c:"TG5",t:"ens. sci."},{j:"vendredi",h:"11h",c:"TG6",t:"ens. sci."},{j:"vendredi",h:"15h",c:"2G3",t:""}
+];
+function cell(j,h){ return S.find(function(s){return s.j===j&&s.h===h;}); }
+var t=document.getElementById("edt");
+var html="<thead><tr><th></th>"+JOURS.map(function(j){return "<th>"+j.charAt(0).toUpperCase()+j.slice(1)+"</th>";}).join("")+"</tr></thead><tbody>";
+HEURES.forEach(function(h){
+  html+="<tr><td class='h'>"+h+"</td>";
+  JOURS.forEach(function(j){
+    if(j==="lundi" && h==="8h"){ html+="<td class='off' rowspan='"+HEURES.length+"'>lundi<br>libre</td>"; return; }
+    if(j==="lundi") return;
+    var s=cell(j,h);
+    if(s){ html+="<td><span class='s' style='background:"+COL[s.c]+"'>"+s.c+(s.t?"<small>"+s.t+"</small>":"")+"</span></td>"; }
+    else html+="<td></td>";
+  });
+  html+="</tr>";
+});
+html+="</tbody>";
+t.innerHTML=html;
+document.getElementById("leg").innerHTML=Object.keys(COL).map(function(c){return "<span><b style='background:"+COL[c]+"'></b>"+c+"</span>";}).join("");
+</script>
+</body>
+</html>
