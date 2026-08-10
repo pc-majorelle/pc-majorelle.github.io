@@ -151,7 +151,7 @@
 </head>
 <body>
 <header>
-  <div class="hrow">
+  <div class="hrow"><a href="index.html" class="nc-home" aria-label="Retour à l'accueil">‹ Accueil</a>
     <h1>👩‍🏫 Gestion <span class="sub">classes &amp; progression — Plateforme PC · Majorelle</span></h1>
     <div class="spacer"></div>
     <label class="small muted">Classe active</label>
@@ -1630,6 +1630,8 @@ switchTab("semaine");
 </script>
 
 <style>/*NOTATION_COMPETENCES_V19_CSS*/
+.nc-home{display:inline-flex;align-items:center;gap:2px;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:.85rem;margin-right:10px;white-space:nowrap}
+.nc-home:hover{border-color:var(--accent,#4aa3ff)}
 #p-comp input,#p-comp select{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:6px 8px}
 #p-comp .nc-cat{display:inline-block;min-width:24px;border-radius:6px;color:#fff;font-weight:700;font-size:12px;padding:1px 6px;text-align:center}
 #p-comp .nc-crit{display:flex;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line);flex-wrap:wrap}
