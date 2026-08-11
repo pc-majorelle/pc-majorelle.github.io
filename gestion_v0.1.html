@@ -164,7 +164,7 @@
 <body>
 <header>
   <div class="hrow"><a href="prof.html" class="nc-home" aria-label="Espace prof">‹ Espace prof</a>
-    <h1>👩‍🏫 Gestion <span class="sub">classes &amp; progression — Plateforme PC · Majorelle</span></h1>
+    <h1>👩‍🏫 <span id="gTitle">Gestion</span> <span class="sub">classes &amp; progression — Plateforme PC · Majorelle</span></h1>
     <div class="spacer"></div>
     <label class="small muted">Année</label>
     <select id="activeAnnee"></select>
@@ -2117,5 +2117,6 @@ function ncImportFile(e){
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
+<script>(function(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces"));if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));}if(a&&a.role==="prof"&&a.prenom){var g=document.getElementById("gTitle");if(g)g.textContent="Gestion "+a.prenom;document.title="Gestion "+a.prenom+" \u2014 Plateforme PC";}}catch(e){}})();</script>
 </body>
 </html>

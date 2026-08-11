@@ -21,6 +21,8 @@
   td.h{background:color-mix(in srgb,var(--card) 80%,var(--line));color:var(--muted);font-size:12px;width:52px;font-weight:600}
   .s{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;line-height:1.2;padding:2px 3px}
   .s small{font-weight:400;opacity:.92;font-size:11px;margin-top:2px}
+  .s.prov{outline:2px dashed rgba(255,255,255,.8);outline-offset:-3px}
+  .prov-tag{font-size:9px;opacity:.9}
   td.off{background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(127,127,127,.12) 6px,rgba(127,127,127,.12) 12px);color:var(--muted);font-size:12px}
   .leg{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;font-size:12px}
   .leg span{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
@@ -39,17 +41,23 @@
 </style>
 </head>
 <body>
-<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1 id="ttl">Ma semaine<small id="sub">2025-2026 (données réelles EDT)</small></h1></header>
+<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1 id="ttl">Ma semaine<small id="sub"></small></h1><select id="ysel" aria-label="Année scolaire" style="margin-left:auto;font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px"></select></header>
 <div class="leg" id="leg"></div>
 <div class="wrap"><table id="edt"></table></div>
 <p class="note" id="note">EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Les TP dédoublés d'une même classe apparaissent sur leurs créneaux respectifs. Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
 <script>
 var JOURS=["lundi","mardi","mercredi","jeudi","vendredi"];
-// Grille en pas de 30 min, de 8h00 (slot 0) à 18h00 (slot 20).
-var NROWS=20;
+var NROWS=20; // pas de 30 min, 8h00->18h00
+var YEARS=["2025-2026","2026-2027"];
+var YKEY="gestion_majorelle_annee";
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");}
+function curYear(){try{var y=localStorage.getItem(YKEY);if(YEARS.indexOf(y)>=0)return y;}catch(e){}return "2025-2026";}
+var PRENOM2NOM={"laurent":"AGENOR","nicolas":"BASTIAN","alain":"GIRSCH","saadia":"HALOUM","malika":"HAMMA","anne":"PARISE","serge":"PECOUL"};
+/* EDT 2026-2027 PROVISOIRE (brouillon de service administratif\EDT\2026\PHY.pdf) — créneaux par nom de famille */
+var EDT2026={"AGENOR":[{"jour":"mardi","debut":"08:00","duree_min":120,"etiquette":"Cours TSPE PHY1"},{"jour":"mercredi","debut":"10:00","duree_min":120,"etiquette":"Cours TSPE PHY1"},{"jour":"mercredi","debut":"13:30","duree_min":60,"etiquette":"A placer TSTI Cours"},{"jour":"jeudi","debut":"10:00","duree_min":120,"etiquette":"TSTI TP"},{"jour":"jeudi","debut":"15:30","duree_min":120,"etiquette":"TP TSPE PHY1"},{"jour":"vendredi","debut":"08:00","duree_min":60,"etiquette":"TEnS4 0,5 0,25 0,25 [co-intervention: AGENOR/HALOUM/HAMMA]"},{"jour":"vendredi","debut":"09:00","duree_min":60,"etiquette":"TSTI Cours"},{"jour":"vendredi","debut":"10:00","duree_min":60,"etiquette":"TEnS5"},{"jour":"vendredi","debut":"11:00","duree_min":60,"etiquette":"TEnS6"},{"jour":"vendredi","debut":"13:30","duree_min":180,"etiquette":"TP 2nd"}],"BASTIAN":[{"jour":"lundi","debut":"08:00","duree_min":60,"etiquette":"1EnS1"},{"jour":"lundi","debut":"09:00","duree_min":60,"etiquette":"1EnS2"},{"jour":"lundi","debut":"10:00","duree_min":60,"etiquette":"1EnS4 0,5 0,25 0,25 [co-intervention: BASTIAN/GIRSCH/PARISE]"},{"jour":"lundi","debut":"13:30","duree_min":180,"etiquette":"TP 2nd"},{"jour":"mardi","debut":"08:00","duree_min":120,"etiquette":"Cours TSPE PHY2"},{"jour":"mardi","debut":"13:30","duree_min":180,"etiquette":"TP 2nd"},{"jour":"mercredi","debut":"10:00","duree_min":120,"etiquette":"TP TSPE PHY2"},{"jour":"jeudi","debut":"15:30","duree_min":120,"etiquette":"Cours TSPE PHY2"}],"GIRSCH":[{"jour":"lundi","debut":"10:00","duree_min":60,"etiquette":"1EnS4 0,5 0,25 0,25 [co-intervention: BASTIAN/GIRSCH/PARISE]"},{"jour":"mardi","debut":"08:00","duree_min":120,"etiquette":"1STI A TP"},{"jour":"mardi","debut":"10:00","duree_min":120,"etiquette":"1STI B TP"},{"jour":"mercredi","debut":"08:00","duree_min":60,"etiquette":"1STI AB Cours"},{"jour":"vendredi","debut":"08:00","duree_min":60,"etiquette":"1STI B Cours"},{"jour":"vendredi","debut":"09:00","duree_min":60,"etiquette":"1STI A Cours"},{"jour":"vendredi","debut":"11:00","duree_min":60,"etiquette":"1EnS6"}],"HALOUM":[{"jour":"lundi","debut":"13:30","duree_min":120,"etiquette":"TP 1er PHY-G1"},{"jour":"lundi","debut":"15:30","duree_min":120,"etiquette":"TP 1er PHY-G3"},{"jour":"mardi","debut":"09:00","duree_min":180,"etiquette":"TP 2nd"},{"jour":"mardi","debut":"15:30","duree_min":120,"etiquette":"Cours 1er PHY-G3"},{"jour":"jeudi","debut":"10:00","duree_min":120,"etiquette":"Cours 1er PHY-G1"},{"jour":"vendredi","debut":"08:00","duree_min":60,"etiquette":"TEnS4 0,5 0,25 0,25 [co-intervention: AGENOR/HALOUM/HAMMA]"},{"jour":"vendredi","debut":"09:00","duree_min":180,"etiquette":"TP 2nd"}],"HAMMA":[{"jour":"lundi","debut":"08:00","duree_min":60,"etiquette":"TEnS1"},{"jour":"lundi","debut":"09:00","duree_min":60,"etiquette":"TEnS2"},{"jour":"lundi","debut":"10:00","duree_min":60,"etiquette":"TEnS3"},{"jour":"lundi","debut":"11:00","duree_min":60,"etiquette":"TEnS4"},{"jour":"lundi","debut":"13:30","duree_min":120,"etiquette":"Cours 1er PHY-G4"},{"jour":"mercredi","debut":"09:00","duree_min":180,"etiquette":"TP 2nd"},{"jour":"jeudi","debut":"10:00","duree_min":120,"etiquette":"TP 1er PHY-G4"},{"jour":"jeudi","debut":"13:30","duree_min":180,"etiquette":"TP 2nd"},{"jour":"vendredi","debut":"08:00","duree_min":60,"etiquette":"TEnS4 0,5 0,25 0,25 [co-intervention: AGENOR/HALOUM/HAMMA]"}],"PARISE":[{"jour":"lundi","debut":"09:00","duree_min":60,"etiquette":"1EnS3"},{"jour":"lundi","debut":"10:00","duree_min":60,"etiquette":"1EnS4 0,5 0,25 0,25 [co-intervention: BASTIAN/GIRSCH/PARISE]"},{"jour":"lundi","debut":"11:00","duree_min":60,"etiquette":"1EnS5"},{"jour":"mardi","debut":"10:00","duree_min":120,"etiquette":"Cours TSPE PHY3"},{"jour":"mardi","debut":"13:30","duree_min":180,"etiquette":"TP 2nd"},{"jour":"mercredi","debut":"08:00","duree_min":120,"etiquette":"TP TSPE PHY3"},{"jour":"jeudi","debut":"09:00","duree_min":180,"etiquette":"TP 2nd"},{"jour":"jeudi","debut":"13:30","duree_min":120,"etiquette":"Cours TSPE PHY3"}],"PECOUL":[{"jour":"lundi","debut":"09:00","duree_min":180,"etiquette":"TP 2nd"},{"jour":"lundi","debut":"13:30","duree_min":120,"etiquette":"1SPE NSI-G1"},{"jour":"mardi","debut":"10:00","duree_min":120,"etiquette":"TSPE NSI1"},{"jour":"mardi","debut":"13:30","duree_min":120,"etiquette":"TP 1er PHY-G2"},{"jour":"mercredi","debut":"08:00","duree_min":120,"etiquette":"TSPE NSI1"},{"jour":"jeudi","debut":"08:00","duree_min":120,"etiquette":"Cours 1er PHY-G2"},{"jour":"jeudi","debut":"10:00","duree_min":120,"etiquette":"1SPE NSI-G1"},{"jour":"jeudi","debut":"13:30","duree_min":120,"etiquette":"TSPE NSI1"}]};
 
-/* Repli si aucun prof connecté : EDT réel de M. Agénor 2025-26. */
-var FALLBACK={prenom:"", classes:[
+/* Repli 2025-26 (aucun prof connecté) : EDT réel de M. Agénor. */
+var FALLBACK={prenom:"",nom:"AGENOR",classes:[
  {id:"2G3",libelle:"2de G3",creneaux:[{jour:"mardi",debut:"09:00",duree_min:90},{jour:"mardi",debut:"10:30",duree_min:90},{jour:"vendredi",debut:"14:30",duree_min:90}]},
  {id:"2G6",libelle:"2de G6",creneaux:[{jour:"mercredi",debut:"09:00",duree_min:90},{jour:"mercredi",debut:"10:30",duree_min:90},{jour:"jeudi",debut:"14:30",duree_min:90}]},
  {id:"1PC",libelle:"1re spé PC",creneaux:[{jour:"jeudi",debut:"08:00",duree_min:120},{jour:"mardi",debut:"15:30",duree_min:120}]},
@@ -62,36 +70,41 @@ function loggedProf(){
   var LS="pcmajo_acces",a=null;
   try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
   if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
-  if(a&&a.role==="prof"&&a.classes&&a.classes.length) return a;
+  if(a&&a.role==="prof") return a;
   return null;
 }
 function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
 function colOf(id){return "hsl("+hue(id)+",55%,42%)";}
 function toSlot(hhmm){ if(!hhmm||hhmm.indexOf(":")<0) return null; var p=hhmm.split(":"); var m=(+p[0]-8)*60+(+p[1]); if(m<0) return null; return Math.round(m/30); }
 function slotLabel(i){ var h=8+Math.floor(i/2), m=(i%2)?"30":"00"; return h+"h"+m; }
+function tag2026(etq){ etq=String(etq||""); if(/TSPE/.test(etq))return "TSPE"; if(/TSTI/.test(etq))return "TSTI"; if(/1STI/.test(etq))return "1STI"; if(/TEnS/.test(etq))return "T.EnS"; if(/1EnS/.test(etq))return "1.EnS"; if(/\b1er\b/.test(etq))return "1re"; if(/2nd/.test(etq))return "2de"; return (etq.replace(/^A placer\s*/i,"").split(" ")[0])||"?"; }
 
-var prof=loggedProf()||FALLBACK;
-if(prof.prenom){ document.getElementById("ttl").childNodes[0].nodeValue="Ma semaine — "+prof.prenom; }
+var acces=loggedProf();
+var YEAR=curYear();
+var profNom=(acces&&acces.prenom?PRENOM2NOM[String(acces.prenom).toLowerCase()]:null)||FALLBACK.nom;
 
-/* Construire les séances (une par créneau) à partir des classes du prof. */
-var S=[];
-(prof.classes||[]).forEach(function(c){
-  (c.creneaux||[]).forEach(function(cr){
-    var s=toSlot(cr.debut); if(s===null) return;
-    var n=Math.max(1,Math.round((cr.duree_min||60)/30));
-    if(s+n>NROWS) n=NROWS-s; if(n<=0) return;
-    if(JOURS.indexOf(cr.jour)<0) return;
-    S.push({j:cr.jour,s:s,n:n,c:c.id,lib:c.libelle||c.id});
-  });
-});
+/* titre + sous-titre + sélecteur d'année */
+document.getElementById("ttl").childNodes[0].nodeValue = (acces&&acces.prenom) ? ("Ma semaine — "+acces.prenom) : "Ma semaine";
+var subEl=document.getElementById("sub");
+subEl.textContent = YEAR + (YEAR==="2026-2027" ? " · EDT provisoire (brouillon)" : " · données réelles EDT");
+var ysel=document.getElementById("ysel");
+if(ysel){ ysel.innerHTML=YEARS.map(function(y){return '<option value="'+y+'"'+(y===YEAR?' selected':'')+'>'+y+'</option>';}).join(""); ysel.addEventListener("change",function(){ try{localStorage.setItem(YKEY,ysel.value);}catch(e){} location.reload(); }); }
+
+/* construire les séances (agnostique de la source) : {j,s,n,code,full,prov} */
+var S=[]; var missing=false, anyProv=false;
+if(YEAR==="2026-2027"){
+  var list=EDT2026[profNom]||[];
+  if(!list.length) missing=true;
+  list.forEach(function(cr){ var s=toSlot(cr.debut); if(s===null)return; var n=Math.max(1,Math.round((cr.duree_min||60)/30)); if(s+n>NROWS)n=NROWS-s; if(n<=0)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,n:n,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov}); });
+}else{
+  var prof=acces||FALLBACK;
+  (prof.classes||[]).forEach(function(c){ (c.creneaux||[]).forEach(function(cr){ var s=toSlot(cr.debut); if(s===null)return; var n=Math.max(1,Math.round((cr.duree_min||60)/30)); if(s+n>NROWS)n=NROWS-s; if(n<=0)return; if(JOURS.indexOf(cr.jour)<0)return; S.push({j:cr.jour,s:s,n:n,code:c.id,full:c.libelle||c.id,prov:false}); }); });
+}
 
 function plage(sess){ return slotLabel(sess.s)+"–"+slotLabel(sess.s+sess.n); }
 function starts(j,r){ return S.find(function(s){return s.j===j&&s.s===r;}); }
-
-// occupation[jour][row] : couverte par un rowspan
 var occ={}; JOURS.forEach(function(j){occ[j]={};});
 S.forEach(function(s){ for(var k=0;k<s.n;k++) occ[s.j][s.s+k]=true; });
-// jours entièrement vides -> "libre"
 var emptyDay={}; JOURS.forEach(function(j){ emptyDay[j]=!S.some(function(s){return s.j===j;}); });
 
 var t=document.getElementById("edt");
@@ -103,8 +116,7 @@ for(var r=0;r<NROWS;r++){
     if(emptyDay[j]){ if(r===0){ html+="<td class='off' rowspan='"+NROWS+"'>"+j+"<br>libre</td>"; } return; }
     if(occ[j][r] && !starts(j,r)) return;
     var s=starts(j,r);
-    if(s){ html+="<td rowspan='"+s.n+"'><span class='s' style='background:"+colOf(s.c)+"'>"+s.c
-                +"<small>"+plage(s)+"</small></span></td>"; }
+    if(s){ html+="<td rowspan='"+s.n+"'><span class='s"+(s.prov?" prov":"")+"' style='background:"+colOf(s.code)+"' title='"+esc(s.full)+"'>"+esc(s.code)+(s.prov?"<small class='prov-tag'>à placer</small>":"")+"<small>"+plage(s)+"</small></span></td>"; }
     else html+="<td></td>";
   });
   html+="</tr>";
@@ -112,12 +124,20 @@ for(var r=0;r<NROWS;r++){
 html+="</tbody>";
 t.innerHTML=html;
 
-// légende = classes du prof
-var seen={}; var legItems=[];
-(prof.classes||[]).forEach(function(c){ if(seen[c.id])return; seen[c.id]=1; legItems.push(c); });
-document.getElementById("leg").innerHTML=legItems.map(function(c){return "<span><b style='background:"+colOf(c.id)+"'></b>"+(c.libelle||c.id)+"</span>";}).join("");
-if(!loggedProf()){ document.getElementById("note").innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voir ton propre emploi du temps.)</b>"; }
-</script>
+/* légende = codes distincts */
+var seen={}, legItems=[];
+S.forEach(function(s){ if(seen[s.code])return; seen[s.code]=1; legItems.push(s.code); });
+document.getElementById("leg").innerHTML=legItems.map(function(c){return "<span><b style='background:"+colOf(c)+"'></b>"+esc(c)+"</span>";}).join("");
+
+/* note bas de page */
+var note=document.getElementById("note");
+if(YEAR==="2026-2027"){
+  note.innerHTML="EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":"");
+  if(missing) note.innerHTML="Aucun créneau 2026-2027 connu pour ce compte dans le brouillon PHY.pdf.";
+}else{
+  note.innerHTML="EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Vue de référence — l'édition reste dans le gestionnaire.";
+}
+if(!acces){ note.innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voir ton propre emploi du temps.)</b>"; }</script>
 <script>
 /* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
 (function(){
