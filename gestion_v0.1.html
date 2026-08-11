@@ -99,6 +99,14 @@
   .wkw{margin-top:4px;font-size:.72rem;line-height:1.3;flex:1 1 auto;overflow-y:auto;min-height:0;scrollbar-width:thin}
   .wklb{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
   .wknone{color:#7c879a;font-style:italic}
+  .wkreel{color:var(--ink)}
+  .wkchap{color:var(--muted);font-style:italic}
+  .wkcen{font-size:.62rem;color:#7c879a;font-style:normal}
+  .wktype{font-size:.58rem;font-weight:700;padding:0 4px;border-radius:4px;background:rgba(255,255,255,.10);color:var(--ink);border:1px solid var(--line);white-space:nowrap}
+  .wktype.tp{background:rgba(126,224,200,.14);color:#7ee0c8;border-color:#3a7d6f}
+  .wktype.ds{background:rgba(228,107,107,.16);color:#f0a6a6;border-color:#a14545}
+  .wktype.dm{background:rgba(224,165,58,.14);color:#f0c068;border-color:#8a6a1e}
+  .wktrav{font-size:.62rem;color:#e0a53a;margin-top:2px;line-height:1.25}
   .wkgrp{font-size:.58rem;color:#7ee0c8;background:rgba(126,224,200,.12);border:1px solid #3a7d6f;border-radius:4px;padding:0 4px;margin-left:4px}
   .wksl.n2{background:rgba(15,118,110,.16);border-color:#5eada3}.n2 .wkc{color:#7ee0c8}.n2 .wktag{background:#0f766e}
   .wksl.n1{background:rgba(55,48,163,.22);border-color:#8983d6}.n1 .wkc{color:#b9b5f5}.n1 .wktag{background:#4f46b5}
@@ -1177,6 +1185,30 @@ function wkBuildWeeks(){var weeks=[],first=0,idx=0,firstSet=false;var d=new Date
 var WKV=null,WKV_annee=null,WK_cur=0;
 function wkEnsure(){if(WKV_annee!==ANNEE||!WKV){WKV=wkBuildWeeks();WKV_annee=ANNEE;WK_cur=WKV.first;}if(WK_cur==null||WK_cur<0||WK_cur>=WKV.weeks.length)WK_cur=WKV.first;}
 function wkTimes(){var s=new Set();(state.classes||[]).forEach(function(c){(c.creneaux||[]).forEach(function(cr){if(cr.jour&&cr.debut)s.add(cr.debut);});});var a=Array.from(s).sort();return a.length?a:['08:00','09:00','10:00','11:00','13:30','14:30','15:30','16:30'];}
+/*WKPLAN_V25 — pont date -> séance : remplit la grille Semaine avec le contenu daté des cahiers (séance exacte si dispo, sinon chapitre en cours), au lieu de « à programmer ». */
+var _WKPROG={};
+function wkFrMonth(tok){tok=(tok||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\./g,'').trim();
+  var m={janv:1,jan:1,fevr:2,fev:2,mars:3,avril:4,avr:4,mai:5,juin:6,juillet:7,juil:7,aout:8,sept:9,sep:9,octo:10,oct:10,nov:11,dece:12,dec:12};
+  if(m[tok]!=null)return m[tok];
+  var ks=['janv','fevr','avril','juillet','juin','juil','mars','aout','sept','octo','nov','dece','jan','fev','avr','mai','sep','oct','dec'];
+  for(var i=0;i<ks.length;i++){if(tok.indexOf(ks[i])===0)return m[ks[i]];}
+  return null;}
+function wkPeriodeISO(periode,y0){var mt=(periode||'').match(/(\d{1,2})\s*([^\d\s].*)$/);if(!mt)return null;var day=+mt[1],mon=wkFrMonth(mt[2]);if(!mon)return null;var y=(mon>=9)?y0:y0+1;return y+'-'+String(mon).padStart(2,'0')+'-'+String(day).padStart(2,'0');}
+function wkTypeLbl(t){t=(t||'').toLowerCase();return {tp:'TP',cours:'Cours',td:'TD',ds:'DS',dm:'DM',eval:'Éval',evaluation:'Éval',ap:'AP',correction:'Corr.',activite:'Act.',remediation:'Reméd.',revision:'Révis.'}[t]||(t?t.charAt(0).toUpperCase()+t.slice(1):'');}
+function wkCleanTitre(s){return (s||'').replace(/^\s*\d{1,2}\s*[A-Za-zà-ÿ.]+\s*[—\-–]\s*/,'').replace(/^\s*(TP|TD|DS|DM|AP|cours|évaluation|evaluation|eval|correction|activité|activite|remédiation|remediation|révision|revision)\s+/i,'').replace(/\s+—\s+-\s+/g,' — ').trim();}
+function wkBuildIndex(cls,aid){var out={byDate:{},windows:[]};var p=getProg(cls,aid);if(!p||!p.chapitres)return out;
+  var y0=parseInt(((typeof ANNEE!=='undefined'?ANNEE:'2025-2026')||'2025-2026').slice(0,4),10)||2025;
+  var chaps=[];
+  p.chapitres.forEach(function(ch){var st=(ch.date_iso&&/^\d{4}-\d\d-\d\d$/.test(ch.date_iso))?ch.date_iso:((ch.periode&&/^\d{4}-\d\d-\d\d$/.test((ch.periode||'').trim()))?(ch.periode||'').trim():wkPeriodeISO(ch.periode,y0));
+    chaps.push({ch:ch,st:st});
+    (ch.seances||[]).forEach(function(s){var sd=(s._date&&/^\d{4}-\d\d-\d\d$/.test(s._date))?s._date:null;if(sd){(out.byDate[sd]=out.byDate[sd]||[]).push({s:s,conf:ch.confiance});}});});
+  var ws=chaps.filter(function(x){return x.st;}).sort(function(a,b){return a.st<b.st?-1:(a.st>b.st?1:0);});
+  ws.forEach(function(x,i){var end;if(i+1<ws.length){end=ws[i+1].st;}else{var d=new Date(x.st+'T00:00');d.setDate(d.getDate()+((x.ch.duree_sem||3)*7)+14);end=iso(d);}out.windows.push({start:x.st,end:end,ch:x.ch});});
+  return out;}
+function wkProgIndex(cls){var aid=activeProgId(cls);var key=(typeof ANNEE!=='undefined'?ANNEE:'')+'|'+aid;var e=_WKPROG[cls.id];if(e&&e.key===key)return e.val;var val=wkBuildIndex(cls,aid);_WKPROG[cls.id]={key:key,val:val};return val;}
+function wkChapAt(windows,d){for(var i=0;i<windows.length;i++){if(d>=windows[i].start&&d<windows[i].end)return windows[i].ch;}return null;}
+function wkSeanceLine(s,conf){var t=wkCleanTitre(s.titre);var ty=(s.type||'').toLowerCase();var chip=ty?('<span class="wktype '+ty+'">'+esc(wkTypeLbl(ty))+'</span> '):'';var dot=conf?confDot(conf):'';var trav=(s._travail&&s._travail.trim())?('<div class="wktrav">📌 '+esc(s._travail.trim())+'</div>'):'';return '<div class="wkw wkreel">'+dot+chip+esc(t||'(séance)')+trav+'</div>';}
+function wkSlotContent(cls,d){try{var idx=wkProgIndex(cls);if(idx){var ss=idx.byDate[d];if(ss&&ss.length)return ss.map(function(x){return wkSeanceLine(x.s,x.conf);}).join('');var ch=wkChapAt(idx.windows,d);if(ch)return '<div class="wkw wkreel wkchap">'+confDot(ch.confiance)+esc(chapDisplayTitle(ch))+' <span class="wkcen">· en cours</span></div>';}}catch(e){console.warn('wkSlot',e);}return '<div class="wkw wknone">à programmer</div>';}
 function renderSemaine(){
   const el=document.getElementById("p-semaine");wkEnsure();
   if(!WKV.weeks.length){el.innerHTML='<div class="card"><p class="muted">Calendrier indisponible pour cette année.</p></div>';return;}
@@ -1189,12 +1221,13 @@ function renderSemaine(){
   else{
     let offmap={};(w.off||[]).forEach(function(o){offmap[o.jour]=o.nom;});
     const TIMES=wkTimes();
+    var DAYISO={};WK_JOURS.forEach(function(j,ix){var dd=new Date(w.lundi+'T00:00');dd.setDate(dd.getDate()+ix);DAYISO[j]=iso(dd);});
     let byDay={};WK_JOURS.forEach(function(j){byDay[j]={};});
     (state.classes||[]).forEach(function(c){(c.creneaux||[]).forEach(function(cr){if(!cr.jour||!cr.debut||WK_JOURS.indexOf(cr.jour)<0)return;if(offmap[cr.jour])return;(byDay[cr.jour][cr.debut]=byDay[cr.jour][cr.debut]||[]).push({c:c,cr:cr});});});
     let hh='<thead><tr><th class="wkh">Heure</th>'+WK_JOURS.map(function(j){return '<th>'+WK_JLAB[j]+(offmap[j]?' <span style="color:#e0a53a">('+esc(offmap[j])+')</span>':'')+'</th>';}).join('')+'</tr></thead><tbody>';
     TIMES.forEach(function(tm){hh+='<tr><td class="wkh">'+tm+'</td>';
       WK_JOURS.forEach(function(j){var sl=byDay[j][tm]||[];if(!sl.length){hh+='<td></td>';return;}
-        hh+='<td>'+sl.map(function(o){var c=o.c,cr=o.cr,nc=wkNcOf(c);var grp=isSeconde(c)?'<span class="wkgrp">TP dédoublé G1/G2</span>':'';var qz=cr.quinzaine?(' · quinz. '+esc(cr.quinzaine)):'';return '<div class="wksl '+nc+'"><div class="wkt"><span class="wkc">'+esc(c.libelle)+'</span><span class="wktag">'+esc(nivLabel(c))+'</span></div><div class="wkh2">'+tm+' · '+(cr.duree||90)+' min'+qz+grp+'</div><div class="wkw wknone">à programmer</div></div>';}).join('')+'</td>';
+        hh+='<td>'+sl.map(function(o){var c=o.c,cr=o.cr,nc=wkNcOf(c);var grp=isSeconde(c)?'<span class="wkgrp">TP dédoublé G1/G2</span>':'';var qz=cr.quinzaine?(' · quinz. '+esc(cr.quinzaine)):'';return '<div class="wksl '+nc+'"><div class="wkt"><span class="wkc">'+esc(c.libelle)+'</span><span class="wktag">'+esc(nivLabel(c))+'</span></div><div class="wkh2">'+tm+' · '+(cr.duree||90)+' min'+qz+grp+'</div>'+wkSlotContent(c,DAYISO[j])+'</div>';}).join('')+'</td>';
       });hh+='</tr>';
     });
     hh+='</tbody>';grid=hh;
@@ -1206,7 +1239,7 @@ function renderSemaine(){
     +'<button class="mini" onclick="wkNav(1)">Semaine suiv. ›</button>'
     +'<button class="mini ghost" onclick="wkReset()">↺ 1re semaine</button>'
     +'</div>'
-    +'<p class="hint">Vue Semaine façon agenda — construite depuis <b>tes créneaux</b> (classes de l\'année sélectionnée) et le calendrier officiel Zone B. TP dédoublé G1/G2 en Seconde. « à programmer » = contenu non encore relié.</p>'
+    +'<p class="hint">Vue Semaine façon agenda — construite depuis <b>tes créneaux</b> (classes de l\'année sélectionnée) et le calendrier officiel Zone B. TP dédoublé G1/G2 en Seconde. Contenu tiré des cahiers de textes (séance datée, sinon chapitre en cours) ; « à programmer » = aucune séance datée pour cette date.</p>'
     +'<div class="wkwrap"><table class="wkedt" id="wkgrid">'+grid+'</table></div>'
     +'</div>';
 }
