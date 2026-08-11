@@ -13,7 +13,7 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);min-height:100vh}
-  header{position:sticky;top:0;z-index:20;background:rgba(15,22,32,.94);
+  header{position:sticky;top:0;z-index:20;background:var(--bg1);
     backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 18px}
   .hrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
   h1{font-size:1.15rem;margin:0;font-weight:650;letter-spacing:.2px}
@@ -150,6 +150,15 @@
 .confb{display:inline-block;font-size:.7rem;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle}
 .conf-ok{color:#1a7f4b;border:1px solid #6fcf97;background:rgba(111,207,151,.14)}
 .conf-interp{color:#9a6b12;border:1px solid #e0b862;background:rgba(224,184,98,.16)}
+</style>
+<style id="pctheme-css">
+  .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1}
+  .thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+  .themebtn{position:fixed;right:14px;bottom:14px;z-index:9000;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:21px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.28)}
+  .themepop{position:fixed;right:14px;bottom:68px;z-index:9000;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.35);display:none}
+  .themepop.open{display:block}
+  .themepop h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
 </style>
 </head>
 <body>
@@ -571,8 +580,21 @@ let state = defaultState(ANNEE);
 function save(){
   try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
 }
+/* MAITRE v22 — migration filière/programme : corrige les états sauvegardés antérieurs
+   où TG5/TG6 (enseignement scientifique) et TSTI2D/1STI2D pointaient encore vers un
+   programme erroné (spé « ...|gen ») → source de la confusion ens.sci ↔ spé (Suivi/Progressions). */
+function reconcileFiliere(st){
+  if(!st||!Array.isArray(st.classes)) return false; var chg=false;
+  st.classes.forEach(function(c){
+    var fil=FILIERE_BY_CLASS[c.id]; if(!fil) return;
+    if(c.filiere!==fil){ c.filiere=fil; chg=true; }
+    var pk=progKeyOf(c.niveau||"tale","pc",fil);
+    if(PROG[pk] && c.programme!==pk){ c.programme=pk; chg=true; }
+  });
+  return chg;
+}
 function tryLoadLS(){
-  try{const s=localStorage.getItem(lsKey(ANNEE)); if(s){const o=JSON.parse(s); if(o&&o.classes) state=o;}}catch(e){}
+  try{const s=localStorage.getItem(lsKey(ANNEE)); if(s){const o=JSON.parse(s); if(o&&o.classes){ if(reconcileFiliere(o)){ try{localStorage.setItem(lsKey(ANNEE),JSON.stringify(o));}catch(e){} } state=o; }}}catch(e){}
 }
 
 /* ===================== DATES & CALENDRIER (données réelles Zone B) ===================== */
@@ -2058,5 +2080,42 @@ function ncImportFile(e){
 }
 </script>
 
+<script>
+/* ===== THEME KIT (gestion-aware) — PC Majorelle — thèmes des prérequis ===== */
+(function(){
+  var THEMES={
+    atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},
+    neon:{nom:"Néon",bg:"#0d0d14",card:"#171722",ink:"#e8e8f0",muted:"#9a9ab0",line:"#2c2c40",accent:"#00d4ff"},
+    herbier:{nom:"Herbier",bg:"#f3efe2",card:"#fbf9f2",ink:"#3a4128",muted:"#5f6347",line:"#d7d0bc",accent:"#5a7a8c"},
+    riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
+    blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
+    crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
+    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"}
+  };
+  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie"];
+  var KEY="pcmajo_theme";
+  function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
+  function apply(id){
+    var th=THEMES[id]; if(!th) return; var r=document.documentElement.style;
+    r.setProperty('--bg1',th.bg); r.setProperty('--bg2',th.bg);
+    r.setProperty('--card',th.card); r.setProperty('--card2',th.card);
+    r.setProperty('--ink',th.ink); r.setProperty('--muted',th.muted);
+    r.setProperty('--line',th.line); r.setProperty('--accent',th.accent);
+    document.documentElement.setAttribute('data-theme',id);
+  }
+  function render(){ var host=document.getElementById('themePick'); if(!host)return; var c=cur();
+    var n=host.querySelectorAll('[data-th]'); for(var i=0;i<n.length;i++){ n[i].setAttribute('aria-pressed', n[i].getAttribute('data-th')===c?'true':'false'); } }
+  function set(id){ if(!THEMES[id])return; try{localStorage.setItem(KEY,id);}catch(e){} apply(id); render(); }
+  var c=cur(); if(c) apply(c);
+  window.PCTheme={THEMES:THEMES,ORDER:ORDER,cur:cur,set:set,apply:apply,
+    swatches:function(hostId){ var host=document.getElementById(hostId); if(!host)return;
+      host.innerHTML=ORDER.map(function(id){var th=THEMES[id];
+        return '<button type="button" class="thsw" data-th="'+id+'" title="Thème '+th.nom+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';
+      }).join(''); render(); } };
+})();
+</script>
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+<script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 </body>
 </html>

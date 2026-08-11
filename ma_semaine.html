@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12324a">
-<title>Ma semaine — Agénor · PC Majorelle</title>
+<title>Ma semaine — PC Majorelle</title>
 <style>
   :root{--bg:#f4f6f9;--card:#fff;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#12324a;}
   @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}}
@@ -17,69 +17,149 @@
   .wrap{overflow-x:auto}
   table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card);border-radius:10px;overflow:hidden}
   th,td{border:1px solid var(--line);padding:0;text-align:center;height:24px;vertical-align:middle}
-  th{background:#eef1f5;color:var(--muted);font-size:13px;font-weight:600;height:34px}
-  td.h{background:#eef1f5;color:var(--muted);font-size:12px;width:52px;font-weight:600}
+  th{background:color-mix(in srgb,var(--card) 80%,var(--line));color:var(--muted);font-size:13px;font-weight:600;height:34px}
+  td.h{background:color-mix(in srgb,var(--card) 80%,var(--line));color:var(--muted);font-size:12px;width:52px;font-weight:600}
   .s{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;line-height:1.2;padding:2px 3px}
   .s small{font-weight:400;opacity:.92;font-size:11px;margin-top:2px}
-  td.off{background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(0,0,0,.04) 6px,rgba(0,0,0,.04) 12px);color:var(--muted);font-size:12px}
+  td.off{background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(127,127,127,.12) 6px,rgba(127,127,127,.12) 12px);color:var(--muted);font-size:12px}
   .leg{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;font-size:12px}
   .leg span{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
   .leg b{width:14px;height:14px;border-radius:4px;display:inline-block}
   .note{font-size:12px;color:var(--muted);margin-top:10px}
 </style>
+<style id="pctheme-css">
+  .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
+  .thsw:active{transform:scale(.96)}
+  .thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+  .themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:21px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+  .themepop{position:fixed;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:60;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:none}
+  .themepop.open{display:block}
+  .themepop h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+</style>
 </head>
 <body>
-<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1>Ma semaine<small>Agénor · 2025-2026 (données réelles EDT)</small></h1></header>
+<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1 id="ttl">Ma semaine<small id="sub">2025-2026 (données réelles EDT)</small></h1></header>
 <div class="leg" id="leg"></div>
 <div class="wrap"><table id="edt"></table></div>
-<p class="note">EDT réel 2025-26 (M. Agénor, « Année Complète » — lundi libre). Secondes (2G3/2G6) = 1h30 ; 1PC &amp; TSTI2D = 2h ; ens. scientifique TG5/TG6 = 1h. Les TP dédoublés apparaissent en (gr.1)/(gr.2). Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
+<p class="note" id="note">EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Les TP dédoublés d'une même classe apparaissent sur leurs créneaux respectifs. Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
 <script>
 var JOURS=["lundi","mardi","mercredi","jeudi","vendredi"];
 // Grille en pas de 30 min, de 8h00 (slot 0) à 18h00 (slot 20).
-var NROWS=20;                 // 20 tranches de 30 min
-var COL={"2G3":"#2b6cb0","2G6":"#7c5cd0","1PC":"#d97a2b","TSTI2D":"#2fa36b","TG5":"#c04f7a","TG6":"#b0872b"};
-// s = slot de début (0=8h00, 2=9h00, 5=10h30, 13=14h30, 15=15h30) ; n = nb de tranches de 30 min.
-var S=[
- {j:"mardi",    s:2,  n:3, c:"2G3",    t:"gr.1"},      // 9h00–10h30 (1h30)
- {j:"mardi",    s:5,  n:3, c:"2G3",    t:"gr.2"},      // 10h30–12h00 (1h30)
- {j:"mardi",    s:15, n:4, c:"1PC",    t:""},          // 15h30–17h30 (2h)
- {j:"mercredi", s:2,  n:3, c:"2G6",    t:"gr.1"},      // 9h00–10h30 (1h30)
- {j:"mercredi", s:5,  n:3, c:"2G6",    t:"gr.2"},      // 10h30–12h00 (1h30)
- {j:"jeudi",    s:0,  n:4, c:"1PC",    t:""},          // 8h00–10h00 (2h)
- {j:"jeudi",    s:4,  n:4, c:"TSTI2D", t:""},          // 10h00–12h00 (2h)
- {j:"jeudi",    s:13, n:3, c:"2G6",    t:""},          // 14h30–16h00 (1h30)
- {j:"vendredi", s:0,  n:4, c:"TSTI2D", t:""},          // 8h00–10h00 (2h)
- {j:"vendredi", s:4,  n:2, c:"TG5",    t:"ens. sci."}, // 10h00–11h00 (1h)
- {j:"vendredi", s:6,  n:2, c:"TG6",    t:"ens. sci."}, // 11h00–12h00 (1h)
- {j:"vendredi", s:13, n:3, c:"2G3",    t:""}           // 14h30–16h00 (1h30)
-];
+var NROWS=20;
+
+/* Repli si aucun prof connecté : EDT réel de M. Agénor 2025-26. */
+var FALLBACK={prenom:"", classes:[
+ {id:"2G3",libelle:"2de G3",creneaux:[{jour:"mardi",debut:"09:00",duree_min:90},{jour:"mardi",debut:"10:30",duree_min:90},{jour:"vendredi",debut:"14:30",duree_min:90}]},
+ {id:"2G6",libelle:"2de G6",creneaux:[{jour:"mercredi",debut:"09:00",duree_min:90},{jour:"mercredi",debut:"10:30",duree_min:90},{jour:"jeudi",debut:"14:30",duree_min:90}]},
+ {id:"1PC",libelle:"1re spé PC",creneaux:[{jour:"jeudi",debut:"08:00",duree_min:120},{jour:"mardi",debut:"15:30",duree_min:120}]},
+ {id:"TSTI2D",libelle:"Tale STI2D",creneaux:[{jour:"jeudi",debut:"10:00",duree_min:120},{jour:"vendredi",debut:"08:00",duree_min:120}]},
+ {id:"TG5",libelle:"Tale G5 ens.sci.",creneaux:[{jour:"vendredi",debut:"10:00",duree_min:60}]},
+ {id:"TG6",libelle:"Tale G6 ens.sci.",creneaux:[{jour:"vendredi",debut:"11:00",duree_min:60}]}
+]};
+
+function loggedProf(){
+  var LS="pcmajo_acces",a=null;
+  try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
+  if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
+  if(a&&a.role==="prof"&&a.classes&&a.classes.length) return a;
+  return null;
+}
+function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
+function colOf(id){return "hsl("+hue(id)+",55%,42%)";}
+function toSlot(hhmm){ if(!hhmm||hhmm.indexOf(":")<0) return null; var p=hhmm.split(":"); var m=(+p[0]-8)*60+(+p[1]); if(m<0) return null; return Math.round(m/30); }
 function slotLabel(i){ var h=8+Math.floor(i/2), m=(i%2)?"30":"00"; return h+"h"+m; }
+
+var prof=loggedProf()||FALLBACK;
+if(prof.prenom){ document.getElementById("ttl").childNodes[0].nodeValue="Ma semaine — "+prof.prenom; }
+
+/* Construire les séances (une par créneau) à partir des classes du prof. */
+var S=[];
+(prof.classes||[]).forEach(function(c){
+  (c.creneaux||[]).forEach(function(cr){
+    var s=toSlot(cr.debut); if(s===null) return;
+    var n=Math.max(1,Math.round((cr.duree_min||60)/30));
+    if(s+n>NROWS) n=NROWS-s; if(n<=0) return;
+    if(JOURS.indexOf(cr.jour)<0) return;
+    S.push({j:cr.jour,s:s,n:n,c:c.id,lib:c.libelle||c.id});
+  });
+});
+
 function plage(sess){ return slotLabel(sess.s)+"–"+slotLabel(sess.s+sess.n); }
 function starts(j,r){ return S.find(function(s){return s.j===j&&s.s===r;}); }
 
-// occupation[row][jour] : vrai si une séance à rowspan couvre cette case.
+// occupation[jour][row] : couverte par un rowspan
 var occ={}; JOURS.forEach(function(j){occ[j]={};});
 S.forEach(function(s){ for(var k=0;k<s.n;k++) occ[s.j][s.s+k]=true; });
+// jours entièrement vides -> "libre"
+var emptyDay={}; JOURS.forEach(function(j){ emptyDay[j]=!S.some(function(s){return s.j===j;}); });
 
 var t=document.getElementById("edt");
 var html="<thead><tr><th></th>"+JOURS.map(function(j){return "<th>"+j.charAt(0).toUpperCase()+j.slice(1)+"</th>";}).join("")+"</tr></thead><tbody>";
 for(var r=0;r<NROWS;r++){
   html+="<tr>";
-  // Colonne des heures : une cellule par heure pleine, sur 2 tranches.
   if(r%2===0){ html+="<td class='h' rowspan='2'>"+(8+r/2)+"h</td>"; }
   JOURS.forEach(function(j){
-    if(j==="lundi"){ if(r===0){ html+="<td class='off' rowspan='"+NROWS+"'>lundi<br>libre</td>"; } return; }
-    if(occ[j][r] && !starts(j,r)) return;              // couverte par un rowspan au-dessus
+    if(emptyDay[j]){ if(r===0){ html+="<td class='off' rowspan='"+NROWS+"'>"+j+"<br>libre</td>"; } return; }
+    if(occ[j][r] && !starts(j,r)) return;
     var s=starts(j,r);
-    if(s){ html+="<td rowspan='"+s.n+"'><span class='s' style='background:"+COL[s.c]+"'>"+s.c
-                +"<small>"+(s.t?s.t+" · ":"")+plage(s)+"</small></span></td>"; }
+    if(s){ html+="<td rowspan='"+s.n+"'><span class='s' style='background:"+colOf(s.c)+"'>"+s.c
+                +"<small>"+plage(s)+"</small></span></td>"; }
     else html+="<td></td>";
   });
   html+="</tr>";
 }
 html+="</tbody>";
 t.innerHTML=html;
-document.getElementById("leg").innerHTML=Object.keys(COL).map(function(c){return "<span><b style='background:"+COL[c]+"'></b>"+c+"</span>";}).join("");
+
+// légende = classes du prof
+var seen={}; var legItems=[];
+(prof.classes||[]).forEach(function(c){ if(seen[c.id])return; seen[c.id]=1; legItems.push(c); });
+document.getElementById("leg").innerHTML=legItems.map(function(c){return "<span><b style='background:"+colOf(c.id)+"'></b>"+(c.libelle||c.id)+"</span>";}).join("");
+if(!loggedProf()){ document.getElementById("note").innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voir ton propre emploi du temps.)</b>"; }
 </script>
+<script>
+/* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
+(function(){
+  var THEMES={
+    atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},
+    neon:{nom:"Néon",bg:"#0d0d14",card:"#171722",ink:"#e8e8f0",muted:"#9a9ab0",line:"#2c2c40",accent:"#00d4ff"},
+    herbier:{nom:"Herbier",bg:"#f3efe2",card:"#fbf9f2",ink:"#3a4128",muted:"#5f6347",line:"#d7d0bc",accent:"#5a7a8c"},
+    riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
+    blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
+    crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
+    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"}
+  };
+  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie"];
+  var KEY="pcmajo_theme";
+  function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
+  function apply(id){
+    var th=THEMES[id]; if(!th) return;
+    var r=document.documentElement.style;
+    r.setProperty('--bg',th.bg); r.setProperty('--card',th.card); r.setProperty('--ink',th.ink);
+    r.setProperty('--muted',th.muted); r.setProperty('--line',th.line); r.setProperty('--accent',th.accent);
+    document.documentElement.setAttribute('data-theme',id);
+    var m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',th.accent);
+  }
+  function render(){
+    var host=document.getElementById('themePick'); if(!host)return; var c=cur();
+    var nodes=host.querySelectorAll('[data-th]');
+    for(var i=0;i<nodes.length;i++){ nodes[i].setAttribute('aria-pressed', nodes[i].getAttribute('data-th')===c?'true':'false'); }
+  }
+  function set(id){ if(!THEMES[id])return; try{localStorage.setItem(KEY,id);}catch(e){} apply(id); render(); }
+  var c=cur(); if(c) apply(c);
+  window.PCTheme={THEMES:THEMES,ORDER:ORDER,cur:cur,set:set,apply:apply,
+    swatches:function(hostId){ var host=document.getElementById(hostId); if(!host)return;
+      host.innerHTML=ORDER.map(function(id){var th=THEMES[id];
+        return '<button type="button" class="thsw" data-th="'+id+'" title="Thème '+th.nom+'" aria-label="Thème '+th.nom+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';
+      }).join('');
+      render();
+    }
+  };
+})();
+</script>
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+<script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 </body>
 </html>

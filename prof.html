@@ -11,9 +11,13 @@
   *{box-sizing:border-box}
   body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);
     padding:0 16px calc(28px + env(safe-area-inset-bottom))}
-  header{margin:0 -16px 20px;background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px}
+  header{margin:0 -16px 16px;background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px}
   header .home{color:#fff;text-decoration:none;font-size:18px;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:2px 9px}
   header h1{margin:0;font-size:18px;font-weight:600}
+  .bar{max-width:620px;margin:0 auto 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .anneebox{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
+  .anneebox label{color:var(--muted);font-size:13px}
+  .anneebox select{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px}
   .grid{display:grid;gap:12px;max-width:620px;margin:0 auto}
   a.tile{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:inherit}
   .ic{width:46px;height:46px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:23px;background:var(--accent);color:#fff}
@@ -22,9 +26,25 @@
   #cls{margin-top:4px}
   .clschip{display:inline-block;color:#fff;font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:2px 9px;margin:3px 4px 0 0}
 </style>
+<style id="pctheme-css">
+  .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
+  .thsw:active{transform:scale(.96)}
+  .thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+  .themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:21px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+  .themepop{position:fixed;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:60;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:none}
+  .themepop.open{display:block}
+  .themepop h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+</style>
 </head>
 <body>
 <header><a class="home" href="index.html" aria-label="Portail">‹</a><div><h1 id="h1">Espace prof — PC</h1><small id="cls" style="display:block;font-weight:400;opacity:.85;font-size:12px;margin-top:2px"></small></div></header>
+<div class="bar">
+  <div class="anneebox">
+    <label for="annee">📅 Année scolaire</label>
+    <select id="annee"></select>
+  </div>
+</div>
 <div class="grid">
   <a class="tile" href="gestion_v0.1.html">
     <span class="ic">📊</span>
@@ -48,13 +68,74 @@
   var LS="pcmajo_acces",a=null;
   try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
   if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
-  if(!a||a.role!=="prof") return;
+  /* Prénom du prof (RGPD : autorisé pour les profs ; interdit pour les élèves) */
+  if(a&&a.role==="prof"&&a.prenom){ document.getElementById("h1").textContent="Espace "+a.prenom; }
+  if(!a||a.role!=="prof"){ initAnnee(); return; }
   var list=(a.classes&&a.classes.length)?a.classes:((a.cl||[]).map(function(l){return {id:l,libelle:l};}));
-  if(!list.length) return;
-  function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
-  document.getElementById("cls").innerHTML=list.map(function(c){
-    return '<span class="clschip" style="background:hsl('+hue(c.id||c.libelle)+',55%,42%)">'+(c.libelle||c.id)+'</span>';
-  }).join("");
-})();</script>
+  if(list.length){
+    function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
+    document.getElementById("cls").innerHTML=list.map(function(c){
+      return '<span class="clschip" style="background:hsl('+hue(c.id||c.libelle)+',55%,42%)">'+(c.libelle||c.id)+'</span>';
+    }).join("");
+  }
+  initAnnee();
+})();
+
+/* ===== Choix de l'année scolaire dès l'espace prof (pilote le gestionnaire) ===== */
+function initAnnee(){
+  var ANNEES_KEY="gestion_majorelle_annees", PREF_ANNEE="gestion_majorelle_annee";
+  var list; try{list=JSON.parse(localStorage.getItem(ANNEES_KEY));}catch(e){}
+  if(!Array.isArray(list)||!list.length) list=["2025-2026","2026-2027"];
+  var cur; try{cur=localStorage.getItem(PREF_ANNEE);}catch(e){}
+  if(list.indexOf(cur)<0) cur=list[0];
+  var sel=document.getElementById("annee");
+  sel.innerHTML=list.map(function(a){return '<option value="'+a+'"'+(a===cur?' selected':'')+'>'+a+'</option>';}).join("");
+  try{localStorage.setItem(PREF_ANNEE,cur);}catch(e){}
+  sel.addEventListener("change",function(){ try{localStorage.setItem(PREF_ANNEE,sel.value);}catch(e){} });
+}
+</script>
+<script>
+/* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
+(function(){
+  var THEMES={
+    atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},
+    neon:{nom:"Néon",bg:"#0d0d14",card:"#171722",ink:"#e8e8f0",muted:"#9a9ab0",line:"#2c2c40",accent:"#00d4ff"},
+    herbier:{nom:"Herbier",bg:"#f3efe2",card:"#fbf9f2",ink:"#3a4128",muted:"#5f6347",line:"#d7d0bc",accent:"#5a7a8c"},
+    riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
+    blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
+    crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
+    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"}
+  };
+  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie"];
+  var KEY="pcmajo_theme";
+  function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
+  function apply(id){
+    var th=THEMES[id]; if(!th) return;
+    var r=document.documentElement.style;
+    r.setProperty('--bg',th.bg); r.setProperty('--card',th.card); r.setProperty('--ink',th.ink);
+    r.setProperty('--muted',th.muted); r.setProperty('--line',th.line); r.setProperty('--accent',th.accent);
+    document.documentElement.setAttribute('data-theme',id);
+    var m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',th.accent);
+  }
+  function render(){
+    var host=document.getElementById('themePick'); if(!host)return; var c=cur();
+    var nodes=host.querySelectorAll('[data-th]');
+    for(var i=0;i<nodes.length;i++){ nodes[i].setAttribute('aria-pressed', nodes[i].getAttribute('data-th')===c?'true':'false'); }
+  }
+  function set(id){ if(!THEMES[id])return; try{localStorage.setItem(KEY,id);}catch(e){} apply(id); render(); }
+  var c=cur(); if(c) apply(c);
+  window.PCTheme={THEMES:THEMES,ORDER:ORDER,cur:cur,set:set,apply:apply,
+    swatches:function(hostId){ var host=document.getElementById(hostId); if(!host)return;
+      host.innerHTML=ORDER.map(function(id){var th=THEMES[id];
+        return '<button type="button" class="thsw" data-th="'+id+'" title="Thème '+th.nom+'" aria-label="Thème '+th.nom+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';
+      }).join('');
+      render();
+    }
+  };
+})();
+</script>
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+<script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 </body>
 </html>
