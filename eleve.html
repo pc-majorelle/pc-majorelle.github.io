@@ -21,6 +21,11 @@
   .tile b{display:block;font-size:16px;font-weight:600} .tile span{font-size:13px;color:var(--muted)}
   .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:8px;padding:1px 7px;margin-left:6px}
   .note{max-width:620px;margin:18px auto 0;font-size:12px;color:var(--muted);text-align:center}
+  .pdfsec{max-width:620px;margin:22px auto 0}
+  .pdfsec h2{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 8px;text-align:center}
+  .pdfrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .pdfrow a{font-size:12px;color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:5px 10px;background:var(--card);line-height:1.2}
+  .pdfrow a.cur{font-weight:700;border-color:var(--accent)}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -35,27 +40,111 @@
 </head>
 <body>
 <header><a class="home" href="index.html" aria-label="Portail">‹</a><h1 id="h1">Espace élève</h1></header>
-<div class="grid">
-  <a class="tile" href="revision_sti2d_tale.html">
-    <span class="ic">🎯</span>
-    <span><b>Révision du jour <span class="tag">Tale STI2D</span></b><span>Rituel 2 min : diagnostic, révisions espacées, carte des concepts.</span></span>
-  </a>
-  <a class="tile soon" href="#">
-    <span class="ic">📚</span>
-    <span><b>Réviser par niveau <span class="tag">à venir</span></b><span>Fiches et essentiels par chapitre.</span></span>
-  </a>
-  <a class="tile soon" href="#">
-    <span class="ic">✏️</span>
-    <span><b>S'entraîner (exercices) <span class="tag">à venir</span></b><span>Exercices pas-à-pas.</span></span>
-  </a>
-</div>
+<div class="grid" id="grid"></div>
+<section class="pdfsec" id="pdfsec" hidden></section>
+<p class="note" id="softnote" hidden></p>
 <p class="note">Bientôt : accès direct au portail de ta classe par QR.</p>
 <script>(function(){
-  var LAB={"1PC":"1re spé PC","2G3":"2nde G3","2G6":"2nde G6","TSTI2D":"Tale STI2D","TG5":"Tale G5","TG6":"Tale G6"};
+  var LAB={
+    "2G3":"2nde G3","2G6":"2nde G6",
+    "1PC":"1re spé PC",
+    "TSTI2D":"Tale STI2D","1STI2D":"1re STI2D",
+    "TG1":"Tale G1","TG5":"Tale G5","TG6":"Tale G6",
+    "1G4":"1re G4"
+  };
   var LS="pcmajo_acces";
-  var p=new URLSearchParams(location.search);var c=p.get("classe");
-  if(!c){var s=null;try{s=JSON.parse(sessionStorage.getItem(LS));}catch(e){} if(!s){try{s=JSON.parse(localStorage.getItem(LS));}catch(e){}} if(s&&s.role==="eleve")c=s.code;}
-  if(c)document.getElementById("h1").textContent="Espace élève — PC · "+(LAB[c]||c);
+
+  /* --- code de classe : ?classe= puis pcmajo_acces (session, puis local) --- */
+  var p=new URLSearchParams(location.search);var code=p.get("classe");
+  if(!code){
+    var s=null;
+    try{s=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
+    if(!s){try{s=JSON.parse(localStorage.getItem(LS));}catch(e){}}
+    if(s&&s.role==="eleve")code=s.code;
+  }
+
+  /* --- titre --- */
+  if(code)document.getElementById("h1").textContent="Espace élève — PC · "+(LAB[code]||code);
+
+  /* --- mappe le code de classe vers un jeton de niveau de la coque --- */
+  function niveauToken(c){
+    if(!c)return null;
+    c=String(c).toUpperCase();
+    if(c.indexOf("2G")===0)return "2nde";
+    if(c.indexOf("1PC")===0)return "spe1";
+    if(c.indexOf("TPC")===0||c.indexOf("TSPE")===0)return "speT";
+    if(c.indexOf("1STI")===0)return "sti1";
+    if(c.indexOf("TSTI")===0||c.indexOf("TSISPH")===0||(c.charAt(0)==="T"&&c.charAt(1)==="S"&&c.charAt(2)==="I"))return "stiT";
+    if(c.indexOf("NSI")!==-1)return null;
+    if(c.indexOf("1G")===0)return "ens1";
+    if(c.indexOf("TG")===0)return "ensT";
+    return null;
+  }
+  var tok=niveauToken(code);
+
+  /* --- tuiles --- */
+  function tile(href,icon,title,sub,soon,tag){
+    var t=tag?' <span class="tag">'+tag+'</span>':'';
+    var cls=soon?'tile soon':'tile';
+    return '<a class="'+cls+'" href="'+href+'"><span class="ic">'+icon+'</span>'+
+           '<span><b>'+title+t+'</b><span>'+sub+'</span></span></a>';
+  }
+
+  var grid=document.getElementById("grid");
+  var html="";
+
+  if(tok){
+    /* Révision du jour : spécifique Tale STI2D uniquement */
+    if(tok==="stiT"){
+      html+=tile("revision_sti2d_tale.html","🎯","Révision du jour",
+                 "Rituel 2 min : diagnostic, révisions espacées, carte des concepts.",false,"Tale STI2D");
+    }
+    /* Réviser par niveau : active */
+    html+=tile("maquette_socle_unifie_v0.17.html?niveau="+tok+"&acces="+tok,"📚","Réviser par niveau",
+               "Prérequis, activités et exercices de ton niveau.",false);
+    /* S'entraîner : toujours active */
+    html+=tile("exerciseur_resolution.html","✏️","S'entraîner (exercices)",
+               "Résolution pas-à-pas, étape par étape.",false);
+  }else{
+    /* hors périmètre PC ou code inconnu : note douce + exercices seule tuile active */
+    html+=tile("exerciseur_resolution.html","✏️","S'entraîner (exercices)",
+               "Résolution pas-à-pas, étape par étape.",false);
+    var sn=document.getElementById("softnote");
+    sn.textContent="Le contenu PC pour ta classe arrive bientôt.";
+    sn.hidden=false;
+  }
+  grid.innerHTML=html;
+
+  /* --- fiches de révision (PDF) --- */
+  var CHAINS={
+    cycle4:["revision_cycle4.pdf"],
+    "2nde":["revision_2nde.pdf","revision_cycle4.pdf"],
+    spe1:["revision_1spePC.pdf","revision_2nde.pdf","revision_cycle4.pdf"],
+    speT:["revision_TspePC.pdf","revision_1spePC.pdf","revision_2nde.pdf","revision_cycle4.pdf"],
+    sti1:["revision_1STI2D.pdf","revision_2nde.pdf","revision_cycle4.pdf"],
+    stiT:["revision_TaleSTI2D.pdf","revision_1STI2D.pdf","revision_2nde.pdf","revision_cycle4.pdf"],
+    ens1:["revision_2nde.pdf","revision_cycle4.pdf"],
+    ensT:["revision_2nde.pdf","revision_cycle4.pdf"]
+  };
+  var PDFLAB={
+    "revision_cycle4":"Cycle 4",
+    "revision_2nde":"Seconde",
+    "revision_1spePC":"1re spé PC",
+    "revision_TspePC":"Tale spé PC",
+    "revision_1STI2D":"1re STI2D",
+    "revision_TaleSTI2D":"Tale STI2D"
+  };
+  var chain=tok?CHAINS[tok]:null;
+  if(chain){
+    var links=chain.map(function(pdf,i){
+      var base=pdf.replace(/\.pdf$/,"");
+      var lab=PDFLAB[base]||base;
+      return '<a target="_blank" rel="noopener" href="fiches/'+pdf+'"'+(i===0?' class="cur"':'')+'>'+lab+'</a>';
+    }).join("");
+    var sec=document.getElementById("pdfsec");
+    sec.innerHTML='<h2>Fiches de révision (PDF)</h2><div class="pdfrow">'+links+'</div>';
+    sec.hidden=false;
+  }
 })();</script>
 <script>
 /* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
