@@ -97,7 +97,7 @@
   .wksl{border-radius:8px;padding:6px 8px;height:116px;border-left:4px solid;margin-bottom:4px;display:flex;flex-direction:column;overflow:hidden;overflow-wrap:anywhere;word-break:break-word}.wksl:last-child{margin-bottom:0}
   .wkt{display:flex;justify-content:space-between;gap:6px;align-items:baseline;flex:0 0 auto}.wkc{font-weight:700;font-size:.82rem;min-width:0;overflow-wrap:anywhere}
   .wktag{font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:20px;color:#fff;flex:0 0 auto;white-space:nowrap}
-  .wkh2{color:var(--muted);font-size:.66rem;margin-top:1px;flex:0 0 auto}
+  .wkh2{color:var(--muted);font-size:.66rem;margin-top:1px;flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:3px}
   .wkw{margin-top:4px;font-size:.72rem;line-height:1.3;flex:1 1 auto;overflow-y:auto;min-height:0;scrollbar-width:thin}
   .wklb{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
   .wknone{color:#7c879a;font-style:italic}
@@ -109,12 +109,31 @@
   .wktype.ds{background:rgba(228,107,107,.16);color:#f0a6a6;border-color:#a14545}
   .wktype.dm{background:rgba(224,165,58,.14);color:#f0c068;border-color:#8a6a1e}
   .wktrav{font-size:.62rem;color:#e0a53a;margin-top:2px;line-height:1.25}
+  /* --- WKPLAN_V25b : agenda proportionnel (pixel/minute) --- */
+  .wkcal{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card2);min-width:900px}
+  .wkcalhead{display:grid;grid-template-columns:58px repeat(5,1fr)}
+  .wkcalhead .wkdh{padding:8px 6px;text-align:center;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;border-left:1px solid var(--line);background:rgba(255,255,255,.03)}
+  .wkcalhead .wkax2{background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+  .wkcalhead .wkdh{border-bottom:1px solid var(--line)}
+  .wkcalbody{display:grid;grid-template-columns:58px repeat(5,1fr)}
+  .wkaxcol{position:relative;background:rgba(255,255,255,.02)}
+  .wkhr{position:absolute;right:6px;transform:translateY(-50%);font-size:.66rem;color:var(--muted)}
+  .wkdaycol{position:relative;border-left:1px solid var(--line);overflow:hidden}
+  .wkgl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.5;pointer-events:none}
+  .wkgl.half{opacity:.2;border-top-style:dashed}
+  .wkblk{position:absolute;left:3px;right:3px;border-radius:7px;border-left:4px solid;padding:3px 6px;overflow:hidden;display:flex;flex-direction:column;background:var(--card2);z-index:1}
+  .wkdayoff{position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(127,127,127,.10) 6px,rgba(127,127,127,.10) 12px);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.72rem;font-style:italic;text-align:center;padding:6px}
+  .wkdaylibre{position:absolute;top:8px;left:0;right:0;text-align:center;color:#7c879a;font-size:.72rem;font-style:italic}
+  .wkcalvac{padding:26px;text-align:center;color:#e0a53a;font-size:.95rem}
+  .wkqz{font-size:.58rem;font-weight:700;padding:0 4px;border-radius:4px;background:rgba(224,165,58,.16);color:#f0c068;border:1px solid #8a6a1e}
+  .wkpl{color:var(--muted);font-size:.62rem;margin-left:auto;white-space:nowrap}
+  .wktype.cours{background:rgba(120,140,170,.16);color:#b7c4d6;border-color:#48566a}
   .wkgrp{font-size:.58rem;color:#7ee0c8;background:rgba(126,224,200,.12);border:1px solid #3a7d6f;border-radius:4px;padding:0 4px;margin-left:4px}
-  .wksl.n2{background:rgba(15,118,110,.16);border-color:#5eada3}.n2 .wkc{color:#7ee0c8}.n2 .wktag{background:#0f766e}
-  .wksl.n1{background:rgba(55,48,163,.22);border-color:#8983d6}.n1 .wkc{color:#b9b5f5}.n1 .wktag{background:#4f46b5}
-  .wksl.ns{background:rgba(180,83,9,.18);border-color:#e0ad64}.ns .wkc{color:#f0b968}.ns .wktag{background:#b45309}
-  .wksl.ne{background:rgba(126,34,206,.18);border-color:#c087e6}.ne .wkc{color:#d3a6f0}.ne .wktag{background:#7e22ce}
-  .wksl.nt{background:rgba(161,18,63,.20);border-color:#e493b3}.nt .wkc{color:#f3a9c2}.nt .wktag{background:#a1123f}
+  .wksl.n2,.wkblk.n2{background:rgba(15,118,110,.16);border-color:#5eada3}.n2 .wkc{color:#7ee0c8}.n2 .wktag{background:#0f766e}
+  .wksl.n1,.wkblk.n1{background:rgba(55,48,163,.22);border-color:#8983d6}.n1 .wkc{color:#b9b5f5}.n1 .wktag{background:#4f46b5}
+  .wksl.ns,.wkblk.ns{background:rgba(180,83,9,.18);border-color:#e0ad64}.ns .wkc{color:#f0b968}.ns .wktag{background:#b45309}
+  .wksl.ne,.wkblk.ne{background:rgba(126,34,206,.18);border-color:#c087e6}.ne .wkc{color:#d3a6f0}.ne .wktag{background:#7e22ce}
+  .wksl.nt,.wkblk.nt{background:rgba(161,18,63,.20);border-color:#e493b3}.nt .wkc{color:#f3a9c2}.nt .wktag{background:#a1123f}
   .wkvac{padding:26px;text-align:center;color:var(--muted);font-size:1rem}
   .wkgth{font-weight:600;font-size:.68rem;color:#9fc0ff;margin:5px 0 2px;border-top:1px solid var(--line);padding-top:3px}
   .wkgpa{font-size:.66rem;color:var(--ink);margin:1px 0 0 6px}
@@ -772,6 +791,7 @@ function creneauRow(idx,ci,cr){
     <input type="time" value="${cr.debut||""}" onchange="setCreneau(${idx},${ci},'debut',this.value)" style="width:110px">
     <label class="small muted">durée</label><input type="number" min="10" step="5" value="${cr.duree}" onchange="setCreneau(${idx},${ci},'duree',+this.value)" style="width:70px"> min
     <select onchange="setCreneau(${idx},${ci},'quinzaine',this.value)"><option value="" ${!cr.quinzaine?"selected":""}>hebdo</option><option value="A" ${cr.quinzaine==="A"?"selected":""}>quinz. A</option><option value="B" ${cr.quinzaine==="B"?"selected":""}>quinz. B</option></select>
+    <select onchange="setCreneau(${idx},${ci},'groupe',this.value)" title="Groupe (TP dédoublé de Seconde)"><option value="auto" ${(!cr.groupe||cr.groupe==='auto')?"selected":""}>groupe auto</option><option value="entiere" ${cr.groupe==='entiere'?"selected":""}>classe entière</option><option value="G1" ${cr.groupe==='G1'?"selected":""}>Groupe 1</option><option value="G2" ${cr.groupe==='G2'?"selected":""}>Groupe 2</option></select>
     <button class="mini del ghost" onclick="delCreneau(${idx},${ci})">✕</button>
   </div>`;
 }
@@ -1211,6 +1231,15 @@ function wkProgIndex(cls){var aid=activeProgId(cls);var key=(typeof ANNEE!=='und
 function wkChapAt(windows,d){for(var i=0;i<windows.length;i++){if(d>=windows[i].start&&d<windows[i].end)return windows[i].ch;}return null;}
 function wkSeanceLine(s,conf){var t=wkCleanTitre(s.titre);var ty=(s.type||'').toLowerCase();var chip=ty?('<span class="wktype '+ty+'">'+esc(wkTypeLbl(ty))+'</span> '):'';var dot=conf?confDot(conf):'';var trav=(s._travail&&s._travail.trim())?('<div class="wktrav">📌 '+esc(s._travail.trim())+'</div>'):'';return '<div class="wkw wkreel">'+dot+chip+esc(t||'(séance)')+trav+'</div>';}
 function wkSlotContent(cls,d){try{var idx=wkProgIndex(cls);if(idx){var ss=idx.byDate[d];if(ss&&ss.length)return ss.map(function(x){return wkSeanceLine(x.s,x.conf);}).join('');var ch=wkChapAt(idx.windows,d);if(ch)return '<div class="wkw wkreel wkchap">'+confDot(ch.confiance)+esc(chapDisplayTitle(ch))+' <span class="wkcen">· en cours</span></div>';}}catch(e){console.warn('wkSlot',e);}return '<div class="wkw wknone">à programmer</div>';}
+function wkEffGroupe(c,cr,dayList){
+  var g=cr.groupe;
+  if(g==='G1'||g==='G2')return g;
+  if(g==='entiere')return '';
+  if(!isSeconde(c))return '';
+  var tp=(dayList||[]).filter(function(x){return x.debut;}).slice().sort(function(a,b){return a.debut<b.debut?-1:(a.debut>b.debut?1:0);});
+  if(tp.length>=2){var i=tp.indexOf(cr);return i===0?'G1':(i===1?'G2':(i%2===0?'G1':'G2'));}
+  return '';
+}
 function renderSemaine(){
   const el=document.getElementById("p-semaine");wkEnsure();
   if(!WKV.weeks.length){el.innerHTML='<div class="card"><p class="muted">Calendrier indisponible pour cette année.</p></div>';return;}
@@ -1219,20 +1248,53 @@ function renderSemaine(){
   const wl='Semaine du '+lun.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' au '+ven.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
   const ws=w.anySchool?('Semaine de classe n°'+w.no):(w.vac.length?('Vacances : '+w.vac.join(', ')):'Hors période scolaire');
   let grid;
-  if(!w.anySchool){grid='<tr><td class="wkvac">🏖️ '+(w.vac.length?('Vacances de '+esc(w.vac.join(', '))):'Hors période scolaire')+'</td></tr>';}
+  if(!w.anySchool){grid='<div class="wkcalvac">🏖️ '+(w.vac.length?('Vacances de '+esc(w.vac.join(', '))):'Hors période scolaire')+'</div>';}
   else{
-    let offmap={};(w.off||[]).forEach(function(o){offmap[o.jour]=o.nom;});
-    const TIMES=wkTimes();
+    var offmap={};(w.off||[]).forEach(function(o){offmap[o.jour]=o.nom;});
     var DAYISO={};WK_JOURS.forEach(function(j,ix){var dd=new Date(w.lundi+'T00:00');dd.setDate(dd.getDate()+ix);DAYISO[j]=iso(dd);});
-    let byDay={};WK_JOURS.forEach(function(j){byDay[j]={};});
-    (state.classes||[]).forEach(function(c){(c.creneaux||[]).forEach(function(cr){if(!cr.jour||!cr.debut||WK_JOURS.indexOf(cr.jour)<0)return;if(offmap[cr.jour])return;(byDay[cr.jour][cr.debut]=byDay[cr.jour][cr.debut]||[]).push({c:c,cr:cr});});});
-    let hh='<colgroup><col class="wkch">'+WK_JOURS.map(function(){return '<col class="wkcj">';}).join('')+'</colgroup><thead><tr><th class="wkh">Heure</th>'+WK_JOURS.map(function(j){return '<th>'+WK_JLAB[j]+(offmap[j]?' <span style="color:#e0a53a">('+esc(offmap[j])+')</span>':'')+'</th>';}).join('')+'</tr></thead><tbody>';
-    TIMES.forEach(function(tm){hh+='<tr><td class="wkh">'+tm+'</td>';
-      WK_JOURS.forEach(function(j){var sl=byDay[j][tm]||[];if(!sl.length){hh+='<td></td>';return;}
-        hh+='<td>'+sl.map(function(o){var c=o.c,cr=o.cr,nc=wkNcOf(c);var grp=isSeconde(c)?'<span class="wkgrp">TP dédoublé G1/G2</span>':'';var qz=cr.quinzaine?(' · quinz. '+esc(cr.quinzaine)):'';return '<div class="wksl '+nc+'"><div class="wkt"><span class="wkc">'+esc(c.libelle)+'</span><span class="wktag">'+esc(nivLabel(c))+'</span></div><div class="wkh2">'+tm+' · '+(cr.duree||90)+' min'+qz+grp+'</div>'+wkSlotContent(c,DAYISO[j])+'</div>';}).join('')+'</td>';
-      });hh+='</tr>';
+    function toMin(hhmm){if(!hhmm||hhmm.indexOf(':')<0)return null;var pp=hhmm.split(':');var v=(+pp[0])*60+(+pp[1]);return isNaN(v)?null:v;}
+    function minLbl(v){var h=Math.floor(v/60),m=v%60;return h+'h'+(m<10?'0'+m:m);}
+    function durLbl(d){return d%60===0?(d/60)+'h':(d<60?d+' min':Math.floor(d/60)+'h'+String(d%60).padStart(2,'0'));}
+    var mins=[];(state.classes||[]).forEach(function(c){(c.creneaux||[]).forEach(function(cr){var s=toMin(cr.debut);if(s!=null){mins.push(s);mins.push(s+(cr.duree||90));}});});
+    var startH=mins.length?Math.floor(Math.min.apply(null,mins)/60):8;
+    var endH=mins.length?Math.ceil(Math.max.apply(null,mins)/60):18;
+    if(endH<=startH){startH=8;endH=18;}
+    var RS=startH*60,RE=endH*60,PX=1.35,H=(RE-RS)*PX;
+    var parA=(w.no%2===1);
+    var sess=[];
+    (state.classes||[]).forEach(function(c){
+      var byJ={};(c.creneaux||[]).forEach(function(cr){if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr);});
+      (c.creneaux||[]).forEach(function(cr){
+        if(!cr.jour||!cr.debut||WK_JOURS.indexOf(cr.jour)<0)return; if(offmap[cr.jour])return;
+        if(cr.quinzaine==='A'&&!parA)return; if(cr.quinzaine==='B'&&parA)return;
+        var s=toMin(cr.debut);if(s==null)return; var d=(cr.duree||90);
+        sess.push({j:cr.jour,s:s,d:d,c:c,cr:cr,grp:wkEffGroupe(c,cr,byJ[cr.jour]||[])});
+      });
     });
-    hh+='</tbody>';grid=hh;
+    var hasDay={};WK_JOURS.forEach(function(j){hasDay[j]=sess.some(function(s){return s.j===j;});});
+    function blockHTML(s){var c=s.c,cr=s.cr,nc=wkNcOf(c);
+      var top=(s.s-RS)*PX,hh2=Math.max(20,s.d*PX-2);
+      var typ=s.grp?'TP':'Cours';
+      var typChip='<span class="wktype '+(s.grp?'tp':'cours')+'">'+typ+'</span>';
+      var grpChip=s.grp?('<span class="wkgrp">Groupe '+(s.grp==='G1'?'1':'2')+'</span>'):'';
+      var qz=cr.quinzaine?('<span class="wkqz">sem. '+esc(cr.quinzaine)+'</span>'):'';
+      return '<div class="wkblk '+nc+'" style="top:'+top.toFixed(1)+'px;height:'+hh2.toFixed(1)+'px" title="'+esc(c.libelle+' — '+minLbl(s.s)+'–'+minLbl(s.s+s.d))+'">'
+        +'<div class="wkt"><span class="wkc">'+esc(c.libelle)+'</span><span class="wktag">'+esc(nivLabel(c))+'</span></div>'
+        +'<div class="wkh2">'+typChip+grpChip+qz+'<span class="wkpl">'+minLbl(s.s)+'–'+minLbl(s.s+s.d)+' · '+durLbl(s.d)+'</span></div>'
+        +wkSlotContent(c,DAYISO[s.j])+'</div>';
+    }
+    var axis='';for(var hA=startH;hA<=endH;hA++){axis+='<div class="wkhr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
+    function gridlines(){var g='';for(var hL=startH;hL<=endH;hL++){g+='<div class="wkgl" style="top:'+(((hL*60)-RS)*PX).toFixed(1)+'px"></div>';if(hL<endH)g+='<div class="wkgl half" style="top:'+(((hL*60+30)-RS)*PX).toFixed(1)+'px"></div>';}return g;}
+    var body='<div class="wkaxcol" style="height:'+H+'px">'+axis+'</div>';
+    WK_JOURS.forEach(function(j){
+      var inner;
+      if(offmap[j]){inner='<div class="wkdayoff">'+esc(offmap[j])+'</div>';}
+      else if(!hasDay[j]){inner=gridlines()+'<div class="wkdaylibre">libre</div>';}
+      else{inner=gridlines()+sess.filter(function(s){return s.j===j;}).map(blockHTML).join('');}
+      body+='<div class="wkdaycol" style="height:'+H+'px">'+inner+'</div>';
+    });
+    var head='<div class="wkax2"></div>'+WK_JOURS.map(function(j){return '<div class="wkdh">'+WK_JLAB[j]+(offmap[j]?' <span style="color:#e0a53a">('+esc(offmap[j])+')</span>':'')+'</div>';}).join('');
+    grid='<div class="wkcalhead">'+head+'</div><div class="wkcalbody">'+body+'</div>';
   }
   el.innerHTML='<div class="card">'
     +'<div class="wknav">'
@@ -1241,8 +1303,8 @@ function renderSemaine(){
     +'<button class="mini" onclick="wkNav(1)">Semaine suiv. ›</button>'
     +'<button class="mini ghost" onclick="wkReset()">↺ 1re semaine</button>'
     +'</div>'
-    +'<p class="hint">Vue Semaine façon agenda — construite depuis <b>tes créneaux</b> (classes de l\'année sélectionnée) et le calendrier officiel Zone B. TP dédoublé G1/G2 en Seconde. Contenu tiré des cahiers de textes (séance datée, sinon chapitre en cours) ; « à programmer » = aucune séance datée pour cette date.</p>'
-    +'<div class="wkwrap"><table class="wkedt" id="wkgrid">'+grid+'</table></div>'
+    +'<p class="hint">Vue Semaine façon agenda — construite depuis <b>tes créneaux</b> (classes de l\'année sélectionnée) et le calendrier officiel Zone B. Grille proportionnelle (½h = hauteur fixe). TP de Seconde marqués Groupe 1/2 (modifiable dans « Classes »). Contenu tiré des cahiers de textes (séance datée, sinon chapitre en cours) ; « à programmer » = aucune séance datée.</p>'
+    +'<div class="wkwrap"><div class="wkcal" id="wkgrid">'+grid+'</div></div>'
     +'</div>';
 }
 function wkNav(d){wkEnsure();var n=WK_cur+d;if(n>=0&&n<WKV.weeks.length){WK_cur=n;renderSemaine();}}
@@ -2122,9 +2184,11 @@ function ncImportFile(e){
     riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
     blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
     crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
-    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"}
+    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"},
+    feu:{nom:"Feu",bg:"#1a0a05",card:"#2a1109",ink:"#ffe3d0",muted:"#e6a988",line:"#5c2917",accent:"#ff4d1a"},
+    foret:{nom:"Forêt",bg:"#0a1a0f",card:"#112a19",ink:"#daefdd",muted:"#93c1a0",line:"#224a31",accent:"#2fae52"}
   };
-  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie"];
+  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie","feu","foret"];
   var KEY="pcmajo_theme";
   function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
   function apply(id){

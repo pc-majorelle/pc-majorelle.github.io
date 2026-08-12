@@ -28,6 +28,22 @@
   .leg span{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
   .leg b{width:14px;height:14px;border-radius:4px;display:inline-block}
   .note{font-size:12px;color:var(--muted);margin-top:10px}
+  .cal{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);min-width:560px}
+  .calhead{display:grid;grid-template-columns:52px repeat(5,1fr)}
+  .calhead .dh{padding:7px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);border-left:1px solid var(--line);background:color-mix(in srgb,var(--card) 80%,var(--line))}
+  .calhead .axh{background:color-mix(in srgb,var(--card) 80%,var(--line))}
+  .calbody{display:grid;grid-template-columns:52px repeat(5,1fr)}
+  .axc{position:relative}
+  .hr{position:absolute;right:5px;transform:translateY(-50%);font-size:11px;color:var(--muted)}
+  .dc{position:relative;border-left:1px solid var(--line);overflow:hidden}
+  .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line);opacity:.5}
+  .gl.half{opacity:.25;border-top-style:dashed}
+  .ev{position:absolute;left:2px;right:2px;border-radius:6px;color:#fff;padding:2px 5px;overflow:hidden;font-size:12px;line-height:1.25;display:flex;flex-direction:column}
+  .ev b{font-weight:700;font-size:12px}
+  .ev small{font-weight:400;opacity:.92;font-size:10px}
+  .ev .tpg{font-size:10px;font-weight:700;background:rgba(255,255,255,.22);border-radius:4px;padding:0 4px;margin:1px 0;align-self:flex-start}
+  .ev.prov{outline:2px dashed rgba(255,255,255,.8);outline-offset:-3px}
+  .dlibre{position:absolute;top:6px;left:0;right:0;text-align:center;color:var(--muted);font-size:12px;font-style:italic}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -43,7 +59,7 @@
 <body>
 <header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1 id="ttl">Ma semaine<small id="sub"></small></h1><select id="ysel" aria-label="Année scolaire" style="margin-left:auto;font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px"></select></header>
 <div class="leg" id="leg"></div>
-<div class="wrap"><table id="edt"></table></div>
+<div class="wrap"><div id="edt" class="cal"></div></div>
 <p class="note" id="note">EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Les TP dédoublés d'une même classe apparaissent sur leurs créneaux respectifs. Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
 <script>
 var JOURS=["lundi","mardi","mercredi","jeudi","vendredi"];
@@ -91,38 +107,37 @@ var ysel=document.getElementById("ysel");
 if(ysel){ ysel.innerHTML=YEARS.map(function(y){return '<option value="'+y+'"'+(y===YEAR?' selected':'')+'>'+y+'</option>';}).join(""); ysel.addEventListener("change",function(){ try{localStorage.setItem(YKEY,ysel.value);}catch(e){} location.reload(); }); }
 
 /* construire les séances (agnostique de la source) : {j,s,n,code,full,prov} */
+function toMin(hhmm){if(!hhmm||hhmm.indexOf(':')<0)return null;var p=hhmm.split(':');var v=(+p[0])*60+(+p[1]);return isNaN(v)?null:v;}
+function minLbl(v){var h=Math.floor(v/60),m=v%60;return h+'h'+(m<10?'0'+m:m);}
+function durLbl(d){return d%60===0?(d/60)+'h':(d<60?d+' min':Math.floor(d/60)+'h'+String(d%60).padStart(2,'0'));}
+function isSec(c){return /^2/.test(c.id||'')||/2de|2nd|second/i.test((c.libelle||'')+' '+(c.id||''));}
+function effGrp(c,cr,dayList){if(cr.groupe==='G1'||cr.groupe==='G2')return cr.groupe;if(cr.groupe==='entiere')return '';if(!isSec(c))return '';var tp=(dayList||[]).filter(function(x){return x.debut;}).slice().sort(function(a,b){return a.debut<b.debut?-1:(a.debut>b.debut?1:0);});if(tp.length>=2){var i=tp.indexOf(cr);return i===0?'G1':(i===1?'G2':(i%2===0?'G1':'G2'));}return '';}
 var S=[]; var missing=false, anyProv=false;
 if(YEAR==="2026-2027"){
   var list=EDT2026[profNom]||[];
   if(!list.length) missing=true;
-  list.forEach(function(cr){ var s=toSlot(cr.debut); if(s===null)return; var n=Math.max(1,Math.round((cr.duree_min||60)/30)); if(s+n>NROWS)n=NROWS-s; if(n<=0)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,n:n,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov}); });
+  list.forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,d:cr.duree_min||60,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov,grp:'',typ:''}); });
 }else{
   var prof=acces||FALLBACK;
-  (prof.classes||[]).forEach(function(c){ (c.creneaux||[]).forEach(function(cr){ var s=toSlot(cr.debut); if(s===null)return; var n=Math.max(1,Math.round((cr.duree_min||60)/30)); if(s+n>NROWS)n=NROWS-s; if(n<=0)return; if(JOURS.indexOf(cr.jour)<0)return; S.push({j:cr.jour,s:s,n:n,code:c.id,full:c.libelle||c.id,prov:false}); }); });
+  (prof.classes||[]).forEach(function(c){ var byJ={};(c.creneaux||[]).forEach(function(cr){if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr);});
+    (c.creneaux||[]).forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var g=effGrp(c,cr,byJ[cr.jour]||[]); S.push({j:cr.jour,s:s,d:cr.duree_min||90,code:c.id,full:c.libelle||c.id,prov:false,grp:g,typ:g?'TP':''}); }); });
 }
-
-function plage(sess){ return slotLabel(sess.s)+"–"+slotLabel(sess.s+sess.n); }
-function starts(j,r){ return S.find(function(s){return s.j===j&&s.s===r;}); }
-var occ={}; JOURS.forEach(function(j){occ[j]={};});
-S.forEach(function(s){ for(var k=0;k<s.n;k++) occ[s.j][s.s+k]=true; });
+var mins=[]; S.forEach(function(s){mins.push(s.s);mins.push(s.s+s.d);});
+var startH=mins.length?Math.floor(Math.min.apply(null,mins)/60):8;
+var endH=mins.length?Math.ceil(Math.max.apply(null,mins)/60):18;
+if(endH<=startH){startH=8;endH=18;}
+var RS=startH*60,RE=endH*60,PX=1.35,H=(RE-RS)*PX;
 var emptyDay={}; JOURS.forEach(function(j){ emptyDay[j]=!S.some(function(s){return s.j===j;}); });
-
-var t=document.getElementById("edt");
-var html="<thead><tr><th></th>"+JOURS.map(function(j){return "<th>"+j.charAt(0).toUpperCase()+j.slice(1)+"</th>";}).join("")+"</tr></thead><tbody>";
-for(var r=0;r<NROWS;r++){
-  html+="<tr>";
-  if(r%2===0){ html+="<td class='h' rowspan='2'>"+(8+r/2)+"h</td>"; }
-  JOURS.forEach(function(j){
-    if(emptyDay[j]){ if(r===0){ html+="<td class='off' rowspan='"+NROWS+"'>"+j+"<br>libre</td>"; } return; }
-    if(occ[j][r] && !starts(j,r)) return;
-    var s=starts(j,r);
-    if(s){ html+="<td rowspan='"+s.n+"'><span class='s"+(s.prov?" prov":"")+"' style='background:"+colOf(s.code)+"' title='"+esc(s.full)+"'>"+esc(s.code)+(s.prov?"<small class='prov-tag'>à placer</small>":"")+"<small>"+plage(s)+"</small></span></td>"; }
-    else html+="<td></td>";
-  });
-  html+="</tr>";
-}
-html+="</tbody>";
-t.innerHTML=html;
+function blk(s){ var top=(s.s-RS)*PX,h=Math.max(20,s.d*PX-2);
+  var tp=s.grp?('<span class="tpg">TP \u00b7 Groupe '+(s.grp==='G1'?'1':'2')+'</span>'):(s.typ?('<span class="tpg">'+esc(s.typ)+'</span>'):'');
+  return '<div class="ev'+(s.prov?' prov':'')+'" style="top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf(s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d))+'">'
+    +'<b>'+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
+var axis=''; for(var hA=startH;hA<=endH;hA++){axis+='<div class="hr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
+function glines(){var g='';for(var hL=startH;hL<=endH;hL++){g+='<div class="gl" style="top:'+(((hL*60)-RS)*PX).toFixed(1)+'px"></div>';if(hL<endH)g+='<div class="gl half" style="top:'+(((hL*60+30)-RS)*PX).toFixed(1)+'px"></div>';}return g;}
+var head='<div class="axh"></div>'+JOURS.map(function(j){return '<div class="dh">'+j.charAt(0).toUpperCase()+j.slice(1)+'</div>';}).join('');
+var body='<div class="axc" style="height:'+H+'px">'+axis+'</div>';
+JOURS.forEach(function(j){ var inner; if(emptyDay[j]){inner=glines()+'<div class="dlibre">libre</div>';} else {inner=glines()+S.filter(function(s){return s.j===j;}).map(blk).join('');} body+='<div class="dc" style="height:'+H+'px">'+inner+'</div>'; });
+document.getElementById('edt').innerHTML='<div class="calhead">'+head+'</div><div class="calbody">'+body+'</div>';
 
 /* légende = codes distincts */
 var seen={}, legItems=[];
@@ -148,9 +163,11 @@ if(!acces){ note.innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voi
     riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
     blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
     crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
-    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"}
+    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"},
+    feu:{nom:"Feu",bg:"#1a0a05",card:"#2a1109",ink:"#ffe3d0",muted:"#e6a988",line:"#5c2917",accent:"#ff4d1a"},
+    foret:{nom:"Forêt",bg:"#0a1a0f",card:"#112a19",ink:"#daefdd",muted:"#93c1a0",line:"#224a31",accent:"#2fae52"}
   };
-  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie"];
+  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie","feu","foret"];
   var KEY="pcmajo_theme";
   function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
   function apply(id){
