@@ -59,7 +59,7 @@ async function sha256hex(s){
   var buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
   return Array.prototype.map.call(new Uint8Array(buf), function(b){return b.toString(16).padStart(2,"0");}).join("");
 }
-function goTo(a){ if(a.role==="prof") location.href="prof.html"; else location.href="eleve.html?classe="+encodeURIComponent(a.code); }
+function goTo(a){ if(a.role==="prof") location.href="app.html"; else location.href="eleve.html?classe="+encodeURIComponent(a.code); }
 function store(a){ try{ localStorage.setItem(LS, JSON.stringify(a)); }catch(e){} }
 async function resolve(raw){
   var code=norm(raw); if(!code) return null;
