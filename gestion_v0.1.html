@@ -1918,7 +1918,7 @@ function constrImportLS(){
   var tok=constrLevelToken(c);
   var info=document.getElementById("constrInfo");
   if(!tok){ if(info) info.textContent="Niveau non reconnu pour cette classe (ex. ens. scientifique) — utilise « Importer un fichier »."; return; }
-  var js=null; try{ js=localStorage.getItem("boKeys_export_"+tok); }catch(e){}
+  var js=null; try{ js=localStorage.getItem("boKeys_export_"+tok+"__"+c.id)||localStorage.getItem("boKeys_export_"+tok); }catch(e){}   /*MENU_CTX_V30*/
   if(!js){ if(info) info.textContent="Rien trouvé sur cet appareil pour « "+tok+" ». Ouvre la frise, clique « ⬇ Exporter les boKeys datés », puis réessaie (ou importe le fichier)."; return; }
   constrApply(js);
 }
@@ -1965,7 +1965,7 @@ if(!state.evalComp) state.evalComp={};
 if(!state.baremeComp) state.baremeComp={A:1,B:0.75,C:0.5,D:0.25};
 refreshAnneeSelector();
 refreshClassSelector();
-switchTab("semaine");
+/*MENU_DEEPLINK_V30*/ (function(){var t="semaine";try{var p=new URLSearchParams(location.search).get("tab");var ok={semaine:1,classes:1,eleves:1,calendrier:1,seances:1,prev:1,suivi:1,materiel:1,plan:1,progressions:1,constr:1,comp:1};if(p&&ok[p])t=p;}catch(e){} switchTab(t);})();
 </script>
 
 <style>/*NOTATION_COMPETENCES_V19_CSS*/

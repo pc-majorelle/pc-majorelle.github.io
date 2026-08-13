@@ -675,6 +675,7 @@ try{
   function doExport(){
     var segs=computeSegments();
     var out={ niveau:curLevel, niveau_label:DATA.label,
+      classe:(typeof __ACTX!=="undefined"&&__ACTX)?(__ACTX.classe||null):null,   /*MENU_CTX_V30*/
       genere_le:new Date().toISOString().slice(0,10),
       total_seances:segs.length, total_heures:0, seances:[], a_replanifier:[] };
     var th=0;
@@ -744,7 +745,10 @@ try{
   document.getElementById('btnExpand').addEventListener('click',toggleAll);
   document.getElementById('chkCompact').addEventListener('change',function(e){ state.compact=e.target.checked; document.body.classList.toggle('compact',state.compact); saveState(); });
 
-  setLevel(LEVEL_ORDER[0]);
+  var __ACTX=(function(){try{var p=new URLSearchParams(location.search);var al={spe1:"1spe",speT:"Tspe",sti1:"1sti",stiT:"Tsti"};var n=p.get("niveau");if(n&&al[n])n=al[n];return {niveau:(n&&SOCLE[n])?n:null,classe:p.get("classe")||null};}catch(e){return {niveau:null,classe:null};}})();  /*MENU_CTX_V30*/
+  if(__ACTX.niveau){ sel.value=__ACTX.niveau; }
+  setLevel(__ACTX.niveau||LEVEL_ORDER[0]);
+  try{ if(__ACTX.classe){ document.title="Constructeur (arbre) "+curLevel+" \u2014 "+__ACTX.classe; } }catch(e){}
 }catch(e){ fatal(e); }
 })();
 </script>

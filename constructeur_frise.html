@@ -1794,10 +1794,19 @@ function chargerEtat(){
   }catch(e){ return etatVide(); }
 }
 // NIVEAU initial (mémorisé) puis dérivés calculés AVANT de charger l'état.
+/* ===== MENU_CTX_V30 : contexte transmis par le menu prof (?niveau=&classe=&annee=) ===== */
+var __MENUCTX=(function(){try{var p=new URLSearchParams(location.search);
+  var al={spe1:"1spe",speT:"Tspe",sti1:"1sti",stiT:"Tsti"};
+  var n=p.get("niveau"); if(n&&al[n])n=al[n]; if(n && !TREES_ALL[n]) n=null;
+  var a=p.get("annee"); if(a && !/^\d{4}-\d{4}$/.test(a)) a=null;
+  return {niveau:n||null, annee:a||null, classe:p.get("classe")||null};
+}catch(e){return {niveau:null,annee:null,classe:null};}})();
 let initialLevel="Tsti";
 try{ const _sv=localStorage.getItem("constructeur_level"); if(_sv && TREES_ALL[_sv]) initialLevel=_sv; }catch(e){}
+if(__MENUCTX.niveau){ initialLevel=__MENUCTX.niveau; }   /*MENU_CTX_V30*/
 rebuildDerived(initialLevel);
 let STATE = chargerEtat();
+if(__MENUCTX.annee){ STATE.annee=__MENUCTX.annee; }   /*MENU_CTX_V30*/
 chargerCalendrier(STATE.annee);   // initialise le calendrier de l'année choisie
 miSeedIfEmpty();   // MESURE_INCERTITUDE_V28 : graine + pointe MI_PAR_CHAPITRE sur l'état éditable
 function sauverEtat(){ try{ localStorage.setItem(lsKey(), JSON.stringify(STATE)); localStorage.setItem("constructeur_level", level); }catch(e){} }
@@ -3202,9 +3211,11 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
     rows.sort(function(a,b){return a.date_iso<b.date_iso?-1:(a.date_iso>b.date_iso?1:0);});
     var payload={niveau:level,
                  niveau_label:(typeof LEVELS!=="undefined"&&LEVELS[level]&&LEVELS[level].label)?LEVELS[level].label:level,
+                 classe:(__MENUCTX&&__MENUCTX.classe)||null,   /*MENU_CTX_V30*/
                  annee:STATE.annee, genere:"constructeur_frise EXPORT_BOKEYS_V29", n:rows.length, capacites:rows};
     var js=JSON.stringify(payload,null,2);
-    try{ localStorage.setItem("boKeys_export_"+level, js); }catch(e){}   // passerelle même-origine vers le gestionnaire
+    try{ localStorage.setItem("boKeys_export_"+level, js);
+         if(__MENUCTX&&__MENUCTX.classe){ localStorage.setItem("boKeys_export_"+level+"__"+__MENUCTX.classe, js); } }catch(e){}   /*MENU_CTX_V30 : passerelle niveau + par classe*/
     var blob=new Blob([js],{type:"application/json"});
     var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
     a.download="boKeys_dates_"+level+"_"+STATE.annee+".json"; document.body.appendChild(a); a.click(); a.remove();
@@ -3224,6 +3235,7 @@ function boot(){
     setupTimelineDrag();
     attacherEcouteurs();
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
+    try{ if(__MENUCTX&&__MENUCTX.classe){ var _h=document.querySelector("header"); if(_h){ var _s=document.createElement("span"); _s.style.cssText="margin-left:8px;padding:2px 9px;border-radius:999px;background:var(--accent,#4aa3ff);color:#08111b;font-weight:700;font-size:12px"; _s.textContent="Classe : "+__MENUCTX.classe; _h.appendChild(_s);} document.title="Constructeur "+level+" \u2014 "+__MENUCTX.classe; } }catch(e){}   /*MENU_CTX_V30*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");

@@ -5,26 +5,66 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12324a">
 <title>Espace prof — PC Majorelle</title>
+<!-- MENU_PROF_V30 : menu par fréquence (Huffman), câblé. Dérivé de maquette_menu_prof.html (validée v29). -->
 <style>
-  :root{--bg:#f4f6f9;--card:#fff;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#12324a;}
-  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}}
+  :root{--bg:#f4f6f9;--card:#fff;--card2:#eef2f7;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#12324a;
+        --q:#1baf7a;--s:#2a78d6;--r:#eb8f34;--rr:#7a4fc0;--radius:16px;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--card2:#1e2b3a;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}}
   *{box-sizing:border-box}
-  body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);
-    padding:0 16px calc(28px + env(safe-area-inset-bottom))}
-  header{margin:0 -16px 16px;background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px}
-  header .home{color:#fff;text-decoration:none;font-size:18px;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:2px 9px}
-  header h1{margin:0;font-size:18px;font-weight:600}
-  .bar{max-width:620px;margin:0 auto 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-  .anneebox{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px}
-  .anneebox label{color:var(--muted);font-size:13px}
-  .anneebox select{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px}
-  .grid{display:grid;gap:12px;max-width:620px;margin:0 auto}
-  a.tile{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:inherit}
-  .ic{width:46px;height:46px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:23px;background:var(--accent);color:#fff}
-  .tile b{display:block;font-size:16px;font-weight:600} .tile span{font-size:13px;color:var(--muted)}
-  .note{max-width:620px;margin:18px auto 0;font-size:12px;color:var(--muted);text-align:center}
-  #cls{margin-top:4px}
-  .clschip{display:inline-block;color:#fff;font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:2px 9px;margin:3px 4px 0 0}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+    padding:0 0 calc(46px + env(safe-area-inset-bottom))}
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px}
+  header.top{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;
+    padding:calc(13px + env(safe-area-inset-top)) 14px 13px;display:flex;align-items:center;gap:10px}
+  header.top a.home{color:#fff;text-decoration:none;font-size:18px;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:1px 9px;flex:0 0 auto}
+  header.top .htxt{min-width:0}
+  header.top h1{margin:0;font-size:18px;font-weight:600}
+  header.top p{margin:2px 0 0;font-size:12px;opacity:.85}
+  #cls{margin-top:5px}
+  .clschip{display:inline-block;color:#fff;font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:1px 9px;margin:3px 4px 0 0;background:rgba(255,255,255,.18)}
+
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 2px}
+  .chip{font-size:.72rem;padding:2px 9px;border-radius:999px;color:#08111b;font-weight:700}
+  .chip.q{background:var(--q)} .chip.s{background:var(--s);color:#fff} .chip.r{background:var(--r)} .chip.rr{background:var(--rr);color:#fff}
+
+  details.theme{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin:12px 0;overflow:hidden}
+  details.theme>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px;user-select:none}
+  details.theme>summary::-webkit-details-marker{display:none}
+  .thidx{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:.95rem;color:#08111b}
+  .thtitle{flex:1;min-width:0}
+  .thtitle b{display:block;font-size:1.02rem}
+  .thtitle span{display:block;color:var(--muted);font-size:.76rem;margin-top:1px}
+  .caret{color:var(--muted);transition:transform .18s;font-size:1.1rem}
+  details.theme[open]>summary .caret{transform:rotate(90deg)}
+  .depth{margin-left:auto}
+  .items{padding:4px 12px 14px}
+  a.item,button.item{width:100%;text-align:left;font:inherit;display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink);
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin:8px 0;min-height:46px;cursor:pointer}
+  a.item:active,button.item:active{border-color:var(--accent)}
+  a.item .ico,button.item .ico{font-size:1.2rem;width:24px;text-align:center;flex:0 0 24px}
+  .lab{flex:1;min-width:0}
+  .lab b{font-weight:650}
+  .lab small{display:block;color:var(--muted);font-size:.74rem}
+  .go{color:var(--muted);font-size:1.1rem}
+  details.sub{margin:8px 0 2px;border:1px solid var(--line);border-radius:12px;background:var(--card2)}
+  details.sub>summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;gap:10px}
+  details.sub>summary::-webkit-details-marker{display:none}
+  details.sub .items{padding:0 10px 10px}
+  .deeper{margin:2px 0 0 6px;border-left:2px solid var(--line);padding-left:8px}
+  .clsrow{margin:8px 0}
+  .clsrow .clab{font-size:.82rem;font-weight:650;margin:6px 2px 2px}
+  .clsrow .clab .ntag{font-weight:400;color:var(--muted);font-size:.72rem;margin-left:6px}
+  .clsrow .two{display:flex;gap:8px}
+  .clsrow .two a{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;color:var(--ink);
+    background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:.85rem}
+  .clsrow .two a:active{border-color:var(--accent)}
+  .note{color:var(--muted);font-size:.75rem;padding:2px 4px 6px}
+  .anneesel{display:flex;align-items:center;gap:8px;padding:4px 2px}
+  .anneesel select{font:inherit;color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:8px;padding:6px 9px}
+  footer{color:var(--muted);font-size:.78rem;text-align:center;margin:20px 0 0;padding:0 10px}
+  footer a{color:var(--accent);text-decoration:none;font-weight:600}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -38,51 +78,198 @@
 </style>
 </head>
 <body>
-<header><a class="home" href="index.html" aria-label="Portail">‹</a><div><h1 id="h1">Espace prof — PC</h1><small id="cls" style="display:block;font-weight:400;opacity:.85;font-size:12px;margin-top:2px"></small></div></header>
-<div class="bar">
-  <div class="anneebox">
-    <label for="annee">📅 Année scolaire</label>
-    <select id="annee"></select>
+<header class="top">
+  <a class="home" href="index.html" aria-label="Connexion">‹</a>
+  <div class="htxt">
+    <h1 id="h1">Espace prof — PC</h1>
+    <p>Menu rangé par fréquence d'usage.</p>
+    <div id="cls"></div>
   </div>
+</header>
+
+<div class="wrap">
+  <div class="legend">
+    <span class="chip q">quotidien</span>
+    <span class="chip s">souvent</span>
+    <span class="chip r">de temps en temps</span>
+    <span class="chip rr">rare</span>
+  </div>
+
+  <!-- ① AU QUOTIDIEN -->
+  <details class="theme" open>
+    <summary>
+      <span class="thidx" style="background:var(--q)">①</span>
+      <span class="thtitle"><b>Au quotidien</b><span>ce que tu ouvres chaque jour</span></span>
+      <span class="chip q depth">quotidien</span><span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="ma_semaine.html">
+        <span class="ico">🗓️</span><span class="lab"><b>Ma semaine</b><small>EDT + la séance du jour</small></span><span class="go">›</span></a>
+      <a class="item" href="gestion_v0.1.html?tab=seances">
+        <span class="ico">📓</span><span class="lab"><b>Cahier de textes / séances</b><small>ce qui est fait, le travail donné</small></span><span class="go">›</span></a>
+      <a class="item" href="gestion_v0.1.html?tab=suivi">
+        <span class="ico">✅</span><span class="lab"><b>Cocher ce qui est fait</b><small>Suivi de progression</small></span><span class="go">›</span></a>
+    </div>
+  </details>
+
+  <!-- ② MES ÉLÈVES -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--s);color:#fff">②</span>
+      <span class="thtitle"><b>Mes élèves</b><span>groupes, notes, compétences</span></span>
+      <span class="chip s depth">souvent</span><span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="gestion_v0.1.html?tab=eleves">
+        <span class="ico">👥</span><span class="lab"><b>Élèves &amp; groupes</b><small>classes, G1/G2, roster</small></span><span class="go">›</span></a>
+      <a class="item" href="gestion_v0.1.html?tab=comp">
+        <span class="ico">🎯</span><span class="lab"><b>Notes &amp; compétences</b><small>saisie ECE, barème, /20</small></span><span class="go">›</span></a>
+      <a class="item" href="saisie_competences_mobile.html">
+        <span class="ico">📝</span><span class="lab"><b>Saisie compétences (grille TP)</b><small>noter un TP au téléphone</small></span><span class="go">›</span></a>
+    </div>
+  </details>
+
+  <!-- ③ MATÉRIEL -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--r)">③</span>
+      <span class="thtitle"><b>Matériel</b><span>préparer les TP</span></span>
+      <span class="chip r depth">de temps en temps</span><span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="gestion_v0.1.html?tab=materiel">
+        <span class="ico">🧪</span><span class="lab"><b>Matériel</b><small>du jour · du lycée (catalogue)</small></span><span class="go">›</span></a>
+    </div>
+  </details>
+
+  <!-- ④ PRÉPARER L'ANNÉE (rare, profond) -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--rr);color:#fff">④</span>
+      <span class="thtitle"><b>Préparer l'année</b><span>en début d'année, ou ponctuellement</span></span>
+      <span class="chip rr depth">rare</span><span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <div class="note">Peu fréquent → rangé ici, et en plein écran quand on l'ouvre.</div>
+
+      <details class="sub">
+        <summary>
+          <span class="ico" style="font-size:1.2rem">🧭</span>
+          <span class="lab"><b>Constructeur de progression</b><small>bâtir la progression → boKeys datés</small></span>
+          <span class="caret">›</span>
+        </summary>
+        <div class="items">
+          <div class="deeper" id="constrList">
+            <!-- rempli par JS : une ligne Frise/Arbre par classe éligible -->
+            <div class="clsrow"><div class="two">
+              <a href="constructeur_frise.html">📊 Frise (dates)</a>
+              <a href="constructeur_arbre.html">🌳 Arbre (séances)</a>
+            </div></div>
+          </div>
+          <div class="note" id="constrNote">Choisis le niveau dans l'outil, ou connecte-toi pour voir tes classes ici.</div>
+        </div>
+      </details>
+
+      <a class="item" href="gestion_v0.1.html?tab=progressions">
+        <span class="ico">📚</span><span class="lab"><b>Progressions de référence</b><small>découpages B.O. / collègues</small></span><span class="go">›</span></a>
+      <a class="item" href="gestion_v0.1.html?tab=calendrier">
+        <span class="ico">📅</span><span class="lab"><b>Calendrier / EDT de l'année</b><small>vacances Zone B, créneaux</small></span><span class="go">›</span></a>
+    </div>
+  </details>
+
+  <!-- ⑤ RÉGLAGES -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:#5b6b7e;color:#fff">⑤</span>
+      <span class="thtitle"><b>Réglages</b><span>on y touche presque jamais</span></span>
+      <span class="chip rr depth">rare</span><span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <div class="anneesel">
+        <span class="ico" style="width:24px;text-align:center">🗂️</span>
+        <label for="annee" style="color:var(--muted);font-size:.85rem">Année scolaire</label>
+        <select id="annee"></select>
+      </div>
+      <button class="item" type="button" id="btnTheme2">
+        <span class="ico">🎨</span><span class="lab"><b>Thème d'interface</b><small>ambiances</small></span><span class="go">›</span></button>
+      <a class="item" href="eleve.html">
+        <span class="ico">👀</span><span class="lab"><b>Aperçu côté élève</b><small>voir ce que voient les élèves</small></span><span class="go">›</span></a>
+      <div class="note">🔑 Comptes &amp; codes d'accès (profs / élèves, QR) : gérés <b>sur le PC</b> — fichiers locaux, jamais en ligne.</div>
+    </div>
+  </details>
+
+  <footer>
+    Espace enseignant. Tes données restent sur cet appareil (phase 2 : comptes/synchro).
+  </footer>
 </div>
-<div class="grid">
-  <a class="tile" href="gestion_v0.1.html">
-    <span class="ic">📊</span>
-    <span><b>Gestionnaire de classe</b><span>Calendrier, progressions, suivi, notation par compétences.</span></span>
-  </a>
-  <a class="tile" href="saisie_competences_mobile.html">
-    <span class="ic">📝</span>
-    <span><b>Saisie compétences (grille TP)</b><span>Noter un TP par grille de critères — pensé pour le téléphone.</span></span>
-  </a>
-  <a class="tile" href="ma_semaine.html">
-    <span class="ic">🗓️</span>
-    <span><b>Ma semaine (EDT)</b><span>Ton emploi du temps 2025-26.</span></span>
-  </a>
-  <a class="tile" href="eleve.html">
-    <span class="ic">👀</span>
-    <span><b>Aperçu côté élève</b><span>Voir ce que voient les élèves.</span></span>
-  </a>
-</div>
-<p class="note">Espace enseignant. Plus tard : inscription/compte (phase 2). Pour l'instant, tes données restent sur cet appareil.</p>
-<script>(function(){
-  var LS="pcmajo_acces",a=null;
+
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+
+<script>
+/* ===== Contexte prof + construction du sous-menu Constructeur (par classe) ===== */
+(function(){
+  var LS="pcmajo_acces", a=null;
   try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
   if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
-  /* Prénom du prof (RGPD : autorisé pour les profs ; interdit pour les élèves) */
+
   if(a&&a.role==="prof"&&a.prenom){ document.getElementById("h1").textContent="Espace "+a.prenom; }
-  if(!a||a.role!=="prof"){ initAnnee(); return; }
-  var list=(a.classes&&a.classes.length)?a.classes:((a.cl||[]).map(function(l){return {id:l,libelle:l};}));
-  if(list.length){
-    function hue(s){s=String(s||"");var h=0;for(var i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))%360;}return h;}
-    document.getElementById("cls").innerHTML=list.map(function(c){
-      return '<span class="clschip" style="background:hsl('+hue(c.id||c.libelle)+',55%,42%)">'+(c.libelle||c.id)+'</span>';
+
+  var classes=(a&&a.role==="prof"&&Array.isArray(a.classes))?a.classes:[];
+  if(classes.length){
+    document.getElementById("cls").innerHTML=classes.map(function(c){
+      return '<span class="clschip">'+(c.libelle||c.id)+'</span>';
     }).join("");
   }
-  initAnnee();
+
+  /* id de classe -> jeton de niveau du constructeur (5 niveaux à YAML B.O.) */
+  function friseToken(c){
+    var id=String((c&&c.id)||"").toUpperCase();
+    if(/^2G/.test(id)) return "2nde";
+    if(/^1PC/.test(id)) return "1spe";
+    if(/^TPC/.test(id)) return "Tspe";
+    if(/^1STI/.test(id)) return "1sti";
+    if(/^TSTI/.test(id)||/^TSISPH/.test(id)||/^TSI/.test(id)) return "Tsti";
+    return null; // ens.sci (1G/TG), NSI : pas de niveau constructeur
+  }
+  var TOKLAB={"2nde":"Seconde","1spe":"1re spé PC","Tspe":"Tale spé PC","1sti":"1re STI2D","Tsti":"Tale STI2D"};
+
+  function anneeCourante(){
+    var cur; try{cur=localStorage.getItem("gestion_majorelle_annee");}catch(e){}
+    if(!cur||!/^\d{4}-\d{4}$/.test(cur)) cur="2025-2026";
+    return cur;
+  }
+
+  function buildConstr(){
+    var host=document.getElementById("constrList"), note=document.getElementById("constrNote");
+    if(!host) return;
+    var eligibles=classes.filter(function(c){return !!friseToken(c);});
+    var an=anneeCourante();
+    if(!eligibles.length){
+      // pas connecté / que des ens.sci : garder les 2 liens génériques (déjà dans le HTML)
+      if(note) note.textContent = classes.length
+        ? "Aucune de tes classes n'a de programme B.O. dans le constructeur (ens. scientifique / NSI). Ouvre l'outil et choisis un niveau."
+        : "Choisis le niveau dans l'outil, ou connecte-toi pour voir tes classes ici.";
+      return;
+    }
+    host.innerHTML=eligibles.map(function(c){
+      var tok=friseToken(c);
+      var q="?niveau="+encodeURIComponent(tok)+"&classe="+encodeURIComponent(c.id)+"&annee="+encodeURIComponent(an);
+      return '<div class="clsrow">'
+        +'<div class="clab">'+(c.libelle||c.id)+'<span class="ntag">'+(TOKLAB[tok]||tok)+'</span></div>'
+        +'<div class="two">'
+        +'<a href="constructeur_frise.html'+q+'">📊 Frise</a>'
+        +'<a href="constructeur_arbre.html'+q+'">🌳 Arbre</a>'
+        +'</div></div>';
+    }).join("");
+    if(note) note.textContent="La frise exporte des « boKeys datés » ; reviens ensuite dans Gestion → Constructeur → « Importer depuis la frise » pour cocher le Suivi de la classe.";
+  }
+  window.__buildConstr=buildConstr;
+  buildConstr();
 })();
 
-/* ===== Choix de l'année scolaire dès l'espace prof (pilote le gestionnaire) ===== */
-function initAnnee(){
+/* ===== Année scolaire (pilote le gestionnaire) ===== */
+(function(){
   var ANNEES_KEY="gestion_majorelle_annees", PREF_ANNEE="gestion_majorelle_annee";
   var list; try{list=JSON.parse(localStorage.getItem(ANNEES_KEY));}catch(e){}
   if(!Array.isArray(list)||!list.length) list=["2025-2026","2026-2027"];
@@ -91,11 +278,15 @@ function initAnnee(){
   var sel=document.getElementById("annee");
   sel.innerHTML=list.map(function(a){return '<option value="'+a+'"'+(a===cur?' selected':'')+'>'+a+'</option>';}).join("");
   try{localStorage.setItem(PREF_ANNEE,cur);}catch(e){}
-  sel.addEventListener("change",function(){ try{localStorage.setItem(PREF_ANNEE,sel.value);}catch(e){} });
-}
+  sel.addEventListener("change",function(){
+    try{localStorage.setItem(PREF_ANNEE,sel.value);}catch(e){}
+    if(window.__buildConstr) window.__buildConstr();   // ré-génère les liens Constructeur avec la bonne année
+  });
+})();
 </script>
+
 <script>
-/* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
+/* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) ===== */
 (function(){
   var THEMES={
     atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},
@@ -116,6 +307,8 @@ function initAnnee(){
     var r=document.documentElement.style;
     r.setProperty('--bg',th.bg); r.setProperty('--card',th.card); r.setProperty('--ink',th.ink);
     r.setProperty('--muted',th.muted); r.setProperty('--line',th.line); r.setProperty('--accent',th.accent);
+    /* carte secondaire dérivée = fond légèrement contrasté */
+    r.setProperty('--card2',th.line);
     document.documentElement.setAttribute('data-theme',id);
     var m=document.querySelector('meta[name=theme-color]'); if(m)m.setAttribute('content',th.accent);
   }
@@ -136,8 +329,13 @@ function initAnnee(){
   };
 })();
 </script>
-<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
-<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
-<script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
+<script>(function(){
+  var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');
+  if(!window.PCTheme)return; PCTheme.swatches('themePick');
+  function toggle(e){e.stopPropagation();p.classList.toggle('open');}
+  if(b)b.addEventListener('click',toggle);
+  var b2=document.getElementById('btnTheme2'); if(b2)b2.addEventListener('click',toggle);
+  document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b&&e.target!==b2)p.classList.remove('open');});
+})();</script>
 </body>
 </html>
