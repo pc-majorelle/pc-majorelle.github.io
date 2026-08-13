@@ -215,6 +215,7 @@
     <div class="tab" data-t="materiel">Matériel</div>
     <div class="tab" data-t="plan">Plannings cohérents</div>
     <div class="tab" data-t="progressions">Progressions</div>
+    <div class="tab" data-t="constr" title="Construire la progression (frise dates + arbre séances) — remplace prévisionnel/progression">🧭 Constructeur</div>
     <div class="tab" data-t="comp">Compétences</div>
   </div>
 </header>
@@ -229,6 +230,7 @@
   <section class="panel" id="p-materiel"></section>
   <section class="panel" id="p-plan"></section>
   <section class="panel" id="p-progressions"></section>
+  <section class="panel" id="p-constr"></section>
   <section class="panel" id="p-comp"></section>
 </main>
 
@@ -1857,7 +1859,7 @@ function switchTab(t){
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.t===t));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("on"));
   document.getElementById("p-"+t).classList.add("on");
-  ({semaine:renderSemaine,classes:renderClasses,calendrier:renderCalendrier,seances:renderSeances,prev:renderPrev,suivi:renderSuivi,plan:renderPlan,eleves:renderEleves,materiel:renderMateriel,progressions:renderProgressions,comp:function(){return renderComp();}}[t])();
+  ({semaine:renderSemaine,classes:renderClasses,calendrier:renderCalendrier,seances:renderSeances,prev:renderPrev,suivi:renderSuivi,plan:renderPlan,eleves:renderEleves,materiel:renderMateriel,progressions:renderProgressions,constr:renderConstr,comp:function(){return renderComp();}}[t])();
 }
 document.getElementById("tabs").addEventListener("click",e=>{if(e.target.dataset.t)switchTab(e.target.dataset.t);});
 document.getElementById("activeClass").addEventListener("change",()=>{selCaps.clear();lastPlan=null;const on=document.querySelector(".tab.on").dataset.t;switchTab(on);});
@@ -1871,6 +1873,88 @@ document.getElementById("fileIn").addEventListener("change",e=>{
   r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.classes)throw 0;state=o;save();refreshClassSelector();switchTab("classes");}catch(err){alert("Fichier d'état invalide.");}};
   r.readAsText(f);
 });
+
+
+/* ===================== CONSTRUCTEUR_V29 (frise + arbre + pont boKeys->Suivi) ===================== */
+var _constrView="frise";
+function renderConstr(){
+  var el=document.getElementById("p-constr");
+  var src=(_constrView==="arbre")?"constructeur_arbre.html":"constructeur_frise.html";
+  el.innerHTML =
+   '<div class="card">'
+   +'<div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
+   +'<div><b>Constructeur de progression</b> <span class="small muted">— vue unifiée, remplace prévisionnel / progression</span></div>'
+   +'<div class="row" style="gap:6px">'
+   +'<button id="cv-frise" class="tab '+(_constrView==="frise"?"on":"")+'" title="Progression datée (frise temps)">🗓 Frise (dates)</button>'
+   +'<button id="cv-arbre" class="tab '+(_constrView==="arbre"?"on":"")+'" title="Découpage en séances (arbre + curseurs)">🌳 Arbre (séances)</button>'
+   +'</div></div>'
+   +'<p class="hint" style="margin:6px 0">La <b>frise</b> génère les <b>boKeys datés</b> (bouton « ⬇ Exporter les boKeys datés » en haut de l’outil). Récupère-les ici pour cocher automatiquement le <b>Suivi</b> de la classe active.</p>'
+   +'<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'
+   +'<button id="constrImportLS">⤵ Importer depuis la frise (cet appareil)</button>'
+   +'<button id="constrImportFile">📂 Importer un fichier boKeys…</button>'
+   +'<input type="file" id="constrFileIn" accept="application/json" style="display:none">'
+   +'<span id="constrInfo" class="small muted"></span>'
+   +'</div></div>'
+   +'<div class="card" style="padding:0;overflow:hidden">'
+   +'<iframe id="constrFrame" src="'+src+'" style="width:100%;height:76vh;border:0;display:block" title="Constructeur"></iframe>'
+   +'</div>';
+  document.getElementById("cv-frise").onclick=function(){_constrView="frise";renderConstr();};
+  document.getElementById("cv-arbre").onclick=function(){_constrView="arbre";renderConstr();};
+  document.getElementById("constrImportLS").onclick=function(){constrImportLS();};
+  document.getElementById("constrImportFile").onclick=function(){document.getElementById("constrFileIn").click();};
+  document.getElementById("constrFileIn").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){constrApply(r.result);};r.readAsText(f);};
+}
+function constrLevelToken(c){
+  var pr=c?(c.programme||""):"";
+  if(pr==="tale|pc|sti") return "Tsti";
+  if(pr==="1ere|pc|sti"||pr==="1ere|pc|sti2d") return "1sti";
+  if(pr==="tale|pc|gen") return "Tspe";
+  if(pr==="1ere|pc|gen") return "1spe";
+  if(pr==="2nde|pc|gen") return "2nde";
+  return null; // ens.sci et autres : pas de niveau frise -> import par fichier uniquement
+}
+function constrImportLS(){
+  var c=activeClass(); if(!c){alert("Choisis d’abord une classe.");return;}
+  var tok=constrLevelToken(c);
+  var info=document.getElementById("constrInfo");
+  if(!tok){ if(info) info.textContent="Niveau non reconnu pour cette classe (ex. ens. scientifique) — utilise « Importer un fichier »."; return; }
+  var js=null; try{ js=localStorage.getItem("boKeys_export_"+tok); }catch(e){}
+  if(!js){ if(info) info.textContent="Rien trouvé sur cet appareil pour « "+tok+" ». Ouvre la frise, clique « ⬇ Exporter les boKeys datés », puis réessaie (ou importe le fichier)."; return; }
+  constrApply(js);
+}
+function _constrNorm(x){ try{ return (x||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }catch(e){ return (x||"").toLowerCase().replace(/\s+/g," ").trim(); } }
+function _constrTxtIndex(){
+  // index texte B.O. verbatim -> id (depuis NODES), pour joindre les niveaux dont l'id frise
+  // diffère de l'id gestion (2nde/1re/Tale spé). Construit une fois.
+  if(window.__constrTxt2id) return window.__constrTxt2id;
+  var m={}; try{ Object.keys(NODES).forEach(function(id){ var t=NODES[id]&&NODES[id].t; if(t){ var k=_constrNorm(t); if(k && !(k in m)) m[k]=id; } }); }catch(e){}
+  window.__constrTxt2id=m; return m;
+}
+function constrApply(js){
+  var c=activeClass(); if(!c){alert("Choisis d’abord une classe.");return;}
+  var data; try{ data=JSON.parse(js); }catch(e){ alert("Fichier boKeys illisible."); return; }
+  var rows=(data&&data.capacites)||[];
+  var p=progOf(c); if(!p){ alert("Pas de programme pour cette classe."); return; }
+  var caps={}; capsOfProg(p).forEach(function(id){ caps[id]=1; });
+  var t2id=_constrTxtIndex();
+  var sv=suiviOf(c.id);
+  if(!state.constrDates) state.constrDates={};
+  var cd=state.constrDates[c.id]=state.constrDates[c.id]||{};
+  var ok=0, miss=0, missList=[], viaTxt=0;
+  rows.forEach(function(r){
+    if(!r||!r.ref) return;
+    var id=null;
+    if(caps[r.ref]) id=r.ref;                                   // join direct par id (STI2D)
+    else { var cand=t2id[_constrNorm(r.bo)]; if(cand && caps[cand]){ id=cand; viaTxt++; } } // join par texte B.O.
+    if(id){ sv[id]="done"; cd[id]=r.date_iso||""; ok++; }
+    else { miss++; if(missList.length<8) missList.push(r.ref); }
+  });
+  save();
+  var info=document.getElementById("constrInfo");
+  if(info) info.textContent="✔ "+ok+" capacités cochées dans le Suivi"+(viaTxt?(" (dont "+viaTxt+" via texte B.O.)"):"")
+     +(miss?(" · "+miss+" non appariées ("+missList.join(", ")+(miss>8?"…":"")+")"):" · appariement complet")
+     +" — niveau "+(data.niveau||"?")+". (Onglet « Suivi » pour voir.)";
+}
 
 /* ===================== BOOT ===================== */
 migrateOldLS();

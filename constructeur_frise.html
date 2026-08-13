@@ -201,6 +201,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
     </label>
     <button id="themeBtn" title="Basculer clair / sombre">◐ Thème</button>
     <button id="resetBtn" title="Revenir à la progression stricte auto-générée">↺ Réinitialiser</button>
+    <button id="exportBoKeysBtn" title="Exporter les capacités datées (boKeys) pour le gestionnaire de classe">⬇ Exporter les boKeys datés</button><span id="expInfo" class="small" style="margin-left:6px;opacity:.75"></span>
   </header>
 
   <!-- ============ COMPTEURS ============ -->
@@ -3179,6 +3180,38 @@ function attacherEcouteurs(){
    BOOT DÉFENSIF : toute l'init dans un try/catch. En cas d'erreur -> BANNIÈRE
    visible (pas de page blanche). Écouteurs attachés APRÈS le premier rendu.
    ============================================================================ */
+
+/* ===================== EXPORT_BOKEYS_V29 ===================== */
+function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
+  try{
+    var plan=construirePlan(STATE.order);
+    var rows=[], seen={};
+    plan.sessions.forEach(function(s){
+      if(!s.date||!s.caps||!s.caps.length) return;
+      var chap=(typeof CHAP_BY_ID!=="undefined"&&CHAP_BY_ID[s.chap])?CHAP_BY_ID[s.chap]:null;
+      var themeRef=chap?chap.theme:"";
+      var themeLbl=(typeof THEME_LABEL!=="undefined"&&THEME_LABEL[themeRef])?THEME_LABEL[themeRef]:themeRef;
+      var chapLbl=chap?chap.code:String(s.chap);
+      s.caps.forEach(function(capId){
+        if(seen[capId]) return; seen[capId]=1;   // 1re occurrence datée = date d'introduction
+        var c=(typeof CAPS!=="undefined"&&CAPS[capId])?CAPS[capId]:{};
+        rows.push({ref:capId, bo:(c.bo||c.titre||""), date_iso:iso(s.date),
+                   seance_type:s.baseType, chapitre:chapLbl, theme:themeLbl});
+      });
+    });
+    rows.sort(function(a,b){return a.date_iso<b.date_iso?-1:(a.date_iso>b.date_iso?1:0);});
+    var payload={niveau:level,
+                 niveau_label:(typeof LEVELS!=="undefined"&&LEVELS[level]&&LEVELS[level].label)?LEVELS[level].label:level,
+                 annee:STATE.annee, genere:"constructeur_frise EXPORT_BOKEYS_V29", n:rows.length, capacites:rows};
+    var js=JSON.stringify(payload,null,2);
+    try{ localStorage.setItem("boKeys_export_"+level, js); }catch(e){}   // passerelle même-origine vers le gestionnaire
+    var blob=new Blob([js],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="boKeys_dates_"+level+"_"+STATE.annee+".json"; document.body.appendChild(a); a.click(); a.remove();
+    var info=document.getElementById("expInfo"); if(info) info.textContent=rows.length+" capacités datées exportées ("+level+").";
+  }catch(e){ try{alert("Export boKeys : "+(e&&e.message?e.message:e));}catch(_){}}
+}
+
 function boot(){
   try{
     injectLevelColors();
@@ -3190,6 +3223,7 @@ function boot(){
     initCursorRange();
     setupTimelineDrag();
     attacherEcouteurs();
+    var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");
