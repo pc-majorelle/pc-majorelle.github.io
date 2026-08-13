@@ -149,6 +149,25 @@
   body.compact .cap-ref{display:none}
 
   .foot{max-width:1280px;margin:0 auto;padding:6px 16px 30px;color:#9aa6b4;font-size:11px}
+/* MESURE_INCERTITUDE_V28 */
+.mi-arow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 2px}
+.mi-alab{font-size:11px;font-weight:700;color:#b18bff}
+.mi-achip{display:inline-flex;align-items:center;gap:4px;font-size:11px;border:1px solid rgba(177,139,255,.5);background:rgba(177,139,255,.12);border-radius:999px;padding:1px 7px;color:#e6e9ef}
+.mi-achip .mi-an{font-weight:700;color:#b18bff;font-variant-numeric:tabular-nums}
+.mi-arm{border:none;background:none;color:#ef6b6b;cursor:pointer;font-size:12px;line-height:1;padding:0 2px}
+.mi-aadd{font-size:11px;border:1px dashed rgba(177,139,255,.6);background:transparent;color:#b18bff;border-radius:8px;padding:1px 8px;cursor:pointer}
+.mi-apick{display:none;flex-direction:column;gap:2px;margin:4px 0 6px;padding:7px;border:1px solid rgba(177,139,255,.35);border-radius:8px;background:rgba(177,139,255,.07);max-height:220px;overflow:auto}
+.mi-apick.open{display:flex}
+.mi-apick label{display:flex;gap:6px;align-items:flex-start;font-size:11px;line-height:1.3;cursor:pointer}
+.mipanelA{margin:2px 0 8px}
+.mipa-h{font-size:12px;font-weight:700;color:#b18bff;margin-bottom:6px}
+.mipa-grid{display:flex;flex-direction:column;gap:4px}
+.mipa-chip{display:flex;align-items:center;gap:6px;font-size:11px;border:1px solid rgba(177,139,255,.3);background:rgba(177,139,255,.07);border-radius:8px;padding:3px 8px}
+.mipa-id{color:#b18bff;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mipa-tx{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cdd3dd}
+.mipa-n{font-weight:700;font-variant-numeric:tabular-nums;border-radius:999px;padding:0 7px}
+.mipa-chip.zero .mipa-n{background:#ef4444;color:#fff}
+.mipa-chip.ok .mipa-n{background:#10b981;color:#fff}
 </style>
 </head>
 <body>
@@ -189,6 +208,7 @@
     <div class="card">
       <h2>Récapitulatif des séances</h2>
       <div class="tot" id="tot"></div>
+      <div class="mipanelA" id="mipanelA"></div>
       <div class="recap-list" id="recap"></div>
       <div class="maths-box" id="mathsBox" style="display:none">
         <h3>Maths à mobiliser (B.O.)</h3>
@@ -233,8 +253,50 @@ try{
   function storageKey(lvl){return 'constructeur_arbre__'+lvl;}
   function shortTxt(t){t=t||'';return t.length>90?t.slice(0,88)+'…':t;}
 
+  /* ==== MESURE & INCERTITUDES — transversal éditable + compteur (MESURE_INCERTITUDE_V28) ====
+     MI exclu de l'arbre de CONTENU ; attaché aux séances (state.miAssign : segKey -> [refs]). */
+  var MI_CAPS=[];
+  function isMITheme(th){ return /mesure\s*(?:et|&)?\s*incertitude/i.test((th&&th.theme)||''); }
+  function miSetData(lvl){
+    var raw=SOCLE[lvl]; MI_CAPS=[]; var themes=[];
+    raw.themes.forEach(function(th){
+      if(isMITheme(th)){ th.chapitres.forEach(function(ch){ch.sections.forEach(function(se){se.caps.forEach(function(c){MI_CAPS.push(c);});});}); }
+      else themes.push(th);
+    });
+    DATA={label:raw.label, voie:raw.voie, niveau:raw.niveau, maths:raw.maths, themes:themes};
+  }
+  function miAssignMap(){ if(!state.miAssign) state.miAssign={}; return state.miAssign; }
+  function miHostsA(ref){ var m=(state&&state.miAssign)||{}, out=[]; for(var k in m){ if((m[k]||[]).indexOf(ref)>=0) out.push(k); } return out; }
+  function miCountA(ref){ return miHostsA(ref).length; }
+  function miToggleA(key,ref){
+    var m=miAssignMap(); if(!m[key])m[key]=[];
+    var i=m[key].indexOf(ref);
+    if(i>=0){ m[key].splice(i,1); if(!m[key].length) delete m[key]; } else { m[key].push(ref); }
+    render(); saveState();
+  }
+  function miShortA(ref){ return String(ref).replace(/^STI2D-PC-[A-Z]\./,'').replace(/^GEN-\d+-/,''); }
+  function renderMIPanelA(){
+    var host=document.getElementById('mipanelA'); if(!host) return; host.innerHTML='';
+    if(!MI_CAPS.length) return;
+    var segs=computeSegments(), keyNum={}; segs.forEach(function(s,i){keyNum[s.key]=i+1;});
+    var nz=MI_CAPS.filter(function(c){return miCountA(c.ref)===0;}).length;
+    var h=document.createElement('div'); h.className='mipa-h';
+    h.innerHTML='Mesure &amp; incertitudes — couverture transversale ('+MI_CAPS.length+' cap. · '+nz+' jamais placée'+(nz>1?'s':'')+')';
+    host.appendChild(h);
+    var grid=document.createElement('div'); grid.className='mipa-grid';
+    MI_CAPS.forEach(function(c){
+      var nn=miCountA(c.ref);
+      var seances=miHostsA(c.ref).map(function(k){return 'S'+(keyNum[k]||'?');});
+      var chip=document.createElement('div'); chip.className='mipa-chip '+(nn===0?'zero':'ok');
+      chip.title=(nn?('Séances : '+seances.join(', ')):'Jamais placée — à attacher à une séance');
+      chip.innerHTML='<span class="mipa-id">'+miShortA(c.ref)+'</span><span class="mipa-tx">'+shortTxt(c.texte)+'</span><span class="mipa-n">×'+nn+'</span>';
+      grid.appendChild(chip);
+    });
+    host.appendChild(grid);
+  }
+
   function buildLinear(lvl){
-    var d=SOCLE[lvl]; LIN=[];
+    var d=DATA||SOCLE[lvl]; LIN=[];  /* MESURE_INCERTITUDE_V28 : contenu sans le thème M&I */
     d.themes.forEach(function(th,ti){
       th.chapitres.forEach(function(ch,ci){
         var ck='t'+ti+'c'+ci;
@@ -250,7 +312,7 @@ try{
     LIN.forEach(function(c,i){REFSET[c.ref]=i;CAPBY[c.ref]=c;});
   }
 
-  function defaultState(){ return {unchecked:{}, breaks:{}, meta:{}, collapsed:{}, compact:false}; }
+  function defaultState(){ return {unchecked:{}, breaks:{}, meta:{}, collapsed:{}, compact:false, miAssign:{}}; }  /* MESURE_INCERTITUDE_V28 */
   function loadState(lvl){
     var s=defaultState();
     try{
@@ -264,6 +326,7 @@ try{
           Object.keys(o.meta).forEach(function(k){var m=o.meta[k];if(m)s.meta[k]={type:m.type,duree:m.duree};});
         }
         s.compact=!!o.compact;
+        if(o.miAssign&&typeof o.miAssign==='object') s.miAssign=o.miAssign;  /* MESURE_INCERTITUDE_V28 */
       }
     }catch(e){}
     return s;
@@ -277,7 +340,7 @@ try{
           unchecked:Object.keys(state.unchecked),
           breaks:Object.keys(state.breaks),
           collapsed:Object.keys(state.collapsed),
-          meta:state.meta, compact:state.compact, v:1
+          meta:state.meta, compact:state.compact, miAssign:state.miAssign, v:1
         }));
       }catch(e){}
     },180);
@@ -357,6 +420,30 @@ try{
       mb.appendChild(up);mb.appendChild(dn);mb.appendChild(del);
     }
     bar.appendChild(mb);wrap.appendChild(bar);
+    // --- M&I transversale sur CETTE séance (MESURE_INCERTITUDE_V28) ---
+    if(MI_CAPS.length){
+      var attached=(state.miAssign&&state.miAssign[seg.key])?state.miAssign[seg.key]:[];
+      var arow=document.createElement('div'); arow.className='mi-arow';
+      var alab=document.createElement('span'); alab.className='mi-alab'; alab.textContent='M&I :'; arow.appendChild(alab);
+      attached.forEach(function(ref){
+        var chip=document.createElement('span'); chip.className='mi-achip';
+        chip.innerHTML='<b>'+miShortA(ref)+'</b> <span class="mi-an">×'+miCountA(ref)+'</span>';
+        var rm=document.createElement('button'); rm.type='button'; rm.className='mi-arm'; rm.textContent='✕'; rm.title='Retirer de cette séance';
+        rm.addEventListener('click',function(){ miToggleA(seg.key,ref); });
+        chip.appendChild(rm); arow.appendChild(chip);
+      });
+      var add=document.createElement('button'); add.type='button'; add.className='mi-aadd'; add.textContent='＋ M&I';
+      var pick=document.createElement('div'); pick.className='mi-apick';
+      MI_CAPS.forEach(function(c){
+        var l=document.createElement('label');
+        var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=attached.indexOf(c.ref)>=0;
+        cb.addEventListener('change',function(){ miToggleA(seg.key,c.ref); });
+        var sp=document.createElement('span'); sp.innerHTML='<b>'+miShortA(c.ref)+'</b> '+shortTxt(c.texte)+' <i style="opacity:.6">(×'+miCountA(c.ref)+')</i>';
+        l.appendChild(cb); l.appendChild(sp); pick.appendChild(l);
+      });
+      add.addEventListener('click',function(){ pick.classList.toggle('open'); });
+      arow.appendChild(add); wrap.appendChild(arow); wrap.appendChild(pick);
+    }
     return wrap;
   }
 
@@ -368,6 +455,7 @@ try{
       if(!state.breaks[nref]){
         delete state.breaks[ref];
         var m=state.meta[ref]; delete state.meta[ref]; if(m) state.meta[nref]=m;
+        if(state.miAssign){ var mia=state.miAssign[ref]; delete state.miAssign[ref]; if(mia) state.miAssign[nref]=mia; }  /* MESURE_INCERTITUDE_V28 */
         state.breaks[nref]=1;
         render();saveState();return;
       }
@@ -556,6 +644,7 @@ try{
       box.appendChild(ul);elRecap.appendChild(box);
     });
     renderMaths();
+    renderMIPanelA();  /* MESURE_INCERTITUDE_V28 */
   }
 
   function renderMaths(){
@@ -592,9 +681,11 @@ try{
     segs.forEach(function(seg,i){
       var meta=segMeta(seg.key); th+=meta.duree;
       out.seances.push({ n:i+1, type:meta.type, duree_h:meta.duree,
-        caps: seg.capIdx.map(function(ci){return LIN[ci].ref;}) });
+        caps: seg.capIdx.map(function(ci){return LIN[ci].ref;}),
+        mesure_incertitude: (state.miAssign&&state.miAssign[seg.key])?state.miAssign[seg.key].slice():[] });  /* MESURE_INCERTITUDE_V28 */
     });
     out.total_heures=th;
+    out.mesure_incertitude_couverture={}; MI_CAPS.forEach(function(c){ out.mesure_incertitude_couverture[c.ref]=miCountA(c.ref); });  /* MESURE_INCERTITUDE_V28 */
     LIN.forEach(function(c){ if(state.unchecked[c.ref]) out.a_replanifier.push(c.ref); });
     var blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
     var url=URL.createObjectURL(blob);
@@ -604,7 +695,7 @@ try{
   }
 
   function setLevel(lvl){
-    curLevel=lvl; DATA=SOCLE[lvl];
+    curLevel=lvl; miSetData(lvl);  /* MESURE_INCERTITUDE_V28 */
     buildLinear(lvl); state=loadState(lvl);
     document.getElementById('lvlName').textContent=DATA.label;
     document.getElementById('chkCompact').checked=!!state.compact;
