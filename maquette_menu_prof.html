@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette — Menu prof (fréquence / Huffman)</title>
+<style>
+  :root{
+    --bg1:#0f1620; --bg2:#0b1119; --card:#17212e; --card2:#1e2b3a;
+    --ink:#e8eef6; --muted:#9fb0c3; --line:#2a3a4e; --accent:#4aa3ff;
+    --q:#1baf7a; --s:#2a78d6; --r:#eb8f34; --rr:#7a4fc0;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--ink); font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:0 0 40px;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:0 14px}
+  header.top{
+    position:sticky;top:0;z-index:5;
+    background:rgba(15,22,32,.92);backdrop-filter:blur(8px);
+    padding:14px 14px 12px;border-bottom:1px solid var(--line);
+  }
+  .top h1{margin:0;font-size:1.15rem;letter-spacing:.2px}
+  .top p{margin:3px 0 0;color:var(--muted);font-size:.8rem}
+  .banner{
+    margin:12px 0;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;
+    background:var(--card);color:var(--muted);font-size:.82rem
+  }
+  .banner b{color:var(--ink)}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+  .chip{font-size:.72rem;padding:2px 9px;border-radius:999px;color:#08111b;font-weight:700}
+  .chip.q{background:var(--q)} .chip.s{background:var(--s);color:#fff} .chip.r{background:var(--r)} .chip.rr{background:var(--rr);color:#fff}
+
+  /* ------- une section de thème = <details> natif (aucun JS) ------- */
+  details.theme{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    margin:12px 0;overflow:hidden
+  }
+  details.theme>summary{
+    list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px;
+    user-select:none
+  }
+  details.theme>summary::-webkit-details-marker{display:none}
+  .thidx{
+    width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;
+    font-weight:800;font-size:.95rem;color:#08111b;background:var(--accent)
+  }
+  .thtitle{flex:1;min-width:0}
+  .thtitle b{display:block;font-size:1.02rem}
+  .thtitle span{display:block;color:var(--muted);font-size:.76rem;margin-top:1px}
+  .caret{color:var(--muted);transition:transform .18s;font-size:1.1rem}
+  details.theme[open]>summary .caret{transform:rotate(90deg)}
+  .depth{margin-left:auto}
+
+  .items{padding:4px 12px 14px}
+  a.item{
+    display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink);
+    background:var(--card2);border:1px solid var(--line);border-radius:12px;
+    padding:12px 13px;margin:8px 0;min-height:46px
+  }
+  a.item:active{border-color:var(--accent)}
+  a.item .ico{font-size:1.2rem;width:24px;text-align:center;flex:0 0 24px}
+  a.item .lab{flex:1;min-width:0}
+  a.item .lab b{font-weight:650}
+  a.item .lab small{display:block;color:var(--muted);font-size:.74rem}
+  a.item .go{color:var(--muted);font-size:1.1rem}
+
+  /* sous-niveau plus profond (rare) = details imbriqué */
+  details.sub{margin:8px 0 2px;border:1px solid var(--line);border-radius:12px;background:var(--card2)}
+  details.sub>summary{list-style:none;cursor:pointer;padding:11px 13px;display:flex;align-items:center;gap:10px}
+  details.sub>summary::-webkit-details-marker{display:none}
+  details.sub>summary .lab{flex:1;min-width:0}
+  details.sub>summary .lab b{display:block;font-weight:650}
+  details.sub>summary .lab small{display:block;color:var(--muted);font-size:.74rem;margin-top:1px}
+  details.sub .items{padding:0 10px 10px}
+  .deeper{margin:2px 0 0 6px;border-left:2px solid var(--line);padding-left:8px}
+  .note{color:var(--muted);font-size:.75rem;padding:2px 4px 6px}
+  footer{color:var(--muted);font-size:.75rem;text-align:center;margin:22px 0 0;padding:0 10px}
+  .tag{font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin-left:6px;white-space:nowrap}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap" style="padding:0">
+    <h1>Espace prof — PC <span class="tag">maquette</span></h1>
+    <p>Menu rangé par <b>fréquence d'usage</b> (Huffman) : fréquent = près de la racine, rare = plus profond.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>Comment lire :</b> les tuiles du haut s'ouvrent d'un tap (usage quotidien). Ce qui sert
+    <b>rarement</b> — comme le <b>Constructeur de progression</b> — est rangé plus profond, dans
+    « Préparer l'année ». Les feuilles pointent vers les vraies pages du site.
+    <div class="legend">
+      <span class="chip q">quotidien</span>
+      <span class="chip s">souvent</span>
+      <span class="chip r">de temps en temps</span>
+      <span class="chip rr">rare</span>
+    </div>
+  </div>
+
+  <!-- ① AU QUOTIDIEN -->
+  <details class="theme" open>
+    <summary>
+      <span class="thidx" style="background:var(--q)">①</span>
+      <span class="thtitle"><b>Au quotidien</b><span>ce que tu ouvres chaque jour</span></span>
+      <span class="chip q depth">quotidien</span>
+      <span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="ma_semaine.html">
+        <span class="ico">🗓️</span><span class="lab"><b>Ma semaine</b><small>EDT + la séance du jour</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">📓</span><span class="lab"><b>Cahier de textes / séances</b><small>ce qui est fait, le travail donné</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">✅</span><span class="lab"><b>Cocher ce qui est fait</b><small>Suivi de progression</small></span><span class="go">›</span>
+      </a>
+    </div>
+  </details>
+
+  <!-- ② MES ÉLÈVES -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--s);color:#fff">②</span>
+      <span class="thtitle"><b>Mes élèves</b><span>groupes, notes, compétences</span></span>
+      <span class="chip s depth">souvent</span>
+      <span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">👥</span><span class="lab"><b>Élèves &amp; groupes</b><small>classes, G1/G2, roster</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">🎯</span><span class="lab"><b>Notes &amp; compétences</b><small>saisie ECE, barème, /20</small></span><span class="go">›</span>
+      </a>
+    </div>
+  </details>
+
+  <!-- ③ MATÉRIEL -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--r)">③</span>
+      <span class="thtitle"><b>Matériel</b><span>préparer les TP</span></span>
+      <span class="chip r depth">de temps en temps</span>
+      <span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">🧪</span><span class="lab"><b>Matériel</b><small>du jour · du lycée (catalogue)</small></span><span class="go">›</span>
+      </a>
+    </div>
+  </details>
+
+  <!-- ④ PRÉPARER L'ANNÉE (rare, profond) -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:var(--rr);color:#fff">④</span>
+      <span class="thtitle"><b>Préparer l'année</b><span>en début d'année, ou ponctuellement</span></span>
+      <span class="chip rr depth">rare</span>
+      <span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <div class="note">Peu fréquent → rangé ici, et en plein écran quand on l'ouvre.</div>
+
+      <!-- le Constructeur : encore un cran plus profond -->
+      <details class="sub">
+        <summary>
+          <span class="ico" style="font-size:1.2rem">🧭</span>
+          <span class="lab" style="flex:1"><b>Constructeur de progression</b><small>bâtir la progression → boKeys datés</small></span>
+          <span class="caret">›</span>
+        </summary>
+        <div class="items">
+          <div class="deeper">
+            <a class="item" href="constructeur_frise.html">
+              <span class="ico">📊</span><span class="lab"><b>Frise (dates)</b><small>progression datée · export boKeys</small></span><span class="go">›</span>
+            </a>
+            <a class="item" href="constructeur_arbre.html">
+              <span class="ico">🌳</span><span class="lab"><b>Arbre (séances)</b><small>découper le programme en séances</small></span><span class="go">›</span>
+            </a>
+          </div>
+        </div>
+      </details>
+
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">📚</span><span class="lab"><b>Progressions de référence</b><small>découpages B.O. / collègues</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="gestion_v0.1.html">
+        <span class="ico">📅</span><span class="lab"><b>Calendrier / EDT de l'année</b><small>vacances Zone B, créneaux</small></span><span class="go">›</span>
+      </a>
+    </div>
+  </details>
+
+  <!-- ⑤ RÉGLAGES -->
+  <details class="theme">
+    <summary>
+      <span class="thidx" style="background:#5b6b7e;color:#fff">⑤</span>
+      <span class="thtitle"><b>Réglages</b><span>on y touche presque jamais</span></span>
+      <span class="chip rr depth">rare</span>
+      <span class="caret">›</span>
+    </summary>
+    <div class="items">
+      <a class="item" href="#">
+        <span class="ico">🗂️</span><span class="lab"><b>Année scolaire</b><small>2025-26 / 2026-27</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="#">
+        <span class="ico">🔑</span><span class="lab"><b>Comptes &amp; accès</b><small>profs, codes, QR</small></span><span class="go">›</span>
+      </a>
+      <a class="item" href="#">
+        <span class="ico">🎨</span><span class="lab"><b>Thème d'interface</b><small>ambiances</small></span><span class="go">›</span>
+      </a>
+    </div>
+  </details>
+
+  <footer>
+    Maquette de structure — MAÎTRE v29. Aucun JavaScript (menus dépliables natifs) → testable partout,
+    y compris sur iPhone Safari. Rien n'est câblé au-delà de la navigation.
+  </footer>
+</div>
+</body>
+</html>
