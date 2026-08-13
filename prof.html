@@ -162,8 +162,8 @@
           <div class="deeper" id="constrList">
             <!-- rempli par JS : une ligne Frise/Arbre par classe éligible -->
             <div class="clsrow"><div class="two">
-              <a href="constructeur_frise.html">📊 Frise (dates)</a>
-              <a href="constructeur_arbre.html">🌳 Arbre (séances)</a>
+              <a href="constructeur.html?mode=frise">📊 Frise (dates)</a>
+              <a href="constructeur.html?mode=arbre">🌳 Arbre (séances)</a>
             </div></div>
           </div>
           <div class="note" id="constrNote">Choisis le niveau dans l'outil, ou connecte-toi pour voir tes classes ici.</div>
@@ -258,8 +258,8 @@
       return '<div class="clsrow">'
         +'<div class="clab">'+(c.libelle||c.id)+'<span class="ntag">'+(TOKLAB[tok]||tok)+'</span></div>'
         +'<div class="two">'
-        +'<a href="constructeur_frise.html'+q+'">📊 Frise</a>'
-        +'<a href="constructeur_arbre.html'+q+'">🌳 Arbre</a>'
+        +'<a href="constructeur.html'+q+'&mode=frise">📊 Frise</a>'
+        +'<a href="constructeur.html'+q+'&mode=arbre">🌳 Arbre</a>'
         +'</div></div>';
     }).join("");
     if(note) note.textContent="La frise exporte des « boKeys datés » ; reviens ensuite dans Gestion → Constructeur → « Importer depuis la frise » pour cocher le Suivi de la classe.";
