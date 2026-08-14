@@ -197,6 +197,13 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .arbre-caps li .exp{font-style:italic}
 .arbre-caps .cref{font-weight:600;color:var(--accent);margin-right:6px;font-size:12px}
 .arbre-badge{font-size:11px;color:var(--ink-soft,#889);font-weight:400;margin-left:6px}
+.arbre-seances{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px 22px}
+.se-chip{font-size:11px;padding:1px 7px;border-radius:999px;color:#08111b;font-weight:600;white-space:nowrap;border:1px solid rgba(0,0,0,.18)}
+.se-chip b{font-weight:700;font-variant-numeric:tabular-nums;opacity:.82;margin-left:3px}
+.se-cours{background:var(--t-cours)}.se-td{background:var(--t-td)}.se-tp{background:var(--t-tp)}
+.se-tpe{background:var(--t-tpe)}.se-ds{background:var(--t-ds)}.se-tampon{background:var(--t-tampon)}
+.arbre-srclbl{font-size:12px;color:var(--ink-soft,#889);margin:0 0 6px}
+.arbre-srclbl b{color:var(--accent)}
 </style>
 <!-- bannière d'erreur (masquée sauf si l'initialisation JS échoue) -->
 <div id="errBanner" role="alert" style="display:none;background:#d92b2b;color:#fff;padding:10px 14px;
@@ -212,6 +219,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
     <div class="spacer"></div>
     <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">Classe
       <select id="classeSel"></select>
+    </label>
+    <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px" title="Ordre de départ de la progression : B.O. (par défaut) ou une source réelle si elle existe pour ce niveau">Proposition
+      <select id="propSel"></select>
     </label>
     <label style="display:none">Niveau
       <select id="lvlSel">
@@ -1480,18 +1490,50 @@ function compterPerdues(){
 /*ARBRE_VIEW_V30*/
 function _aesc(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';});}
 function _acref(id){var p=String(id).split('.');return p.slice(-2).join('.');}
+/* s\u00e9ances dat\u00e9es et typ\u00e9es (Cours/TP/DS\u2026) inject\u00e9es dans l'arbre \u2014 m\u00eame d\u00e9coupage que la frise */
+function _seType(t){return t==="Cours"?"cours":t==="TD"?"td":t==="TP"?"tp":t==="TP \u00e9valu\u00e9"?"tpe":t==="DS"?"ds":"tampon";}
+function _seLbl(t){return t==="TP \u00e9valu\u00e9"?"TP\u2713":t;}
+function _seDate(d){ if(!(d&&d.getUTCDate))return""; return ("0"+d.getUTCDate()).slice(-2)+"/"+("0"+(d.getUTCMonth()+1)).slice(-2); }
+function _seancesParChap(order){
+  var map={}; try{
+    var plan=construirePlan(order);
+    (plan.sessions||[]).forEach(function(s){
+      if(s.chap!=null && CHAP_BY_ID[s.chap]){ (map[s.chap]=map[s.chap]||[]).push(s); }
+    });
+  }catch(e){}
+  return map;
+}
+function _seStrip(ses){
+  if(!ses||!ses.length) return "";
+  var h='<div class="arbre-seances">';
+  ses.forEach(function(s){
+    var t=s.baseType||s.slot||"Cours", d=_seDate(s.date);
+    h+='<span class="se-chip se-'+_seType(t)+'" title="'+_aesc(t)+(d?(' \u00b7 '+d):'')+(s.ds&&s.note?(' \u2014 '+_aesc(s.note)):'')+'">'+_aesc(_seLbl(t))+(d?' <b>'+d+'</b>':'')+'</span>';
+  });
+  return h+'</div>';
+}
 function renderArbre(){
   var host=document.getElementById('arbreTree'); if(!host) return;
   var order=(STATE&&STATE.order&&STATE.order.length)?STATE.order:DEFAULT_ORDER;
   var byTheme={}; (ORDRE_THEMES||[]).forEach(function(t){byTheme[t]=[];});
   order.forEach(function(id){ var ch=CHAP_BY_ID[id]; if(ch){ (byTheme[ch.theme]=byTheme[ch.theme]||[]).push(ch); } });
-  var html='';
-  (ORDRE_THEMES||[]).forEach(function(tc){
+  var seMap=_seancesParChap(order);
+  // ordre d'affichage des th\u00e8mes = ordre d'apparition dans la progression choisie (proposition)
+  var themeSeq=[]; order.forEach(function(id){var ch=CHAP_BY_ID[id]; if(ch&&themeSeq.indexOf(ch.theme)<0)themeSeq.push(ch.theme);});
+  (ORDRE_THEMES||[]).forEach(function(t){if(themeSeq.indexOf(t)<0)themeSeq.push(t);});
+  var propLbl=(function(){ try{ var ps=propositionsForLevel(level), pid=(STATE&&STATE.proposition)||"bo", p=ps.filter(function(x){return x.id===pid;})[0]||ps[0]; return p?p.label:""; }catch(e){ return ""; } })();
+  var html='<p class="arbre-srclbl">D\u00e9coupage temporel <b>'+_aesc(propLbl)+'</b> \u2014 chaque chapitre est r\u00e9parti en s\u00e9ances dat\u00e9es (Cours / TP / TP\u2713 / TD / DS), comme en mode frise.</p>';
+  themeSeq.forEach(function(tc){
     var chs=byTheme[tc]||[]; if(!chs.length) return;
     var ncaps=chs.reduce(function(n,c){return n+(c.caps?c.caps.length:0);},0);
     html+='<details class="arbre-theme" open><summary>'+_aesc(THEME_LABEL[tc]||tc)+'<span class="arbre-badge">'+chs.length+' chapitres \u00b7 '+ncaps+' capacit\u00e9s</span></summary>';
     chs.forEach(function(ch){
-      html+='<details class="arbre-chap"><summary>'+_aesc(ch.code)+(ch.titre?(' \u2014 '+_aesc(ch.titre)):'')+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s</span></summary><ul class="arbre-caps">';
+      var ses=seMap[ch.id]||[];
+      var span=""; var dated=ses.filter(function(s){return s.date;});
+      if(dated.length){ span=" \u00b7 "+_seDate(dated[0].date)+"\u2192"+_seDate(dated[dated.length-1].date); }
+      html+='<details class="arbre-chap"><summary>'+_aesc(ch.code)+(ch.titre?(' \u2014 '+_aesc(ch.titre)):'')+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+'</span></summary>';
+      html+=_seStrip(ses);
+      html+='<ul class="arbre-caps">';
       (ch.caps||[]).forEach(function(cid){
         var exp=estExp(cid), math=estMath(cid);
         html+='<li><span class="cref">'+_aesc(_acref(cid))+'</span><span class="'+(exp?'exp':'')+'">'+_aesc(capLibelle(cid))+'</span>'+(exp?' <span class="arbre-badge">\u2697 exp</span>':'')+(math?' <span class="arbre-badge">\u0192 maths</span>':'')+'</li>';
@@ -1849,6 +1891,7 @@ function etatVide(){
     miAssign:{},        // chapId -> [refs M&I attachées]  (MESURE_INCERTITUDE_V28)
     dsMerged:{},        // chapId -> true : DS fusionne avec le chapitre PRECEDENT dans l'ordre
     order: DEFAULT_ORDER.slice(),  // ordre des chapitres (ids), reordonnable par glisser
+    proposition: "bo",             // PROPOSITION de départ appliquée (bo = B.O. au poids ; sinon source réelle)
     cursorIdx: -1,                 // index dans la liste des dates de séances (-1 = à initialiser)
     compareOn: false,              // 2e frise (progression réelle) affichée ?
     realMode: "cahier",            // source de la progression réelle : "cahier" (daté) | "chapitres" (auto-séquencé)
@@ -3194,6 +3237,7 @@ function fullRender(){
   renderCursorReadout();
   renderChapters();
   renderMIPanel();   // MESURE_INCERTITUDE_V28 : panneau compteur Mesure & incertitudes
+  try{ fillPropSel(); }catch(e){}/*PROPOSITIONS_V30*/
   try{ if(document.documentElement.getAttribute('data-cmode')==='arbre') renderArbre(); }catch(e){}/*ARBRE_VIEW_V30*/
 }
 
@@ -3229,6 +3273,7 @@ function on(id,evt,fn){ const el=document.getElementById(id); if(el) el.addEvent
 }
 function attacherEcouteurs(){
   on("lvlSel","change",e=>setLevel(e.target.value));
+  on("propSel","change",e=>applyProposition(e.target.value));/*PROPOSITIONS_V30*/
   on("themeBtn","click",()=>{
     const html=document.documentElement;
     const cur=html.getAttribute("data-theme");
@@ -3334,6 +3379,50 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
   fill();
   sel.addEventListener("change",function(){ applyClasse(sel.value); });
   if(asel0) asel0.addEventListener("change",function(){ try{ localStorage.setItem("gestion_majorelle_annee", asel0.value); if(Store.reload)Store.reload(); }catch(e){} fill(); });
+}
+/* ===================== PROPOSITIONS_V30 : ordres de départ proposés =====================
+   Le B.O. est TOUJOURS présent (défaut) : découpage thématique au poids des capacités,
+   réparti dans l'année (Cours/TP/DS), visible en frise ET en arbre. Les autres sources ne
+   sont proposées QUE si des données réelles existent pour le niveau — sinon on laisse un trou.
+   themeOrder = réordonne les BLOCS de thèmes (les chapitres gardent l'ordre B.O. à l'intérieur). */
+var PROPOSITIONS_ALL = {
+  // Tale spé PC — cahier de textes réel de Nicolas 2025-26 : il a monté les ondes très tôt
+  // (Doppler + lunette dès octobre) et repoussé l'énergie tout à la fin (thermo, mai).
+  Tspe: [
+    {id:"cahier_nicolas", label:"Cahier réel — Nicolas 2025-26", themeOrder:["CTM","OND","MOU","ENE"]}
+  ]
+};
+function propositionsForLevel(lv){
+  var bo={id:"bo", label:"B.O. — thématique (défaut)"};
+  return [bo].concat(PROPOSITIONS_ALL[lv]||[]);
+}
+function orderByThemes(themeSeq){
+  var out=[], seen={};
+  (themeSeq||[]).forEach(function(tc){
+    DEFAULT_ORDER.forEach(function(id){ var ch=CHAP_BY_ID[id]; if(ch&&ch.theme===tc&&!seen[id]){out.push(id);seen[id]=1;} });
+  });
+  DEFAULT_ORDER.forEach(function(id){ if(!seen[id]){out.push(id);seen[id]=1;} });
+  return out;
+}
+function fillPropSel(){
+  var sel=document.getElementById("propSel"); if(!sel) return;
+  var props=propositionsForLevel(level);
+  if(sel.getAttribute("data-lv")!==level){
+    sel.innerHTML=props.map(function(p){return '<option value="'+p.id+'">'+_aesc(p.label)+'</option>';}).join("");
+    sel.setAttribute("data-lv",level);
+  }
+  var cur=(STATE&&STATE.proposition)||"bo";
+  if(!props.some(function(p){return p.id===cur;})) cur="bo";
+  sel.value=cur;
+}
+function applyProposition(pid){
+  var props=propositionsForLevel(level);
+  var p=props.filter(function(x){return x.id===pid;})[0]||props[0];
+  STATE.proposition=p.id;
+  STATE.order = p.order ? p.order.slice() : (p.themeOrder ? orderByThemes(p.themeOrder) : DEFAULT_ORDER.slice());
+  STATE.cursorIdx=-1;
+  sauverEtat();
+  fullRender();
 }
 function boot(){
   try{
