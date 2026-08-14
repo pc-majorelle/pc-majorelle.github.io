@@ -87,9 +87,8 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   var saved=null; try{ saved=JSON.parse(localStorage.getItem(LS)); }catch(e){}
   if(saved && saved.role){
     var who=saved.role==="prof"?"enseignant":("classe "+saved.code);
-    document.getElementById("resume").innerHTML='<div class="resume">Déjà connecté : <b>'+who+'</b></div><button class="btn" id="cont">Continuer →</button><button class="btn sec" id="switch">Changer d\'accès</button><hr style="border:none;border-top:1px solid var(--line);margin:16px 0">';
+    document.getElementById("resume").innerHTML='<div class="resume">Déjà connecté : <b>'+who+'</b></div><button class="btn" id="cont">Continuer →</button><hr style="border:none;border-top:1px solid var(--line);margin:16px 0">';
     document.getElementById("cont").onclick=function(){ goTo(saved); };
-    document.getElementById("switch").onclick=function(){ try{localStorage.removeItem(LS);}catch(e){} document.getElementById("resume").innerHTML=""; document.getElementById("code").focus(); };
   }
 })();
 </script>

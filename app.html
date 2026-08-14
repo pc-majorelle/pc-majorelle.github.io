@@ -24,14 +24,16 @@
   .anneebox select{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px}
   .grp{margin:16px 4px 6px;font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  a.tile{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;text-decoration:none;color:var(--ink);min-height:56px;box-shadow:0 1px 2px rgba(20,40,60,.04)}
-  a.tile:active{border-color:var(--accent)}
-  a.tile .ic{font-size:1.3rem;width:28px;text-align:center;flex:0 0 28px}
-  a.tile b{font-weight:600;font-size:.94rem;display:block;line-height:1.15}
-  a.tile small{color:var(--muted);font-size:.72rem}
-  a.tile.wide{grid-column:1 / -1}
-  a.tile.prep{background:#f2edfb}
-  @media (prefers-color-scheme:dark){a.tile.prep{background:#241d38}}
+  .tile{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;text-decoration:none;color:var(--ink);min-height:56px;box-shadow:0 1px 2px rgba(20,40,60,.04)}
+  .tile:active{border-color:var(--accent)}
+  .tile .ic{font-size:1.3rem;width:28px;text-align:center;flex:0 0 28px}
+  .tile b{font-weight:600;font-size:.94rem;display:block;line-height:1.15}
+  .tile small{color:var(--muted);font-size:.72rem}
+  .tile.wide{grid-column:1 / -1}
+  .tile.prep{background:#f2edfb}
+  @media (prefers-color-scheme:dark){.tile.prep{background:#241d38}}
+  .tile.hole{opacity:.55;border-style:dashed;cursor:default;box-shadow:none;background:repeating-linear-gradient(45deg,var(--card),var(--card) 7px,var(--card2) 7px,var(--card2) 14px)}
+  .tile.hole small{color:var(--muted)}
   .foot{color:var(--muted);font-size:.76rem;text-align:center;margin:22px 10px 0;line-height:1.5}
 </style>
 <style id="pctheme-css">
@@ -61,33 +63,34 @@
 
   <div class="grp">Au quotidien</div>
   <div class="tiles">
-    <a class="tile" href="ma_semaine.html"><span class="ic">📅</span><span><b>Ma semaine</b><small>EDT + séance du jour</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=seances&solo=1"><span class="ic">📓</span><span><b>Cahier de textes</b><small>séances, travail donné</small></span></a>
+    <span class="tile hole"><span class="ic">📅</span><span><b>Ma semaine</b><small>en construction</small></span></span>
+    <span class="tile hole"><span class="ic">📓</span><span><b>Cahier de textes</b><small>en construction</small></span></span>
     <a class="tile wide" href="suivi.html"><span class="ic">✅</span><span><b>Suivi de progression</b><small>cocher ce qui est fait</small></span></a>
   </div>
 
   <div class="grp">Mes élèves</div>
   <div class="tiles">
-    <a class="tile" href="gestion_v0.1.html?tab=eleves&solo=1"><span class="ic">👥</span><span><b>Élèves &amp; groupes</b><small>classes, G1/G2</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=comp&solo=1"><span class="ic">🎯</span><span><b>Notes &amp; compétences</b><small>ECE, /20</small></span></a>
+    <span class="tile hole"><span class="ic">👥</span><span><b>Élèves &amp; groupes</b><small>en construction</small></span></span>
+    <span class="tile hole"><span class="ic">🎯</span><span><b>Notes &amp; compétences</b><small>en construction</small></span></span>
   </div>
 
   <div class="grp">Préparer l'année</div>
   <div class="tiles">
     <a class="tile prep wide" id="tileConstr" href="constructeur.html"><span class="ic">🧭</span><span><b>Constructeur de progression</b><small>frise (dates) ⇄ arbre (séances)</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=progressions&solo=1"><span class="ic">📚</span><span><b>Progressions de réf.</b><small>B.O. / collègues</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=calendrier&solo=1"><span class="ic">🗓️</span><span><b>Calendrier</b><small>vacances Zone B</small></span></a>
+    <span class="tile hole"><span class="ic">📚</span><span><b>Progressions de réf.</b><small>en construction</small></span></span>
+    <span class="tile hole"><span class="ic">🗓️</span><span><b>Calendrier</b><small>en construction</small></span></span>
   </div>
 
   <div class="grp">Matériel &amp; réglages</div>
   <div class="tiles">
-    <a class="tile" href="gestion_v0.1.html?tab=materiel&solo=1"><span class="ic">🧪</span><span><b>Matériel</b><small>du jour · lycée</small></span></a>
-    <a class="tile" href="classes.html"><span class="ic">⚙️</span><span><b>Réglages / classes</b><small>classes · classe active · groupes</small></span></a>
+    <span class="tile hole"><span class="ic">🧪</span><span><b>Matériel</b><small>en construction</small></span></span>
+    <a class="tile" href="classes.html"><span class="ic">⚙️</span><span><b>Réglages / classes</b><small>classe active · groupes</small></span></a>
   </div>
 
   <div class="foot">
-    Base neuve : un seul menu (cet accueil). Chaque outil s'ouvre en plein écran et revient par « ‹ Accueil ».
-    Les outils déjà construits (gestionnaire, constructeur, semaine) sont rebranchés ici, sans menu en double.
+    Base neuve : un seul menu (cet accueil). Les tuiles <b>grisées « en construction »</b> sont en cours de
+    reconstruction à partir des données — seules les pages reconstruites sont actives, pour éviter tout menu
+    en double ou retour incohérent. Chaque outil s'ouvre en plein écran et revient par « ‹ Accueil ».
   </div>
 </div>
 
@@ -96,43 +99,44 @@
 
 <script src="store.js"></script>
 <script>
-/* BASE_NEUVE : classe active partagée (store) + Constructeur ouvert sur elle */
+/* BASE_NEUVE : contexte prof + année + classe active — tout se rafraîchit au changement d'année */
 (function(){
-  var sel=document.getElementById("classe"); if(!sel) return;
-  var cs=Store.classesProf();
-  function friseTok(id){ return Store.niveauToken(id); }
-  function refreshConstr(){
-    var t=document.getElementById("tileConstr"); if(!t) return;
-    var id=Store.classeActive(), tok=id?friseTok(id):null;
-    t.href = tok ? ("constructeur.html?niveau="+encodeURIComponent(tok)+"&classe="+encodeURIComponent(id)) : "constructeur.html";
-  }
-  if(!cs.length){ sel.innerHTML='<option>—</option>'; refreshConstr(); return; }
-  var act=Store.classeActive();
-  sel.innerHTML=cs.map(function(c){return '<option value="'+c.id+'"'+(c.id===act?' selected':'')+'>'+(c.libelle||c.id)+'</option>';}).join("");
-  Store.setClasseActive(sel.value);
-  refreshConstr();
-  sel.addEventListener("change",function(){ Store.setClasseActive(sel.value); refreshConstr(); });
-})();
-</script>
-<script>
-/* contexte prof + année */
-(function(){
-  var LS="pcmajo_acces", a=null;
-  try{a=JSON.parse(sessionStorage.getItem(LS));}catch(e){}
-  if(!a){try{a=JSON.parse(localStorage.getItem(LS));}catch(e){}}
-  if(a&&a.role==="prof"&&a.prenom){ document.getElementById("h1").textContent="Espace "+a.prenom; }
-  var classes=(a&&a.role==="prof"&&Array.isArray(a.classes))?a.classes:[];
-  if(classes.length){ document.getElementById("cls").innerHTML=classes.map(function(c){return '<span class="clschip">'+(c.libelle||c.id)+'</span>';}).join(""); }
-  // année (pilote le gestionnaire)
-  var ANNEES_KEY="gestion_majorelle_annees", PREF="gestion_majorelle_annee";
+  var a=Store.acces();
+  if(a&&a.prenom){ var h=document.getElementById("h1"); if(h)h.textContent="Espace "+a.prenom; }
+  var selA=document.getElementById("annee"), selC=document.getElementById("classe"), cls=document.getElementById("cls");
+  var PREF="gestion_majorelle_annee", ANNEES_KEY="gestion_majorelle_annees";
   var list; try{list=JSON.parse(localStorage.getItem(ANNEES_KEY));}catch(e){}
   if(!Array.isArray(list)||!list.length) list=["2025-2026","2026-2027"];
   var cur; try{cur=localStorage.getItem(PREF);}catch(e){}
   if(list.indexOf(cur)<0) cur=list[0];
-  var sel=document.getElementById("annee");
-  sel.innerHTML=list.map(function(x){return '<option'+(x===cur?' selected':'')+'>'+x+'</option>';}).join("");
   try{localStorage.setItem(PREF,cur);}catch(e){}
-  sel.addEventListener("change",function(){try{localStorage.setItem(PREF,sel.value);}catch(e){}});
+  if(selA) selA.innerHTML=list.map(function(x){return '<option'+(x===cur?' selected':'')+'>'+x+'</option>';}).join("");
+
+  function refreshConstr(){
+    var t=document.getElementById("tileConstr"); if(!t) return;
+    var id=Store.classeActive(), tok=id?Store.niveauToken(id):null;
+    t.href = tok ? ("constructeur.html?niveau="+encodeURIComponent(tok)+"&classe="+encodeURIComponent(id)) : "constructeur.html";
+  }
+  function refreshClasses(){
+    var csv=Store.classesProf();                          // classes de l'ANNÉE courante
+    if(cls) cls.innerHTML=csv.map(function(c){return '<span class="clschip">'+(c.libelle||c.id)+'</span>';}).join("");
+    if(selC){
+      if(!csv.length){ selC.innerHTML='<option>—</option>'; }
+      else{
+        var act=Store.classeActive();
+        selC.innerHTML=csv.map(function(c){return '<option value="'+c.id+'"'+(c.id===act?' selected':'')+'>'+(c.libelle||c.id)+'</option>';}).join("");
+        Store.setClasseActive(selC.value);
+      }
+    }
+    refreshConstr();
+  }
+  refreshClasses();
+  if(selC) selC.addEventListener("change",function(){ Store.setClasseActive(selC.value); refreshConstr(); });
+  if(selA) selA.addEventListener("change",function(){
+    try{localStorage.setItem(PREF,selA.value);}catch(e){}
+    Store.reload();          // nouvelle année -> store de l'année -> classes de l'année
+    refreshClasses();
+  });
 })();
 </script>
 <script>

@@ -19,11 +19,23 @@ window.Store = (function(){
   function persist(){ try{ localStorage.setItem(key(), JSON.stringify(state)); }catch(e){} }
   function reload(){ state = read(); }   // à appeler si l'année change
 
-  /* classes réelles du prof = depuis le login (AUTH), source de vérité des classes */
-  function classesProf(){ var a=acces(); return (a && Array.isArray(a.classes)) ? a.classes : []; }
+  /* classes du login (AUTH) = réelles pour 2025-2026 */
+  function classesAuth(){ var a=acces(); return (a && Array.isArray(a.classes)) ? a.classes : []; }
+  /* classes POUR UNE ANNÉE donnée. 2025-2026 = réelles (AUTH). Autres années = classes d'ESSAI
+     (numéros fixés par le MAÎTRE en attendant les vraies) — visiblement distinctes pour ne pas confondre. */
+  function classesForAnnee(an){
+    an = an || annee();
+    var base = classesAuth();
+    if(an === "2025-2026") return base;
+    return base.map(function(c){
+      return { id:c.id, libelle:c.libelle+" · essai "+an, niveau:c.niveau, creneaux:c.creneaux, essai:true };
+    });
+  }
+  /* classes du prof pour l'année COURANTE */
+  function classesProf(){ return classesForAnnee(annee()); }
   function classeById(id){ return classesProf().find(function(c){return c.id===id;}) || null; }
 
-  /* classe active (persistée) */
+  /* classe active (persistée, PAR ANNÉE car la clé du store inclut l'année) */
   function classeActive(){
     if(state.classeActive && classeById(state.classeActive)) return state.classeActive;
     var cs=classesProf(); return cs.length ? cs[0].id : null;
