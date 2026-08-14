@@ -1740,6 +1740,7 @@ function injectLevelColors(){
 function rebuildDerived(lv){
   if(!TREES_ALL[lv]) lv="Tsti";
   level = lv;
+  CHAPSET_ACTIVE=null;   /*FINECHAP_V30 : toute reconstruction B.O. sort du mode fin*/
   TREE = TREES_ALL[lv];
   CAPS = CAPS_ALL[lv];
   MI_THEME = TREE.mi_theme || "MI";
@@ -3406,23 +3407,29 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
 //  sont complétés à la fin dans l'ordre B.O. Chaque source réelle est convertie à la granularité des
 //  chapitres B.O. du constructeur (les chapitres fins d'une source qui retombent dans un même chapitre
 //  B.O. sont regroupés ; l'ordre = 1re apparition). themeOrder reste supporté (réordre de blocs).
+/* FINECHAP_V30 : jeux de chapitres FINS (découpage du livre BELIN) commutables par proposition.
+   Chaque chapitre fin = groupe de capacités B.O. (mêmes refs que le socle), décliné ensuite en
+   Cours/TD/TP/DS par construirePlan. Le B.O. (12 chapitres) reste la vue par défaut. */
+var FINECHAP_ALL = { Tspe: {"chapters": [{"code": "L1", "titre": "Les transformations acide-base", "theme": "CTM", "caps": ["GEN-T-CTM.1.01.CE01", "GEN-T-CTM.1.02.CE01", "GEN-T-CTM.1.03.CE01", "GEN-T-CTM.1.04.CE01", "GEN-T-CTM.1.04.AE01", "GEN-T-CTM.1.04.CM01"]}, {"code": "L2", "titre": "Analyser un système par des méthodes physiques", "theme": "CTM", "caps": ["GEN-T-CTM.1.05.CE01", "GEN-T-CTM.1.05.AE01", "GEN-T-CTM.1.06.CE01"]}, {"code": "L3", "titre": "Analyser un système par des méthodes chimiques (titrages)", "theme": "CTM", "caps": ["GEN-T-CTM.1.07.AE01", "GEN-T-CTM.1.08.CE01", "GEN-T-CTM.1.08.CE02", "GEN-T-CTM.1.08.CE03", "GEN-T-CTM.1.08.AE01", "GEN-T-CTM.1.08.AE02", "GEN-T-CTM.1.08.CN01"]}, {"code": "L4", "titre": "Suivi temporel et modélisation macroscopique (cinétique)", "theme": "CTM", "caps": ["GEN-T-CTM.2.01.CE01", "GEN-T-CTM.2.01.CE02", "GEN-T-CTM.2.01.AE01", "GEN-T-CTM.2.01.CE03"]}, {"code": "L5", "titre": "Loi cinétique et modélisation microscopique", "theme": "CTM", "caps": ["GEN-T-CTM.2.02.CE01", "GEN-T-CTM.2.02.CN01", "GEN-T-CTM.2.02.CM01", "GEN-T-CTM.2.03.CE01", "GEN-T-CTM.2.03.CE02", "GEN-T-CTM.2.03.CE03", "GEN-T-CTM.2.03.CE04"]}, {"code": "L6", "titre": "Évolution temporelle d'une transformation nucléaire", "theme": "CTM", "caps": ["GEN-T-CTM.2.04.CE01", "GEN-T-CTM.2.04.CE02", "GEN-T-CTM.2.04.CE03", "GEN-T-CTM.2.04.CE04", "GEN-T-CTM.2.04.CE05", "GEN-T-CTM.2.04.CE06", "GEN-T-CTM.2.04.CN01"]}, {"code": "L7", "titre": "Évolution spontanée d'un système chimique", "theme": "CTM", "caps": ["GEN-T-CTM.3.01.CE01", "GEN-T-CTM.3.01.AE01", "GEN-T-CTM.3.02.CE01", "GEN-T-CTM.3.02.CE02", "GEN-T-CTM.3.02.AE01", "GEN-T-CTM.3.03.AE01", "GEN-T-CTM.3.04.CE01", "GEN-T-CTM.3.04.CE02", "GEN-T-CTM.3.04.CE03", "GEN-T-CTM.3.04.AE01", "GEN-T-CTM.3.05.CE01", "GEN-T-CTM.3.05.CE02", "GEN-T-CTM.3.12.CE01"]}, {"code": "L8", "titre": "Comparer la force des acides et des bases", "theme": "CTM", "caps": ["GEN-T-CTM.3.06.CE01", "GEN-T-CTM.3.06.AE01", "GEN-T-CTM.3.07.CE01", "GEN-T-CTM.3.07.CE02", "GEN-T-CTM.3.07.CE03", "GEN-T-CTM.3.07.AE01", "GEN-T-CTM.3.07.CN01", "GEN-T-CTM.3.07.CM01", "GEN-T-CTM.3.08.CE01", "GEN-T-CTM.3.09.CE01", "GEN-T-CTM.3.09.CE02", "GEN-T-CTM.3.09.CE03", "GEN-T-CTM.3.09.CN01", "GEN-T-CTM.3.10.CE01"]}, {"code": "L9", "titre": "Forcer le sens d'évolution d'un système (électrolyse)", "theme": "CTM", "caps": ["GEN-T-CTM.3.11.CE01", "GEN-T-CTM.3.11.CE02", "GEN-T-CTM.3.11.AE01"]}, {"code": "L10", "titre": "Structures et propriétés", "theme": "CTM", "caps": ["GEN-T-CTM.4.01.CE01", "GEN-T-CTM.4.01.CE02", "GEN-T-CTM.4.02.CE01", "GEN-T-CTM.4.02.CE02"]}, {"code": "L11", "titre": "Stratégies de synthèse multi-étapes", "theme": "CTM", "caps": ["GEN-T-CTM.4.03.CE01", "GEN-T-CTM.4.03.CE02", "GEN-T-CTM.4.03.AE01", "GEN-T-CTM.4.04.CE01", "GEN-T-CTM.4.04.CE02", "GEN-T-CTM.4.04.CE03", "GEN-T-CTM.4.04.AE01", "GEN-T-CTM.4.05.CE01"]}, {"code": "L12", "titre": "Décrire un mouvement", "theme": "MOU", "caps": ["GEN-T-MOU.1.01.CE01", "GEN-T-MOU.1.01.CE02", "GEN-T-MOU.1.02.CE01", "GEN-T-MOU.1.03.CE01", "GEN-T-MOU.1.03.AE01", "GEN-T-MOU.1.03.CN01", "GEN-T-MOU.1.03.CM01"]}, {"code": "L13", "titre": "Mouvement dans un champ uniforme", "theme": "MOU", "caps": ["GEN-T-MOU.2.01.CE01", "GEN-T-MOU.2.02.CE01", "GEN-T-MOU.2.02.CE02", "GEN-T-MOU.2.03.CE01", "GEN-T-MOU.2.03.CE02", "GEN-T-MOU.2.03.CE03", "GEN-T-MOU.2.03.CE04", "GEN-T-MOU.2.04.CE01", "GEN-T-MOU.2.05.CE01", "GEN-T-MOU.2.05.AE01", "GEN-T-MOU.2.05.CN01", "GEN-T-MOU.2.05.CM01"]}, {"code": "L14", "titre": "Étudier le mouvement des satellites", "theme": "MOU", "caps": ["GEN-T-MOU.2.06.CE01", "GEN-T-MOU.2.06.CE02", "GEN-T-MOU.2.06.CN01"]}, {"code": "L15", "titre": "Modéliser l'écoulement d'un fluide", "theme": "MOU", "caps": ["GEN-T-MOU.3.01.CE01", "GEN-T-MOU.3.01.CE02", "GEN-T-MOU.3.01.AE01", "GEN-T-MOU.3.01.CE03", "GEN-T-MOU.3.02.CE01", "GEN-T-MOU.3.02.AE01"]}, {"code": "L16", "titre": "Gaz parfait et bilan d'énergie d'un système", "theme": "ENE", "caps": ["GEN-T-ENE.1.01.CE01", "GEN-T-ENE.1.02.CE01", "GEN-T-ENE.1.02.CE02", "GEN-T-ENE.2.01.CE01", "GEN-T-ENE.2.02.CE01", "GEN-T-ENE.2.02.CE02", "GEN-T-ENE.2.03.CE01", "GEN-T-ENE.2.03.AE01", "GEN-T-ENE.2.04.CE01", "GEN-T-ENE.2.04.CE02", "GEN-T-ENE.2.05.CE01", "GEN-T-ENE.2.05.CE02", "GEN-T-ENE.2.06.CE01", "GEN-T-ENE.2.06.AE01", "GEN-T-ENE.2.06.CM01"]}, {"code": "L17", "titre": "Propriétés des ondes (sons, Doppler, diffraction, interférences)", "theme": "OND", "caps": ["GEN-T-OND.1.01.CE01", "GEN-T-OND.1.01.AE01", "GEN-T-OND.1.01.CM01", "GEN-T-OND.1.02.CE01", "GEN-T-OND.1.02.CE02", "GEN-T-OND.1.02.AE01", "GEN-T-OND.1.02.AE02", "GEN-T-OND.1.03.CE01", "GEN-T-OND.1.03.CE02", "GEN-T-OND.1.03.AE01", "GEN-T-OND.1.04.CE01", "GEN-T-OND.1.04.AE01", "GEN-T-OND.1.04.CN01", "GEN-T-OND.1.05.CE01", "GEN-T-OND.1.05.CE02", "GEN-T-OND.1.05.CE03", "GEN-T-OND.1.05.AE01"]}, {"code": "L18", "titre": "La lunette astronomique", "theme": "OND", "caps": ["GEN-T-OND.2.01.CE01", "GEN-T-OND.2.01.CE02", "GEN-T-OND.2.01.CE03", "GEN-T-OND.2.01.CE04", "GEN-T-OND.2.01.AE01", "GEN-T-OND.2.01.AE02"]}, {"code": "L19", "titre": "L'effet photoélectrique", "theme": "OND", "caps": ["GEN-T-OND.2.02.CE01", "GEN-T-OND.2.02.CE02", "GEN-T-OND.2.02.CE03", "GEN-T-OND.2.02.CE04", "GEN-T-OND.2.03.CE01", "GEN-T-OND.2.03.CE02"]}, {"code": "L20", "titre": "Étudier la dynamique d'un système électrique (RC)", "theme": "OND", "caps": ["GEN-T-OND.3.01.CE01", "GEN-T-OND.3.02.CE01", "GEN-T-OND.3.03.CE01", "GEN-T-OND.3.03.AE01", "GEN-T-OND.3.03.AE02", "GEN-T-OND.3.04.CE01", "GEN-T-OND.3.05.CE01", "GEN-T-OND.3.05.AE01", "GEN-T-OND.3.05.AE02", "GEN-T-OND.3.05.CM01"]}], "canon": ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19", "L20"], "cahier": ["L1", "L2", "L3", "L17", "L18", "L4", "L5", "L6", "L7", "L12", "L13", "L14", "L8", "L9", "L15", "L11", "L20", "L19", "L16", "L10"]} };
+var CHAPSET_ACTIVE = null;   // null = chapitres B.O. ; sinon id du jeu de chapitres fins actif
+function applyChapSet(fines){
+  CHAPITRES = (fines||[]).map(function(f){
+    return {id:f.theme+"."+f.code, theme:f.theme, themeLabel:(THEME_LABEL[f.theme]||f.theme),
+            code:f.code, titre:f.titre, caps:(f.caps||[]).slice()};
+  });
+  CHAP_BY_ID={}; CHAPITRES.forEach(function(ch){CHAP_BY_ID[ch.id]=ch;});
+  DEFAULT_ORDER = CHAPITRES.map(function(ch){return ch.id;});
+  TOTAL_CAPS = CHAPITRES.reduce(function(n,c){return n+c.caps.length;},0) + ((typeof MI_CAPS!=="undefined"&&MI_CAPS)?MI_CAPS.length:0);
+}
 var PROPOSITIONS_ALL = {
-  // Tale spé PC — 3 sources réelles de Nicolas (mêmes chapitres B.O., ordres différents).
+  // Tale spé PC — jeux de chapitres FINS (20 chapitres du livre), mêmes capacités, ordres différents.
   Tspe: [
-    // Cahier de textes RÉEL 2025-26 : ondes montées très tôt (Doppler oct., lunette nov.),
-    // énergie/thermo repoussée tout à la fin (mai) — ordre entrelacé réellement enseigné.
-    {id:"cahier_nicolas", label:"Nicolas — cahier réel 2025-26 (enseigné)",
-     chapCodeOrder:["CTM1","OND1","OND2","CTM2","CTM3","MOU1","MOU2","MOU3","CTM4","OND3","ENE1","ENE2"]},
-    // Dossiers de cours (1_cours\6_Tale_spePC) : numérotés dans l'ordre canonique B.O.
-    {id:"dossiers_nicolas", label:"Nicolas — dossiers de cours (ordre B.O.)",
-     chapCodeOrder:["CTM1","CTM2","CTM3","CTM4","MOU1","MOU2","MOU3","ENE1","ENE2","OND1","OND2","OND3"]},
-    // Progression écrite (Progression_0Partie_1_2_3_4.pdf) : plan prévu, ordre canonique B.O.
-    {id:"doc_nicolas", label:"Nicolas — progression écrite / doc (ordre B.O.)",
-     chapCodeOrder:["CTM1","CTM2","CTM3","CTM4","MOU1","MOU2","MOU3","ENE1","ENE2","OND1","OND2","OND3"]}
+    {id:"livre", label:"Livre BELIN — 20 chapitres (fin)", chapset:"Tspe"},
+    {id:"cahier_nicolas", label:"Nicolas — cahier réel 2025-26 (fin, daté)", chapset:"Tspe", orderCodes:["L1", "L2", "L3", "L17", "L18", "L4", "L5", "L6", "L7", "L12", "L13", "L14", "L8", "L9", "L15", "L11", "L20", "L19", "L16", "L10"]}
   ]
 };
 function propositionsForLevel(lv){
-  var bo={id:"bo", label:"B.O. — thématique (défaut)"};
+  var bo={id:"bo", label:"B.O. — 12 chapitres (défaut)"};
   return [bo].concat(PROPOSITIONS_ALL[lv]||[]);
 }
 function orderByChapCodes(codes){
@@ -3455,8 +3462,12 @@ function applyProposition(pid){
   var props=propositionsForLevel(level);
   var p=props.filter(function(x){return x.id===pid;})[0]||props[0];
   STATE.proposition=p.id;
-  STATE.order = p.order ? p.order.slice()
-              : p.chapCodeOrder ? orderByChapCodes(p.chapCodeOrder)
+  var fine=(p.chapset && FINECHAP_ALL[level]) ? FINECHAP_ALL[level] : null;
+  if(fine){ applyChapSet(fine.chapters); CHAPSET_ACTIVE=p.chapset; }
+  else if(CHAPSET_ACTIVE){ rebuildDerived(level); CHAPSET_ACTIVE=null; }
+  var codes = p.orderCodes ? p.orderCodes : (fine ? fine.canon : (p.chapCodeOrder||null));
+  STATE.order = codes ? orderByChapCodes(codes)
+              : p.order ? p.order.slice()
               : p.themeOrder ? orderByThemes(p.themeOrder)
               : DEFAULT_ORDER.slice();
   STATE.cursorIdx=-1;
@@ -3478,6 +3489,7 @@ function boot(){
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
+    try{ if(STATE.proposition && STATE.proposition!=="bo" && FINECHAP_ALL[level]) applyProposition(STATE.proposition); }catch(e){}   /*FINECHAP_V30 : ré-applique le jeu de chapitres fin sauvegardé*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");
