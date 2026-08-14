@@ -173,6 +173,8 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 </style>
 </head>
 <body>
+<script src="classes_annee.js"></script>
+<script src="store.js"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -208,7 +210,10 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
       <div class="sub" id="subLine">Terminale STI2D — Physique-chimie &nbsp;•&nbsp; Zone B &nbsp;•&nbsp; prototype PROF v0.13</div>
     </div>
     <div class="spacer"></div>
-    <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">Niveau
+    <label style="font-size:13px;display:inline-flex;align-items:center;gap:6px">Classe
+      <select id="classeSel"></select>
+    </label>
+    <label style="display:none">Niveau
       <select id="lvlSel">
         <option value="Tsti">Tale STI2D</option>
         <option value="2nde">Seconde générale</option>
@@ -3302,6 +3307,34 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
   }catch(e){ try{alert("Export boKeys : "+(e&&e.message?e.message:e));}catch(_){}}
 }
 
+/*CLASSE_SEL_V30*/ function initClasseSel(){
+  var sel=document.getElementById("classeSel"); if(!sel) return;
+  if(typeof Store==="undefined"){ sel.innerHTML='<option>—</option>'; return; }
+  // aligner la liste sur l'année affichée par le constructeur
+  var asel0=document.getElementById("anneeSel");
+  if(asel0){ try{ localStorage.setItem("gestion_majorelle_annee", asel0.value); if(Store.reload)Store.reload(); }catch(e){} }
+  function eligible(){ return Store.classesProf().filter(function(c){ return !!Store.niveauToken(c.id); }); }
+  function applyClasse(id){
+    if(!id) return;
+    var tok=Store.niveauToken(id); if(!tok) return;
+    try{ __MENUCTX=__MENUCTX||{}; __MENUCTX.classe=id; }catch(e){}
+    try{ Store.setClasseActive(id); }catch(e){}
+    if(tok!==level) setLevel(tok);
+    var cl=Store.classeById(id);
+    try{ document.title="Constructeur — "+((cl&&cl.libelle)||id); }catch(e){}
+  }
+  function fill(){
+    var cs=eligible();
+    if(!cs.length){ sel.innerHTML='<option value="">— aucune classe lycée PC —</option>'; return; }
+    var want=null; try{ want=(__MENUCTX&&__MENUCTX.classe)||Store.classeActive(); }catch(e){}
+    if(!cs.some(function(c){return c.id===want;})) want=cs[0].id;
+    sel.innerHTML=cs.map(function(c){ return '<option value="'+c.id+'"'+(c.id===want?' selected':'')+'>'+String(c.libelle||c.id).replace(/</g,'&lt;')+'</option>'; }).join("");
+    applyClasse(sel.value);
+  }
+  fill();
+  sel.addEventListener("change",function(){ applyClasse(sel.value); });
+  if(asel0) asel0.addEventListener("change",function(){ try{ localStorage.setItem("gestion_majorelle_annee", asel0.value); if(Store.reload)Store.reload(); }catch(e){} fill(); });
+}
 function boot(){
   try{
     injectLevelColors();
@@ -3316,7 +3349,7 @@ function boot(){
     /*UNIFY_I1_V30*/ try{ var _m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"frise"; setMode(_m);
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
-    try{ if(__MENUCTX&&__MENUCTX.classe){ var _h=document.querySelector("header"); if(_h){ var _s=document.createElement("span"); _s.style.cssText="margin-left:8px;padding:2px 9px;border-radius:999px;background:var(--accent,#4aa3ff);color:#08111b;font-weight:700;font-size:12px"; _s.textContent="Classe : "+__MENUCTX.classe; _h.appendChild(_s);} document.title="Constructeur "+level+" \u2014 "+__MENUCTX.classe; } }catch(e){}   /*MENU_CTX_V30*/
+    try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");
