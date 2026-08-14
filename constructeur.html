@@ -3385,16 +3385,35 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
    réparti dans l'année (Cours/TP/DS), visible en frise ET en arbre. Les autres sources ne
    sont proposées QUE si des données réelles existent pour le niveau — sinon on laisse un trou.
    themeOrder = réordonne les BLOCS de thèmes (les chapitres gardent l'ordre B.O. à l'intérieur). */
+//  chapCodeOrder = ordre des chapitres (par CODE, ex. "CTM1") pour CETTE source ; les codes absents
+//  sont complétés à la fin dans l'ordre B.O. Chaque source réelle est convertie à la granularité des
+//  chapitres B.O. du constructeur (les chapitres fins d'une source qui retombent dans un même chapitre
+//  B.O. sont regroupés ; l'ordre = 1re apparition). themeOrder reste supporté (réordre de blocs).
 var PROPOSITIONS_ALL = {
-  // Tale spé PC — cahier de textes réel de Nicolas 2025-26 : il a monté les ondes très tôt
-  // (Doppler + lunette dès octobre) et repoussé l'énergie tout à la fin (thermo, mai).
+  // Tale spé PC — 3 sources réelles de Nicolas (mêmes chapitres B.O., ordres différents).
   Tspe: [
-    {id:"cahier_nicolas", label:"Cahier réel — Nicolas 2025-26", themeOrder:["CTM","OND","MOU","ENE"]}
+    // Cahier de textes RÉEL 2025-26 : ondes montées très tôt (Doppler oct., lunette nov.),
+    // énergie/thermo repoussée tout à la fin (mai) — ordre entrelacé réellement enseigné.
+    {id:"cahier_nicolas", label:"Nicolas — cahier réel 2025-26 (enseigné)",
+     chapCodeOrder:["CTM1","OND1","OND2","CTM2","CTM3","MOU1","MOU2","MOU3","CTM4","OND3","ENE1","ENE2"]},
+    // Dossiers de cours (1_cours\6_Tale_spePC) : numérotés dans l'ordre canonique B.O.
+    {id:"dossiers_nicolas", label:"Nicolas — dossiers de cours (ordre B.O.)",
+     chapCodeOrder:["CTM1","CTM2","CTM3","CTM4","MOU1","MOU2","MOU3","ENE1","ENE2","OND1","OND2","OND3"]},
+    // Progression écrite (Progression_0Partie_1_2_3_4.pdf) : plan prévu, ordre canonique B.O.
+    {id:"doc_nicolas", label:"Nicolas — progression écrite / doc (ordre B.O.)",
+     chapCodeOrder:["CTM1","CTM2","CTM3","CTM4","MOU1","MOU2","MOU3","ENE1","ENE2","OND1","OND2","OND3"]}
   ]
 };
 function propositionsForLevel(lv){
   var bo={id:"bo", label:"B.O. — thématique (défaut)"};
   return [bo].concat(PROPOSITIONS_ALL[lv]||[]);
+}
+function orderByChapCodes(codes){
+  var byCode={}; DEFAULT_ORDER.forEach(function(id){ var ch=CHAP_BY_ID[id]; if(ch) byCode[String(ch.code).toUpperCase()]=id; });
+  var out=[], seen={};
+  (codes||[]).forEach(function(c){ var id=byCode[String(c).toUpperCase()]; if(id&&!seen[id]){out.push(id);seen[id]=1;} });
+  DEFAULT_ORDER.forEach(function(id){ if(!seen[id]){out.push(id);seen[id]=1;} });
+  return out;
 }
 function orderByThemes(themeSeq){
   var out=[], seen={};
@@ -3419,7 +3438,10 @@ function applyProposition(pid){
   var props=propositionsForLevel(level);
   var p=props.filter(function(x){return x.id===pid;})[0]||props[0];
   STATE.proposition=p.id;
-  STATE.order = p.order ? p.order.slice() : (p.themeOrder ? orderByThemes(p.themeOrder) : DEFAULT_ORDER.slice());
+  STATE.order = p.order ? p.order.slice()
+              : p.chapCodeOrder ? orderByChapCodes(p.chapCodeOrder)
+              : p.themeOrder ? orderByThemes(p.themeOrder)
+              : DEFAULT_ORDER.slice();
   STATE.cursorIdx=-1;
   sauverEtat();
   fullRender();
