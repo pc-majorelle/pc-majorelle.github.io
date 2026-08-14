@@ -56,13 +56,14 @@
 <div class="wrap">
   <div class="bar">
     <div class="anneebox"><label for="annee">📅 Année</label><select id="annee"></select></div>
+    <div class="anneebox"><label for="classe">🎓 Classe active</label><select id="classe"></select></div>
   </div>
 
   <div class="grp">Au quotidien</div>
   <div class="tiles">
     <a class="tile" href="ma_semaine.html"><span class="ic">📅</span><span><b>Ma semaine</b><small>EDT + séance du jour</small></span></a>
     <a class="tile" href="gestion_v0.1.html?tab=seances&solo=1"><span class="ic">📓</span><span><b>Cahier de textes</b><small>séances, travail donné</small></span></a>
-    <a class="tile wide" href="gestion_v0.1.html?tab=suivi&solo=1"><span class="ic">✅</span><span><b>Suivi de progression</b><small>cocher ce qui est fait</small></span></a>
+    <a class="tile wide" href="suivi.html"><span class="ic">✅</span><span><b>Suivi de progression</b><small>cocher ce qui est fait</small></span></a>
   </div>
 
   <div class="grp">Mes élèves</div>
@@ -73,7 +74,7 @@
 
   <div class="grp">Préparer l'année</div>
   <div class="tiles">
-    <a class="tile prep wide" href="constructeur.html"><span class="ic">🧭</span><span><b>Constructeur de progression</b><small>frise (dates) ⇄ arbre (séances)</small></span></a>
+    <a class="tile prep wide" id="tileConstr" href="constructeur.html"><span class="ic">🧭</span><span><b>Constructeur de progression</b><small>frise (dates) ⇄ arbre (séances)</small></span></a>
     <a class="tile" href="gestion_v0.1.html?tab=progressions&solo=1"><span class="ic">📚</span><span><b>Progressions de réf.</b><small>B.O. / collègues</small></span></a>
     <a class="tile" href="gestion_v0.1.html?tab=calendrier&solo=1"><span class="ic">🗓️</span><span><b>Calendrier</b><small>vacances Zone B</small></span></a>
   </div>
@@ -81,7 +82,7 @@
   <div class="grp">Matériel &amp; réglages</div>
   <div class="tiles">
     <a class="tile" href="gestion_v0.1.html?tab=materiel&solo=1"><span class="ic">🧪</span><span><b>Matériel</b><small>du jour · lycée</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=classes&solo=1"><span class="ic">⚙️</span><span><b>Réglages / classes</b><small>classes · année · thème</small></span></a>
+    <a class="tile" href="classes.html"><span class="ic">⚙️</span><span><b>Réglages / classes</b><small>classes · classe active · groupes</small></span></a>
   </div>
 
   <div class="foot">
@@ -93,6 +94,26 @@
 <button class="themebtn" id="themeBtn" title="Thème" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 
+<script src="store.js"></script>
+<script>
+/* BASE_NEUVE : classe active partagée (store) + Constructeur ouvert sur elle */
+(function(){
+  var sel=document.getElementById("classe"); if(!sel) return;
+  var cs=Store.classesProf();
+  function friseTok(id){ return Store.niveauToken(id); }
+  function refreshConstr(){
+    var t=document.getElementById("tileConstr"); if(!t) return;
+    var id=Store.classeActive(), tok=id?friseTok(id):null;
+    t.href = tok ? ("constructeur.html?niveau="+encodeURIComponent(tok)+"&classe="+encodeURIComponent(id)) : "constructeur.html";
+  }
+  if(!cs.length){ sel.innerHTML='<option>—</option>'; refreshConstr(); return; }
+  var act=Store.classeActive();
+  sel.innerHTML=cs.map(function(c){return '<option value="'+c.id+'"'+(c.id===act?' selected':'')+'>'+(c.libelle||c.id)+'</option>';}).join("");
+  Store.setClasseActive(sel.value);
+  refreshConstr();
+  sel.addEventListener("change",function(){ Store.setClasseActive(sel.value); refreshConstr(); });
+})();
+</script>
 <script>
 /* contexte prof + année */
 (function(){

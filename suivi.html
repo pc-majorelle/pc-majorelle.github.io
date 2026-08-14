@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324a">
+<title>Suivi — PC Majorelle</title>
+<style>
+  :root{--bg:#f3f5f8;--card:#fff;--card2:#eef2f7;--ink:#16202b;--muted:#5d6b7a;--line:#dde4ec;--accent:#12324a;--ok:#1f9d6b}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--card2:#1e2b3a;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;--ok:#37b98a}}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 calc(60px + env(safe-area-inset-bottom))}
+  .topbar{position:sticky;top:0;z-index:6;background:var(--accent);color:#fff;padding:calc(11px + env(safe-area-inset-top)) 14px 11px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .topbar a.back{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:1px 10px;font-size:15px}
+  .topbar b{font-size:16px;font-weight:600}
+  .topbar .cls{margin-left:auto;font-size:13px;opacity:.9}
+  .prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--line)}
+  .prog .lbl{font-size:.85rem;color:var(--muted);margin-bottom:5px}
+  .prog .lbl b{color:var(--ink)}
+  .bar{height:9px;border-radius:999px;background:var(--card2);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ok);width:0}
+  .wrap{max-width:640px;margin:0 auto;padding:0 12px}
+  details.theme{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:10px 0;overflow:hidden}
+  details.theme>summary{cursor:pointer;padding:12px 14px;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px}
+  details.theme>summary::-webkit-details-marker{display:none}
+  details.theme>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+  details.theme[open]>summary::before{transform:rotate(90deg)}
+  .tcount{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:400}
+  details.chap{margin:6px 10px 8px 18px;border-left:2px solid var(--line);padding-left:10px}
+  details.chap>summary{cursor:pointer;padding:6px 2px;list-style:none;font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:8px}
+  details.chap>summary::-webkit-details-marker{display:none}
+  details.chap>summary::before{content:"▸";color:var(--muted)}
+  details.chap[open]>summary::before{content:"▾"}
+  .chc{margin-left:auto;font-size:.72rem;color:var(--muted);font-weight:400}
+  ul.caps{list-style:none;margin:2px 0 8px;padding:0}
+  ul.caps li{display:flex;gap:10px;align-items:flex-start;padding:7px 2px;border-top:1px dashed var(--line);font-size:.9rem}
+  ul.caps li:first-child{border-top:none}
+  ul.caps input{width:20px;height:20px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--ok)}
+  ul.caps .ref{font-weight:600;color:var(--accent);font-size:.76rem;margin-right:4px}
+  ul.caps li.done label{color:var(--muted);text-decoration:line-through}
+  .exp{font-style:italic}
+  .chapbtns{margin:2px 0 6px;display:flex;gap:8px}
+  .chapbtns button{font:inherit;font-size:.78rem;border:1px solid var(--line);background:var(--card2);color:var(--muted);border-radius:8px;padding:3px 9px;cursor:pointer}
+  .empty{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="topbar"><a class="back" href="app.html">‹ Accueil</a><b>Suivi</b><span class="cls" id="clsName"></span></div>
+<div class="prog"><div class="wrap" style="padding:0"><div class="lbl" id="progLbl">—</div><div class="bar"><i id="progBar"></i></div></div></div>
+<div class="wrap"><div id="tree"></div></div>
+
+<script src="socle_data.js"></script>
+<script src="store.js"></script>
+<script src="pcmajo_ui.js"></script>
+<script>
+(function(){
+  var id=Store.classeActive();
+  var cls=Store.classeById(id);
+  var tok=id?Store.niveauToken(id):null;
+  document.getElementById("clsName").textContent = cls ? (cls.libelle||id) : "—";
+  var tree=document.getElementById("tree");
+  if(!id){ tree.innerHTML='<div class="empty">Choisis d\'abord une classe active (accueil ou Réglages).</div>'; return; }
+  if(!tok || !window.SOCLE || !SOCLE.niveaux[tok]){
+    tree.innerHTML='<div class="empty">La classe <b>'+(cls?cls.libelle:id)+'</b> est hors référentiel lycée PC (ens. scientifique / NSI) — pas de suivi de capacités B.O. ici pour l\'instant.</div>';
+    document.getElementById("progLbl").textContent=""; return;
+  }
+  var N=SOCLE.niveaux[tok];
+  var sv=Store.parClasse(id).suivi;
+  function esc(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';});}
+  function isExp(cap){return !!cap.exp;} function isMath(cap){return !!cap.math;}
+  var allRefs=[];
+  N.themes.forEach(function(th){th.chapters.forEach(function(ch){ch.caps.forEach(function(c){allRefs.push(c.ref);});});});
+  function done(){ return allRefs.filter(function(r){return sv[r]==='done';}).length; }
+  function refreshProg(){
+    var d=done(), t=allRefs.length, pct=t?Math.round(100*d/t):0;
+    document.getElementById("progBar").style.width=pct+"%";
+    document.getElementById("progLbl").innerHTML='<b>'+d+'</b> / '+t+' capacités faites · '+pct+'%';
+  }
+  function chapCount(ch){ var d=ch.caps.filter(function(c){return sv[c.ref]==='done';}).length; return d+'/'+ch.caps.length; }
+  function render(){
+    tree.innerHTML=N.themes.map(function(th){
+      var tc=th.chapters.reduce(function(n,ch){return n+ch.caps.length;},0);
+      var td=th.chapters.reduce(function(n,ch){return n+ch.caps.filter(function(c){return sv[c.ref]==='done';}).length;},0);
+      return '<details class="theme" open><summary>'+esc(th.label)+'<span class="tcount">'+td+'/'+tc+'</span></summary>'
+        + th.chapters.map(function(ch){
+            return '<details class="chap" data-ch="'+esc(ch.code)+'"><summary>'+esc(ch.code)+(ch.titre?(' — '+esc(ch.titre)):'')+'<span class="chc">'+chapCount(ch)+'</span></summary>'
+              +'<div class="chapbtns"><button data-act="all">tout cocher</button><button data-act="none">tout décocher</button></div>'
+              +'<ul class="caps">'+ch.caps.map(function(c){
+                  var dn=sv[c.ref]==='done';
+                  return '<li class="'+(dn?'done':'')+'"><input type="checkbox" data-ref="'+c.ref+'"'+(dn?' checked':'')+'>'
+                    +'<label><span class="ref">'+esc(c.ref.split('.').slice(-2).join('.'))+'</span><span class="'+(isExp(c)?'exp':'')+'">'+esc(c.bo)+'</span>'
+                    +(isExp(c)?' ⚗':'')+(isMath(c)?' ƒ':'')+'</label></li>';
+                }).join('')+'</ul></details>';
+          }).join('')
+        + '</details>';
+    }).join('');
+    // wire checkboxes
+    tree.querySelectorAll('input[data-ref]').forEach(function(cb){
+      cb.addEventListener('change',function(){
+        var r=cb.getAttribute('data-ref');
+        if(cb.checked) sv[r]='done'; else delete sv[r];
+        Store.persist();
+        cb.closest('li').classList.toggle('done',cb.checked);
+        updateCounts(); refreshProg();
+      });
+    });
+    tree.querySelectorAll('.chapbtns button').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var chEl=btn.closest('details.chap'); var code=chEl.getAttribute('data-ch');
+        var ch=null; N.themes.forEach(function(th){th.chapters.forEach(function(x){if(x.code===code)ch=x;});});
+        if(!ch)return; var on=btn.getAttribute('data-act')==='all';
+        ch.caps.forEach(function(c){ if(on)sv[c.ref]='done'; else delete sv[c.ref]; });
+        Store.persist(); render();
+      });
+    });
+    updateCounts(); refreshProg();
+  }
+  function updateCounts(){
+    tree.querySelectorAll('details.chap').forEach(function(chEl){
+      var code=chEl.getAttribute('data-ch'); var ch=null;
+      N.themes.forEach(function(th){th.chapters.forEach(function(x){if(x.code===code)ch=x;});});
+      if(ch){ var el=chEl.querySelector('.chc'); if(el)el.textContent=chapCount(ch); }
+    });
+    N.themes.forEach(function(th,i){
+      var d=th.chapters.reduce(function(n,ch){return n+ch.caps.filter(function(c){return sv[c.ref]==='done';}).length;},0);
+      var t=th.chapters.reduce(function(n,ch){return n+ch.caps.length;},0);
+      var det=tree.querySelectorAll('details.theme')[i]; if(det){var s=det.querySelector('.tcount'); if(s)s.textContent=d+'/'+t;}
+    });
+  }
+  render();
+})();
+</script>
+</body>
+</html>

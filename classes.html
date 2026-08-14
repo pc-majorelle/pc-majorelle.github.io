@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324a">
+<title>Réglages · Classes — PC Majorelle</title>
+<style>
+  :root{--bg:#f3f5f8;--card:#fff;--card2:#eef2f7;--ink:#16202b;--muted:#5d6b7a;--line:#dde4ec;--accent:#12324a}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--card2:#1e2b3a;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57}}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 calc(60px + env(safe-area-inset-bottom))}
+  .topbar{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:calc(11px + env(safe-area-inset-top)) 14px 11px;display:flex;align-items:center;gap:12px}
+  .topbar a.back{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:1px 10px;font-size:15px}
+  .topbar b{font-size:16px;font-weight:600}
+  .wrap{max-width:620px;margin:0 auto;padding:0 14px}
+  .hint{color:var(--muted);font-size:.86rem;margin:14px 4px 2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 1px 2px rgba(20,40,60,.04)}
+  .card.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+  .chead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .chead .lib{font-size:1.05rem;font-weight:700}
+  .pill{font-size:.72rem;border-radius:999px;padding:2px 9px;background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+  .pill.niv{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .cre{margin:8px 0 0;color:var(--muted);font-size:.82rem;display:flex;flex-wrap:wrap;gap:6px}
+  .cre span{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:2px 8px}
+  .row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+  label.ck{display:inline-flex;align-items:center;gap:7px;font-size:.9rem;cursor:pointer}
+  .btn{border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:9px;padding:7px 12px;font:inherit;font-size:.88rem;cursor:pointer}
+  .btn.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .grpbox{margin-top:8px;display:none;gap:8px;flex-wrap:wrap;align-items:center}
+  .grpbox.show{display:flex}
+  .grpbox input{font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;width:90px}
+  .foot{color:var(--muted);font-size:.78rem;text-align:center;margin:20px 10px 0}
+</style>
+</head>
+<body>
+<div class="topbar"><a class="back" href="app.html">‹ Accueil</a><b>Réglages · Classes</b></div>
+<div class="wrap">
+  <p class="hint">Tes classes viennent de ta connexion (elles ne se saisissent pas ici). Choisis la <b>classe active</b> (elle sera reprise partout : suivi, constructeur…) et déclare les <b>dédoublements</b> TP.</p>
+  <div id="list"></div>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script src="socle_data.js"></script>
+<script src="store.js"></script>
+<script src="pcmajo_ui.js"></script>
+<script>
+(function(){
+  var classes=Store.classesProf();
+  var active=Store.classeActive();
+  var host=document.getElementById("list");
+  var JLAB={lundi:"lun",mardi:"mar",mercredi:"mer",jeudi:"jeu",vendredi:"ven",samedi:"sam"};
+  function niveauLabel(id){
+    var tok=Store.niveauToken(id);
+    if(tok && window.SOCLE && SOCLE.niveaux[tok]) return SOCLE.niveaux[tok].label+" · "+SOCLE.niveaux[tok].ncap+" capacités";
+    return "hors référentiel lycée PC (ens. sci. / NSI)";
+  }
+  function dureeTxt(min){ var h=Math.floor(min/60),m=min%60; return h+"h"+(m?String(m).padStart(2,"0"):""); }
+  function render(){
+    if(!classes.length){ host.innerHTML='<div class="card">Aucune classe : connecte-toi avec ton code prof.</div>'; return; }
+    active=Store.classeActive();
+    host.innerHTML=classes.map(function(c){
+      var g=Store.parClasse(c.id).groupes||{};
+      var cre=(c.creneaux||[]).map(function(x){return '<span>'+(JLAB[x.jour]||x.jour||"?")+' '+(x.debut||"")+' · '+dureeTxt(x.duree_min||0)+'</span>';}).join("");
+      return '<div class="card'+(c.id===active?' active':'')+'" data-id="'+c.id+'">'
+        +'<div class="chead"><span class="lib">'+(c.libelle||c.id)+'</span>'
+        +'<span class="pill niv">'+(Store.niveauToken(c.id)||"—")+'</span>'
+        +'<span class="pill">'+niveauLabel(c.id)+'</span></div>'
+        +(cre?'<div class="cre">'+cre+'</div>':'')
+        +'<div class="row">'
+        +'<button class="btn actbtn'+(c.id===active?' on':'')+'">'+(c.id===active?'★ Classe active':'Rendre active')+'</button>'
+        +'<label class="ck"><input type="checkbox" class="dd"'+(g.dedouble?' checked':'')+'> dédoublée (TP en 2 groupes)</label>'
+        +'</div>'
+        +'<div class="grpbox'+(g.dedouble?' show':'')+'">Groupes : <input class="g1" value="'+(g.g1||"G1")+'"> <input class="g2" value="'+(g.g2||"G2")+'"></div>'
+        +'</div>';
+    }).join("");
+    // wire
+    host.querySelectorAll('.card').forEach(function(card){
+      var id=card.getAttribute('data-id');
+      card.querySelector('.actbtn').onclick=function(){ Store.setClasseActive(id); render(); };
+      var dd=card.querySelector('.dd'), box=card.querySelector('.grpbox');
+      dd.onchange=function(){ var g=Store.parClasse(id).groupes; g.dedouble=dd.checked; Store.persist(); box.classList.toggle('show',dd.checked); };
+      card.querySelector('.g1').onchange=function(e){ Store.parClasse(id).groupes.g1=e.target.value; Store.persist(); };
+      card.querySelector('.g2').onchange=function(e){ Store.parClasse(id).groupes.g2=e.target.value; Store.persist(); };
+    });
+    document.getElementById("foot").textContent="Classe active : "+(Store.classeById(active)?(Store.classeById(active).libelle||active):"—")+" · année "+Store.annee();
+  }
+  render();
+})();
+</script>
+</body>
+</html>
