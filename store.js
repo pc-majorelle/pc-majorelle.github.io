@@ -25,9 +25,14 @@ window.Store = (function(){
      (numéros fixés par le MAÎTRE en attendant les vraies) — visiblement distinctes pour ne pas confondre. */
   function classesForAnnee(an){
     an = an || annee();
-    var base = classesAuth();
-    if(an === "2025-2026") return base;
-    return base.map(function(c){
+    if(an === "2025-2026") return classesAuth();
+    // Autres années : classes ATTRIBUÉES (window.CLASSES_ANNEE), clé = NOM via PRENOM2NOM.
+    var nom = (window.PRENOM2NOM && prenom()) ? window.PRENOM2NOM[String(prenom()).toLowerCase()] : null;
+    if(window.CLASSES_ANNEE && window.CLASSES_ANNEE[an] && nom && window.CLASSES_ANNEE[an][nom]){
+      return window.CLASSES_ANNEE[an][nom];
+    }
+    // repli si année/prof inconnus : classes d'essai dérivées de 2025-26
+    return classesAuth().map(function(c){
       return { id:c.id, libelle:c.libelle+" · essai "+an, niveau:c.niveau, creneaux:c.creneaux, essai:true };
     });
   }
@@ -52,12 +57,14 @@ window.Store = (function(){
   /* jeton de niveau du référentiel (socle_data) à partir de l'id de classe */
   function niveauToken(id){
     id=String(id||"").toUpperCase();
-    if(/^2G/.test(id)) return "2nde";
-    if(/^1PC/.test(id)) return "1spe";
-    if(/^TPC/.test(id)) return "Tspe";
-    if(/^1STI/.test(id)) return "1sti";
+    if(/NSI/.test(id)) return null;
+    if(/ENS/.test(id)||/^1G/.test(id)||/^TG/.test(id)) return null; // ens. scientifique
     if(/^TSTI/.test(id)||/^TSISPH/.test(id)||/^TSI/.test(id)) return "Tsti";
-    return null; // ens.sci (1G/TG), NSI : hors référentiel lycée PC
+    if(/^1STI/.test(id)) return "1sti";
+    if(/^TPC/.test(id)||/^TSPE/.test(id)) return "Tspe";
+    if(/^1PC/.test(id)) return "1spe";
+    if(/^2/.test(id)) return "2nde"; // 2G3, 2G9, 2NDE…
+    return null; // hors référentiel lycée PC
   }
 
   return {
