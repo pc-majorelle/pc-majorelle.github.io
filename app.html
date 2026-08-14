@@ -48,10 +48,13 @@
 </head>
 <body>
 <div class="appbar">
-  <div class="wrap" style="padding:0">
-    <h1 id="h1">Espace prof — PC</h1>
-    <div class="who" id="who">Une seule navigation · chaque outil s'ouvre en plein écran</div>
-    <div class="cls" id="cls"></div>
+  <div class="wrap" style="padding:0;display:flex;align-items:flex-start;gap:10px">
+    <div style="flex:1;min-width:0">
+      <h1 id="h1">Espace prof — PC</h1>
+      <div class="who" id="who">Une seule navigation · chaque outil s'ouvre en plein écran</div>
+      <div class="cls" id="cls"></div>
+    </div>
+    <button id="logout" title="Se déconnecter et changer d'accès" style="flex:0 0 auto;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:9px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap">⎋ Déconnexion</button>
   </div>
 </div>
 
@@ -153,6 +156,16 @@
   window.PCTheme={set:set,swatches:function(h){var host=document.getElementById(h);if(!host)return;host.innerHTML=ORDER.map(function(id){var th=THEMES[id];return '<button type="button" class="thsw" data-th="'+id+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';}).join('');render();}};
 })();
 (function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();
+</script>
+<script>
+/* Déconnexion : efface la session et revient au login */
+(function(){ var b=document.getElementById("logout"); if(!b) return;
+  b.addEventListener("click",function(){
+    try{ sessionStorage.removeItem("pcmajo_acces"); }catch(e){}
+    try{ localStorage.removeItem("pcmajo_acces"); }catch(e){}
+    location.href="index.html";
+  });
+})();
 </script>
 </body>
 </html>

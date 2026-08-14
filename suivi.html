@@ -111,7 +111,13 @@
         var ch=null; N.themes.forEach(function(th){th.chapters.forEach(function(x){if(x.code===code)ch=x;});});
         if(!ch)return; var on=btn.getAttribute('data-act')==='all';
         ch.caps.forEach(function(c){ if(on)sv[c.ref]='done'; else delete sv[c.ref]; });
-        Store.persist(); render();
+        Store.persist();
+        /* mise à jour SUR PLACE : le chapitre reste déplié, on voit le résultat */
+        chEl.querySelectorAll('ul.caps input[data-ref]').forEach(function(cb){
+          cb.checked=on; cb.closest('li').classList.toggle('done',on);
+        });
+        chEl.setAttribute('open','');   // garde ce chapitre ouvert
+        updateCounts(); refreshProg();
       });
     });
     updateCounts(); refreshProg();
