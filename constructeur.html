@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="auto">
+<html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,6 +33,14 @@
     --t-cours:#3987e5; --t-td:#a78bee; --t-tp:#22b985; --t-tpe:#e08040; --t-ds:#ec5b5b; --t-tampon:#8a8f95;
     --shadow:0 1px 3px rgba(0,0,0,.4);
   }
+}
+/* THEME_GLOBAL_V30 : la page hérite du thème global (pcmajo_ui.js pose --bg/--card/--card2/--ink/--muted/--line/--accent
+   en ligne sur :root). On mappe les variables de surface du constructeur dessus, avec repli sur le clair par défaut. */
+:root{
+  --panel: var(--card, #ffffff);
+  --panel2: var(--card2, #eef1f6);
+  --ink-soft: var(--muted, #54606f);
+  --line-strong: var(--line);
 }
 *{box-sizing:border-box}
 html,body{max-width:100%;overflow-x:hidden}          /* la PAGE ne défile jamais horizontalement */
@@ -175,6 +183,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <body>
 <script src="classes_annee.js"></script>
 <script src="store.js"></script>
+<script src="pcmajo_ui.js"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -239,7 +248,6 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
       </select>
     </label>
     <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="true" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button></span>
-    <button id="themeBtn" title="Basculer clair / sombre">◐ Thème</button>
     <button id="resetBtn" title="Revenir à la progression stricte auto-générée">↺ Réinitialiser</button>
     <button id="exportBoKeysBtn" title="Exporter les capacités datées (boKeys) pour le gestionnaire de classe">⬇ Exporter les boKeys datés</button><span id="expInfo" class="small" style="margin-left:6px;opacity:.75"></span>
   </header>
@@ -2311,6 +2319,13 @@ const CY=46, CH=28;                 // bande des cases jeu/ven
 function currentDark(){
   const t=document.documentElement.getAttribute("data-theme");
   if(t==="dark") return true; if(t==="light") return false;
+  /* THEME_GLOBAL_V30 : thème global -> déduire clair/sombre de la luminance du fond réel (--bg). */
+  try{
+    var bg=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    var m=bg.match(/#?([0-9a-fA-F]{6})/);
+    if(m){ var n=parseInt(m[1],16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+      return (0.2126*r+0.7152*g+0.0722*b) < 128; }
+  }catch(e){}
   return matchMedia("(prefers-color-scheme:dark)").matches;
 }
 // Couleur de texte pour un libellé sur un bloc coloré (bon contraste clair/sombre).
@@ -3292,13 +3307,7 @@ function on(id,evt,fn){ const el=document.getElementById(id); if(el) el.addEvent
 function attacherEcouteurs(){
   on("lvlSel","change",e=>setLevel(e.target.value));
   on("propSel","change",e=>applyProposition(e.target.value));/*PROPOSITIONS_V30*/
-  on("themeBtn","click",()=>{
-    const html=document.documentElement;
-    const cur=html.getAttribute("data-theme");
-    const isDark = cur==="dark" || (cur==="auto" && matchMedia("(prefers-color-scheme:dark)").matches);
-    html.setAttribute("data-theme", isDark?"light":"dark");
-    renderTimeline(); renderCompareFrise();
-  });
+  /* THEME_GLOBAL_V30 : plus de bouton thème local — le thème global (🎨 pcmajo_ui.js) pilote la page. */
   // BASCULE VUE continue / déroulée (zoom) + réglage de zoom
   on("vueBtn","click",()=>{ STATE.vue = (STATE.vue==="zoom")?"continue":"zoom"; sauverEtat(); majVueBtn(); refreshFrises(); });
   on("zoomIn","click",()=>setZoom(1.2));
