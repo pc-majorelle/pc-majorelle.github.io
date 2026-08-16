@@ -13,7 +13,7 @@
   --line:#d3dae4; --line-strong:#b6c0cd; --accent:#2f6bed; --accent-ink:#fff;
   --vac:#c9d1dc; --vac-ink:#5a6675; --ferie:#d64545; --fin:#7a3ff2;
   --E:#e08a00; --MM:#0f9d8f; --OS:#4f6bed; --MI:#8b5cf6;
-  --t-cours:#2a78d6; --t-td:#7a4fc0; --t-tp:#1baf7a; --t-tpe:#eb6834; --t-ds:#d92b2b; --t-tampon:#9aa0a6;
+  --t-activite:#e0a72e; --t-cours:#2a78d6; --t-td:#7a4fc0; --t-tp:#1baf7a; --t-tpe:#eb6834; --t-ds:#d92b2b; --t-tampon:#9aa0a6;
   --shadow:0 1px 3px rgba(20,30,50,.10),0 1px 1px rgba(20,30,50,.06);
 }
 :root[data-theme="dark"]{
@@ -21,7 +21,7 @@
   --line:#2b3849; --line-strong:#3a4a5f; --accent:#5b8bff; --accent-ink:#0e141c;
   --vac:#2a3646; --vac-ink:#9fb0c3; --ferie:#ff6b6b; --fin:#b18bff;
   --E:#f0a530; --MM:#2fc4b4; --OS:#7d95ff; --MI:#b18bff;
-  --t-cours:#3987e5; --t-td:#a78bee; --t-tp:#22b985; --t-tpe:#e08040; --t-ds:#ec5b5b; --t-tampon:#8a8f95;
+  --t-activite:#e6b23e; --t-cours:#3987e5; --t-td:#a78bee; --t-tp:#22b985; --t-tpe:#e08040; --t-ds:#ec5b5b; --t-tampon:#8a8f95;
   --shadow:0 1px 3px rgba(0,0,0,.4);
 }
 @media (prefers-color-scheme: dark){
@@ -30,7 +30,7 @@
     --line:#2b3849; --line-strong:#3a4a5f; --accent:#5b8bff; --accent-ink:#0e141c;
     --vac:#2a3646; --vac-ink:#9fb0c3; --ferie:#ff6b6b; --fin:#b18bff;
     --E:#f0a530; --MM:#2fc4b4; --OS:#7d95ff; --MI:#b18bff;
-    --t-cours:#3987e5; --t-td:#a78bee; --t-tp:#22b985; --t-tpe:#e08040; --t-ds:#ec5b5b; --t-tampon:#8a8f95;
+    --t-activite:#e6b23e; --t-cours:#3987e5; --t-td:#a78bee; --t-tp:#22b985; --t-tpe:#e08040; --t-ds:#ec5b5b; --t-tampon:#8a8f95;
     --shadow:0 1px 3px rgba(0,0,0,.4);
   }
 }
@@ -195,6 +195,13 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .arbre-theme>summary::-webkit-details-marker{display:none}
 .arbre-theme>summary::before{content:'\25B8';transition:transform .15s;color:var(--ink-soft,#889)}
 .arbre-theme[open]>summary::before{transform:rotate(90deg)}
+.arbre-section{margin:4px 6px 8px 16px;border-left:3px solid var(--accent);padding-left:10px;opacity:.98}
+.arbre-section>summary{cursor:pointer;padding:6px 4px;list-style:none;font-weight:650;font-size:14px}
+.arbre-section>summary::-webkit-details-marker{display:none}
+.arbre-section>summary::before{content:'\25B8';margin-right:6px;color:var(--ink-soft,#889)}
+.arbre-section[open]>summary::before{content:'\25BE'}
+.arbre-section .seccode{color:var(--accent);font-weight:800;margin-right:6px;font-size:12px}
+.arbre-chap .pl{color:var(--t-tpe);font-weight:800;margin-right:2px}
 .arbre-chap{margin:4px 8px 8px 20px;border-left:2px solid var(--line);padding-left:10px}
 .arbre-chap>summary{cursor:pointer;padding:6px 4px;list-style:none;font-weight:600}
 .arbre-chap>summary::-webkit-details-marker{display:none}
@@ -209,7 +216,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .arbre-seances{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px 22px}
 .se-chip{font-size:11px;padding:1px 7px;border-radius:999px;color:#08111b;font-weight:600;white-space:nowrap;border:1px solid rgba(0,0,0,.18)}
 .se-chip b{font-weight:700;font-variant-numeric:tabular-nums;opacity:.82;margin-left:3px}
-.se-cours{background:var(--t-cours)}.se-td{background:var(--t-td)}.se-tp{background:var(--t-tp)}
+.se-activite{background:var(--t-activite)}.se-cours{background:var(--t-cours)}.se-td{background:var(--t-td)}.se-tp{background:var(--t-tp)}
 .se-tpe{background:var(--t-tpe)}.se-ds{background:var(--t-ds)}.se-tampon{background:var(--t-tampon)}
 .arbre-srclbl{font-size:12px;color:var(--ink-soft,#889);margin:0 0 6px}
 .arbre-srclbl b{color:var(--accent)}
@@ -314,6 +321,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
     </div>
     <div class="legend" style="font-weight:600">
       <span style="color:var(--ink)">Types de séance :</span>
+      <span><span class="sw" style="background:var(--t-activite)"></span>Activité</span>
       <span><span class="sw" style="background:var(--t-cours)"></span>Cours</span>
       <span><span class="sw" style="background:var(--t-td)"></span>TD</span>
       <span><span class="sw" style="background:var(--t-tp)"></span>TP</span>
@@ -1499,8 +1507,8 @@ function compterPerdues(){
 function _aesc(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return c==='&'?'&amp;':c==='<'?'&lt;':'&gt;';});}
 function _acref(id){var p=String(id).split('.');return p.slice(-2).join('.');}
 /* s\u00e9ances dat\u00e9es et typ\u00e9es (Cours/TP/DS\u2026) inject\u00e9es dans l'arbre \u2014 m\u00eame d\u00e9coupage que la frise */
-function _seType(t){return t==="Cours"?"cours":t==="TD"?"td":t==="TP"?"tp":t==="TP \u00e9valu\u00e9"?"tpe":t==="DS"?"ds":"tampon";}
-function _seLbl(t){return t==="TP \u00e9valu\u00e9"?"TP\u2713":t;}
+function _seType(t){return t==="Activit\u00e9"?"activite":t==="Cours"?"cours":t==="TD"?"td":t==="TP"?"tp":t==="TP \u00e9valu\u00e9"?"tpe":t==="DS"?"ds":"tampon";}
+function _seLbl(t){return t==="TP \u00e9valu\u00e9"?"TP\u2713":t==="Activit\u00e9"?"Act.":t;}
 function _seDate(d){ if(!(d&&d.getUTCDate))return""; return ("0"+d.getUTCDate()).slice(-2)+"/"+("0"+(d.getUTCMonth()+1)).slice(-2); }
 function _seancesParChap(order){
   var map={}; try{
@@ -1530,23 +1538,37 @@ function renderArbre(){
   var themeSeq=[]; order.forEach(function(id){var ch=CHAP_BY_ID[id]; if(ch&&themeSeq.indexOf(ch.theme)<0)themeSeq.push(ch.theme);});
   (ORDRE_THEMES||[]).forEach(function(t){if(themeSeq.indexOf(t)<0)themeSeq.push(t);});
   var propLbl=(function(){ try{ var ps=propositionsForLevel(level), pid=(STATE&&STATE.proposition)||"bo", p=ps.filter(function(x){return x.id===pid;})[0]||ps[0]; return p?p.label:""; }catch(e){ return ""; } })();
-  var html='<p class="arbre-srclbl">D\u00e9coupage temporel <b>'+_aesc(propLbl)+'</b> \u2014 chaque chapitre est r\u00e9parti en s\u00e9ances dat\u00e9es (Cours / TP / TP\u2713 / TD / DS), comme en mode frise.</p>';
+  var html='<p class="arbre-srclbl">D\u00e9coupage <b>'+_aesc(propLbl)+'</b> \u2014 grain = la <b>partie</b> (A/B/C), d\u00e9velopp\u00e9e en s\u00e9ances dat\u00e9es (Activit\u00e9 / Cours / TD / TP / DS). Les sections B.O. regroupent les parties.</p>';
+  function _renderPartie(ch){
+    var ses=seMap[ch.id]||[];
+    var span=""; var dated=ses.filter(function(s){return s.date;});
+    if(dated.length){ span=" \u00b7 "+_seDate(dated[0].date)+"\u2192"+_seDate(dated[dated.length-1].date); }
+    var head = ch.letter ? ('<b class="pl">'+_aesc(ch.letter)+')</b> '+_aesc(ch.titre))
+                         : (_aesc(ch.code)+(ch.titre?(' \u2014 '+_aesc(ch.titre)):''));
+    html+='<details class="arbre-chap"><summary>'+head+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+'</span></summary>';
+    html+=_seStrip(ses);
+    html+='<ul class="arbre-caps">';
+    (ch.caps||[]).forEach(function(cid){
+      var exp=estExp(cid), math=estMath(cid), he=!!(CAPS[cid]&&CAPS[cid].hors_ecrit);
+      html+='<li><span class="cref">'+_aesc(_acref(cid))+'</span><span class="'+(exp?'exp':'')+'">'+_aesc(capLibelle(cid))+'</span>'+(exp?' <span class="arbre-badge">\u2697 exp</span>':'')+(math?' <span class="arbre-badge">\u0192 maths</span>':'')+(he?' <span class="arbre-badge" style="color:#d0873f">hors \u00e9crit</span>':'')+'</li>';
+    });
+    html+='</ul></details>';
+  }
   themeSeq.forEach(function(tc){
     var chs=byTheme[tc]||[]; if(!chs.length) return;
     var ncaps=chs.reduce(function(n,c){return n+(c.caps?c.caps.length:0);},0);
-    html+='<details class="arbre-theme" open><summary>'+_aesc(THEME_LABEL[tc]||tc)+'<span class="arbre-badge">'+chs.length+' chapitres \u00b7 '+ncaps+' capacit\u00e9s</span></summary>';
-    chs.forEach(function(ch){
-      var ses=seMap[ch.id]||[];
-      var span=""; var dated=ses.filter(function(s){return s.date;});
-      if(dated.length){ span=" \u00b7 "+_seDate(dated[0].date)+"\u2192"+_seDate(dated[dated.length-1].date); }
-      html+='<details class="arbre-chap"><summary>'+_aesc(ch.code)+(ch.titre?(' \u2014 '+_aesc(ch.titre)):'')+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+'</span></summary>';
-      html+=_seStrip(ses);
-      html+='<ul class="arbre-caps">';
-      (ch.caps||[]).forEach(function(cid){
-        var exp=estExp(cid), math=estMath(cid);
-        html+='<li><span class="cref">'+_aesc(_acref(cid))+'</span><span class="'+(exp?'exp':'')+'">'+_aesc(capLibelle(cid))+'</span>'+(exp?' <span class="arbre-badge">\u2697 exp</span>':'')+(math?' <span class="arbre-badge">\u0192 maths</span>':'')+'</li>';
-      });
-      html+='</ul></details>';
+    html+='<details class="arbre-theme" open><summary>'+_aesc(THEME_LABEL[tc]||tc)+'<span class="arbre-badge">'+chs.length+' parties \u00b7 '+ncaps+' capacit\u00e9s</span></summary>';
+    // regrouper par SECTION B.O. (ordre d'apparition dans la progression)
+    var secOrder=[], secMap={};
+    chs.forEach(function(ch){ var sc=ch.section?ch.section.code:'_'; if(!secMap[sc]){secMap[sc]=[];secOrder.push(sc);} secMap[sc].push(ch); });
+    secOrder.forEach(function(sc){
+      var parts=secMap[sc], sec=parts[0].section;
+      if(sec){
+        var scaps=parts.reduce(function(n,c){return n+c.caps.length;},0);
+        html+='<details class="arbre-section" open><summary><span class="seccode">'+_aesc(sec.code)+'</span> '+_aesc(sec.titre)+'<span class="arbre-badge">'+parts.length+' parties \u00b7 '+scaps+' capacit\u00e9s</span></summary>';
+        parts.forEach(_renderPartie);
+        html+='</details>';
+      } else { parts.forEach(_renderPartie); }
     });
     html+='</details>';
   });
@@ -1898,6 +1920,8 @@ function setLevel(newLevel){
   const asel=document.getElementById("anneeSel"); if(asel) asel.value=STATE.annee;
   const rv=document.querySelector('input[name="chapView"][value="'+STATE.chapView+'"]'); if(rv) rv.checked=true;
   majVueBtn();
+  /*PARTIES_V31 : niveau à parties -> ré-applique le jeu (sinon on retombe sur la vue B.O. de base)*/
+  try{ if(typeof FINECHAP_ALL!=="undefined" && FINECHAP_ALL[level]){ applyProposition(STATE.proposition||"bo"); return; } }catch(e){}
   fullRender();
 }
 
@@ -2026,8 +2050,12 @@ function unitesChapitres(order){
 // Groupes de DS sur une séquence de chapitres (les suites n'ont pas de DS).
 function groupesDSfrom(chapOrder, useMerge){
   const groups=[]; let cur=[];
+  function sec(id){ var c=CHAP_BY_ID[id]; return (c&&c.section)?c.section.code:null; }
   chapOrder.forEach((id,i)=>{
-    if(useMerge && i>0 && STATE.dsMerged[id]){ cur.push(id); }
+    // PARTIES_V31 : par défaut, un DS par SECTION (on regroupe les parties consécutives d'une même section) ;
+    // dsMerged force le regroupement avec la précédente ; sinon nouvelle section = nouveau DS.
+    var same = i>0 && sec(id)!=null && sec(id)===sec(chapOrder[i-1]);
+    if(useMerge && i>0 && (STATE.dsMerged[id] || same)){ cur.push(id); }
     else { if(cur.length) groups.push(cur); cur=[id]; }
   });
   if(cur.length) groups.push(cur);
@@ -2063,10 +2091,15 @@ function construirePlan(orderIds, opts){
     // nb de créneaux de contenu ~ proportionnel au nb de capacités (min 2). Les caps sont réparties
     // plus bas, une fois les jours (donc les types) connus. Le TYPE par défaut vient du JOUR :
     //  JEUDI = TP, VENDREDI = Cours (la classe n'a que ces 2 jours) -> beaucoup de TP.
-    const nbContenu = Math.max(2, Math.round(ch.caps.length/3.5));
+    // ACTIVITÉ d'ouverture (phase de découverte avant le cours/TP) — une par partie
+    sessions.push({id:P+ch.id+":ACT", chap:ch.id, slot:"activite", caps:[], note:"découverte"});
+    // bundle plus léger quand l'unité est une PARTIE (grain fin) que pour un chapitre B.O.
+    const isPartie = !!ch.section;
+    const nbContenu = isPartie ? Math.max(1, Math.round(ch.caps.length/5)) : Math.max(2, Math.round(ch.caps.length/3.5));
     for(let k=0;k<nbContenu;k++)
       sessions.push({id:P+ch.id+":S"+(k+1), chap:ch.id, slot:"contenu", caps:[]});
-    sessions.push({id:P+ch.id+":TD", chap:ch.id, slot:"TD", caps:[], note:"entraînement"});
+    if(!isPartie || ch.caps.length>=5)
+      sessions.push({id:P+ch.id+":TD", chap:ch.id, slot:"TD", caps:[], note:"entraînement"});
 
     // DS a la fin du groupe (place juste apres le dernier chapitre du groupe -> aucun trou)
     if(finDeGroupe[ch.id]){
@@ -2102,7 +2135,8 @@ function construirePlan(orderIds, opts){
 
   // TYPE PAR DÉFAUT SELON LE JOUR : jeudi = TP, vendredi = Cours (TD/DS/Tampon restent explicites).
   sessions.forEach(s=>{
-    if(s.slot==="TD") s.baseType="TD";
+    if(s.slot==="activite") s.baseType="Activité";
+    else if(s.slot==="TD") s.baseType="TD";
     else if(s.slot==="DS") s.baseType="DS";
     else if(s.slot==="Tampon") s.baseType="Tampon";
     else { const day=s.date? s.date.getUTCDay():5; s.baseType=(day===4)?"TP":"Cours"; } // 4=jeu, 5=ven
@@ -2265,8 +2299,8 @@ function renderCounters(){
   }
 
   // Ventilation par type (comptée sur les PARTIES : nb de parties + heures cumulées)
-  const TYPES=["Cours","TD","TP","TP évalué","DS","Tampon"];
-  const varmap={"Cours":"--t-cours","TD":"--t-td","TP":"--t-tp","TP évalué":"--t-tpe","DS":"--t-ds","Tampon":"--t-tampon"};
+  const TYPES=["Activité","Cours","TD","TP","TP évalué","DS","Tampon"];
+  const varmap={"Activité":"--t-activite","Cours":"--t-cours","TD":"--t-td","TP":"--t-tp","TP évalué":"--t-tpe","DS":"--t-ds","Tampon":"--t-tampon"};
   const cnt={}, hrs={}; TYPES.forEach(t=>{cnt[t]=0; hrs[t]=0;});
   PLAN.forEach(s=>{ partsOf(s).forEach(p=>{ cnt[p.type]=(cnt[p.type]||0)+1; hrs[p.type]=(hrs[p.type]||0)+p.dur; }); });
   const v=document.getElementById("ventil"); v.innerHTML="";
@@ -2295,7 +2329,7 @@ function svgEl(tag,attrs){
 // sous la rangée de blocs (voir renderTimeline), pas en teintant les blocs.
 function blockColor(type){ return `var(${tvar(type)})`; }
 // Étiquette courte de type (encodage secondaire pour l'accessibilité daltonisme).
-function typeAbbr(type){ return {"Cours":"C","TD":"TD","TP":"TP","TP évalué":"TPé","DS":"DS","Tampon":"T"}[type]||"?"; }
+function typeAbbr(type){ return {"Activité":"Act","Cours":"C","TD":"TD","TP":"TP","TP évalué":"TPé","DS":"DS","Tampon":"T"}[type]||"?"; }
 // Calcule la position (x, largeur) de chaque case jeu/ven et de chaque bande de vacances.
 function layoutFrise(){
   const items=construireFrise();
@@ -2765,7 +2799,7 @@ function setParts(s, parts){
 // Menu de type d'une partie (Cours/TD/TP/TP évalué + DS pour un créneau DS).
 function selType(current, isDS, onChange){
   const sel=document.createElement("select");
-  const opts = isDS ? ["DS","Cours","TD","TP","TP évalué"] : ["Cours","TD","TP","TP évalué","DS"];
+  const opts = isDS ? ["DS","Cours","TD","TP","TP évalué"] : ["Activité","Cours","TD","TP","TP évalué","DS"];
   opts.forEach(t=>{ const o=document.createElement("option"); o.value=t; o.textContent=t; if(t===current)o.selected=true; sel.appendChild(o); });
   sel.style.padding="1px 4px"; sel.addEventListener("change",()=>onChange(sel.value));
   return sel;
@@ -3178,7 +3212,7 @@ function attacherDnD(el, id){
     if(from) reordonner(from, id, after);
   });
 }
-function tvar(t){return {"Cours":"--t-cours","TD":"--t-td","TP":"--t-tp","TP évalué":"--t-tpe","DS":"--t-ds","Tampon":"--t-tampon"}[t];}
+function tvar(t){return {"Activité":"--t-activite","Cours":"--t-cours","TD":"--t-td","TP":"--t-tp","TP évalué":"--t-tpe","DS":"--t-ds","Tampon":"--t-tampon"}[t];}
 
 // TYPOGRAPHIE : capacité expérimentale -> italique ; capacité mathématique -> gras (cumulables).
 function styleCap(capId){
@@ -3416,30 +3450,30 @@ function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
 //  sont complétés à la fin dans l'ordre B.O. Chaque source réelle est convertie à la granularité des
 //  chapitres B.O. du constructeur (les chapitres fins d'une source qui retombent dans un même chapitre
 //  B.O. sont regroupés ; l'ordre = 1re apparition). themeOrder reste supporté (réordre de blocs).
-/* FINECHAP_V30 : jeux de chapitres FINS (découpage du livre BELIN) commutables par proposition.
-   Chaque chapitre fin = groupe de capacités B.O. (mêmes refs que le socle), décliné ensuite en
-   Cours/TD/TP/DS par construirePlan. Le B.O. (12 chapitres) reste la vue par défaut. */
-var FINECHAP_ALL = { Tspe: {"chapters": [{"code": "L1", "titre": "Les transformations acide-base", "theme": "CTM", "caps": ["GEN-T-CTM.1.01.CE01", "GEN-T-CTM.1.02.CE01", "GEN-T-CTM.1.03.CE01", "GEN-T-CTM.1.04.CE01", "GEN-T-CTM.1.04.AE01", "GEN-T-CTM.1.04.CM01"]}, {"code": "L2", "titre": "Analyser un système par des méthodes physiques", "theme": "CTM", "caps": ["GEN-T-CTM.1.05.CE01", "GEN-T-CTM.1.05.AE01", "GEN-T-CTM.1.06.CE01"]}, {"code": "L3", "titre": "Analyser un système par des méthodes chimiques (titrages)", "theme": "CTM", "caps": ["GEN-T-CTM.1.07.AE01", "GEN-T-CTM.1.08.CE01", "GEN-T-CTM.1.08.CE02", "GEN-T-CTM.1.08.CE03", "GEN-T-CTM.1.08.AE01", "GEN-T-CTM.1.08.AE02", "GEN-T-CTM.1.08.CN01"]}, {"code": "L4", "titre": "Suivi temporel et modélisation macroscopique (cinétique)", "theme": "CTM", "caps": ["GEN-T-CTM.2.01.CE01", "GEN-T-CTM.2.01.CE02", "GEN-T-CTM.2.01.AE01", "GEN-T-CTM.2.01.CE03"]}, {"code": "L5", "titre": "Loi cinétique et modélisation microscopique", "theme": "CTM", "caps": ["GEN-T-CTM.2.02.CE01", "GEN-T-CTM.2.02.CN01", "GEN-T-CTM.2.02.CM01", "GEN-T-CTM.2.03.CE01", "GEN-T-CTM.2.03.CE02", "GEN-T-CTM.2.03.CE03", "GEN-T-CTM.2.03.CE04"]}, {"code": "L6", "titre": "Évolution temporelle d'une transformation nucléaire", "theme": "CTM", "caps": ["GEN-T-CTM.2.04.CE01", "GEN-T-CTM.2.04.CE02", "GEN-T-CTM.2.04.CE03", "GEN-T-CTM.2.04.CE04", "GEN-T-CTM.2.04.CE05", "GEN-T-CTM.2.04.CE06", "GEN-T-CTM.2.04.CN01"]}, {"code": "L7", "titre": "Évolution spontanée d'un système chimique", "theme": "CTM", "caps": ["GEN-T-CTM.3.01.CE01", "GEN-T-CTM.3.01.AE01", "GEN-T-CTM.3.02.CE01", "GEN-T-CTM.3.02.CE02", "GEN-T-CTM.3.02.AE01", "GEN-T-CTM.3.03.AE01", "GEN-T-CTM.3.04.CE01", "GEN-T-CTM.3.04.CE02", "GEN-T-CTM.3.04.CE03", "GEN-T-CTM.3.04.AE01", "GEN-T-CTM.3.05.CE01", "GEN-T-CTM.3.05.CE02", "GEN-T-CTM.3.12.CE01"]}, {"code": "L8", "titre": "Comparer la force des acides et des bases", "theme": "CTM", "caps": ["GEN-T-CTM.3.06.CE01", "GEN-T-CTM.3.06.AE01", "GEN-T-CTM.3.07.CE01", "GEN-T-CTM.3.07.CE02", "GEN-T-CTM.3.07.CE03", "GEN-T-CTM.3.07.AE01", "GEN-T-CTM.3.07.CN01", "GEN-T-CTM.3.07.CM01", "GEN-T-CTM.3.08.CE01", "GEN-T-CTM.3.09.CE01", "GEN-T-CTM.3.09.CE02", "GEN-T-CTM.3.09.CE03", "GEN-T-CTM.3.09.CN01", "GEN-T-CTM.3.10.CE01"]}, {"code": "L9", "titre": "Forcer le sens d'évolution d'un système (électrolyse)", "theme": "CTM", "caps": ["GEN-T-CTM.3.11.CE01", "GEN-T-CTM.3.11.CE02", "GEN-T-CTM.3.11.AE01"]}, {"code": "L10", "titre": "Structures et propriétés", "theme": "CTM", "caps": ["GEN-T-CTM.4.01.CE01", "GEN-T-CTM.4.01.CE02", "GEN-T-CTM.4.02.CE01", "GEN-T-CTM.4.02.CE02"]}, {"code": "L11", "titre": "Stratégies de synthèse multi-étapes", "theme": "CTM", "caps": ["GEN-T-CTM.4.03.CE01", "GEN-T-CTM.4.03.CE02", "GEN-T-CTM.4.03.AE01", "GEN-T-CTM.4.04.CE01", "GEN-T-CTM.4.04.CE02", "GEN-T-CTM.4.04.CE03", "GEN-T-CTM.4.04.AE01", "GEN-T-CTM.4.05.CE01"]}, {"code": "L12", "titre": "Décrire un mouvement", "theme": "MOU", "caps": ["GEN-T-MOU.1.01.CE01", "GEN-T-MOU.1.01.CE02", "GEN-T-MOU.1.02.CE01", "GEN-T-MOU.1.03.CE01", "GEN-T-MOU.1.03.AE01", "GEN-T-MOU.1.03.CN01", "GEN-T-MOU.1.03.CM01"]}, {"code": "L13", "titre": "Mouvement dans un champ uniforme", "theme": "MOU", "caps": ["GEN-T-MOU.2.01.CE01", "GEN-T-MOU.2.02.CE01", "GEN-T-MOU.2.02.CE02", "GEN-T-MOU.2.03.CE01", "GEN-T-MOU.2.03.CE02", "GEN-T-MOU.2.03.CE03", "GEN-T-MOU.2.03.CE04", "GEN-T-MOU.2.04.CE01", "GEN-T-MOU.2.05.CE01", "GEN-T-MOU.2.05.AE01", "GEN-T-MOU.2.05.CN01", "GEN-T-MOU.2.05.CM01"]}, {"code": "L14", "titre": "Étudier le mouvement des satellites", "theme": "MOU", "caps": ["GEN-T-MOU.2.06.CE01", "GEN-T-MOU.2.06.CE02", "GEN-T-MOU.2.06.CN01"]}, {"code": "L15", "titre": "Modéliser l'écoulement d'un fluide", "theme": "MOU", "caps": ["GEN-T-MOU.3.01.CE01", "GEN-T-MOU.3.01.CE02", "GEN-T-MOU.3.01.AE01", "GEN-T-MOU.3.01.CE03", "GEN-T-MOU.3.02.CE01", "GEN-T-MOU.3.02.AE01"]}, {"code": "L16", "titre": "Gaz parfait et bilan d'énergie d'un système", "theme": "ENE", "caps": ["GEN-T-ENE.1.01.CE01", "GEN-T-ENE.1.02.CE01", "GEN-T-ENE.1.02.CE02", "GEN-T-ENE.2.01.CE01", "GEN-T-ENE.2.02.CE01", "GEN-T-ENE.2.02.CE02", "GEN-T-ENE.2.03.CE01", "GEN-T-ENE.2.03.AE01", "GEN-T-ENE.2.04.CE01", "GEN-T-ENE.2.04.CE02", "GEN-T-ENE.2.05.CE01", "GEN-T-ENE.2.05.CE02", "GEN-T-ENE.2.06.CE01", "GEN-T-ENE.2.06.AE01", "GEN-T-ENE.2.06.CM01"]}, {"code": "L17", "titre": "Propriétés des ondes (sons, Doppler, diffraction, interférences)", "theme": "OND", "caps": ["GEN-T-OND.1.01.CE01", "GEN-T-OND.1.01.AE01", "GEN-T-OND.1.01.CM01", "GEN-T-OND.1.02.CE01", "GEN-T-OND.1.02.CE02", "GEN-T-OND.1.02.AE01", "GEN-T-OND.1.02.AE02", "GEN-T-OND.1.03.CE01", "GEN-T-OND.1.03.CE02", "GEN-T-OND.1.03.AE01", "GEN-T-OND.1.04.CE01", "GEN-T-OND.1.04.AE01", "GEN-T-OND.1.04.CN01", "GEN-T-OND.1.05.CE01", "GEN-T-OND.1.05.CE02", "GEN-T-OND.1.05.CE03", "GEN-T-OND.1.05.AE01"]}, {"code": "L18", "titre": "La lunette astronomique", "theme": "OND", "caps": ["GEN-T-OND.2.01.CE01", "GEN-T-OND.2.01.CE02", "GEN-T-OND.2.01.CE03", "GEN-T-OND.2.01.CE04", "GEN-T-OND.2.01.AE01", "GEN-T-OND.2.01.AE02"]}, {"code": "L19", "titre": "L'effet photoélectrique", "theme": "OND", "caps": ["GEN-T-OND.2.02.CE01", "GEN-T-OND.2.02.CE02", "GEN-T-OND.2.02.CE03", "GEN-T-OND.2.02.CE04", "GEN-T-OND.2.03.CE01", "GEN-T-OND.2.03.CE02"]}, {"code": "L20", "titre": "Étudier la dynamique d'un système électrique (RC)", "theme": "OND", "caps": ["GEN-T-OND.3.01.CE01", "GEN-T-OND.3.02.CE01", "GEN-T-OND.3.03.CE01", "GEN-T-OND.3.03.AE01", "GEN-T-OND.3.03.AE02", "GEN-T-OND.3.04.CE01", "GEN-T-OND.3.05.CE01", "GEN-T-OND.3.05.AE01", "GEN-T-OND.3.05.AE02", "GEN-T-OND.3.05.CM01"]}], "canon": ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18", "L19", "L20"], "cahier": ["L1", "L2", "L3", "L17", "L18", "L4", "L5", "L6", "L7", "L12", "L13", "L14", "L8", "L9", "L15", "L11", "L20", "L19", "L16", "L10"]} };
-var CHAPSET_ACTIVE = null;   // null = chapitres B.O. ; sinon id du jeu de chapitres fins actif
+/* PARTIES_V31 : le GRAIN = la PARTIE (A/B/C d'une section B.O.). Chaque partie = groupe de
+   capacités (mêmes refs que le socle), regroupée sous sa SECTION B.O., développée en bundle
+   Activité/Cours/TD/TP/DS par construirePlan. Les parties sont datées/déplaçables indépendamment. */
+var FINECHAP_ALL = { Tspe: {"parties": [{"code": "CTM1A", "letter": "A", "titre": "Modéliser des transformations acide-base par des transferts d'ion hydrogène H⁺", "theme": "CTM", "section": {"code": "CTM1", "titre": "Déterminer la composition d'un système par des méthodes physiques et chimiques"}, "caps": ["GEN-T-CTM.1.01.CE01", "GEN-T-CTM.1.02.CE01", "GEN-T-CTM.1.03.CE01", "GEN-T-CTM.1.04.CE01", "GEN-T-CTM.1.04.AE01", "GEN-T-CTM.1.04.CM01"]}, {"code": "CTM1B", "letter": "B", "titre": "Analyser un système chimique par des méthodes physiques", "theme": "CTM", "section": {"code": "CTM1", "titre": "Déterminer la composition d'un système par des méthodes physiques et chimiques"}, "caps": ["GEN-T-CTM.1.05.CE01", "GEN-T-CTM.1.05.AE01", "GEN-T-CTM.1.06.CE01"]}, {"code": "CTM1C", "letter": "C", "titre": "Analyser un système chimique par des méthodes chimiques (titrages)", "theme": "CTM", "section": {"code": "CTM1", "titre": "Déterminer la composition d'un système par des méthodes physiques et chimiques"}, "caps": ["GEN-T-CTM.1.07.AE01", "GEN-T-CTM.1.08.CE01", "GEN-T-CTM.1.08.CE02", "GEN-T-CTM.1.08.CE03", "GEN-T-CTM.1.08.AE01", "GEN-T-CTM.1.08.AE02", "GEN-T-CTM.1.08.CN01"]}, {"code": "CTM2A", "letter": "A", "titre": "Suivre et modéliser l'évolution temporelle (approche macroscopique)", "theme": "CTM", "section": {"code": "CTM2", "titre": "Modéliser l'évolution temporelle d'un système, siège d'une transformation"}, "caps": ["GEN-T-CTM.2.01.CE01", "GEN-T-CTM.2.01.CE02", "GEN-T-CTM.2.01.AE01", "GEN-T-CTM.2.01.CE03"]}, {"code": "CTM2B", "letter": "B", "titre": "Loi de vitesse et modélisation microscopique", "theme": "CTM", "section": {"code": "CTM2", "titre": "Modéliser l'évolution temporelle d'un système, siège d'une transformation"}, "caps": ["GEN-T-CTM.2.02.CE01", "GEN-T-CTM.2.02.CN01", "GEN-T-CTM.2.02.CM01", "GEN-T-CTM.2.03.CE01", "GEN-T-CTM.2.03.CE02", "GEN-T-CTM.2.03.CE03", "GEN-T-CTM.2.03.CE04"]}, {"code": "CTM2C", "letter": "C", "titre": "Évolution temporelle d'une transformation nucléaire", "theme": "CTM", "section": {"code": "CTM2", "titre": "Modéliser l'évolution temporelle d'un système, siège d'une transformation"}, "caps": ["GEN-T-CTM.2.04.CE01", "GEN-T-CTM.2.04.CE02", "GEN-T-CTM.2.04.CE03", "GEN-T-CTM.2.04.CE04", "GEN-T-CTM.2.04.CE05", "GEN-T-CTM.2.04.CE06", "GEN-T-CTM.2.04.CN01"]}, {"code": "CTM3A", "letter": "A", "titre": "Prévoir le sens d'évolution spontanée d'un système (piles)", "theme": "CTM", "section": {"code": "CTM3", "titre": "Prévoir l'état final d'un système, siège d'une transformation chimique"}, "caps": ["GEN-T-CTM.3.01.CE01", "GEN-T-CTM.3.01.AE01", "GEN-T-CTM.3.02.CE01", "GEN-T-CTM.3.02.CE02", "GEN-T-CTM.3.02.AE01", "GEN-T-CTM.3.03.AE01", "GEN-T-CTM.3.04.CE01", "GEN-T-CTM.3.04.CE02", "GEN-T-CTM.3.04.CE03", "GEN-T-CTM.3.04.AE01", "GEN-T-CTM.3.05.CE01", "GEN-T-CTM.3.05.CE02", "GEN-T-CTM.3.12.CE01"]}, {"code": "CTM3B", "letter": "B", "titre": "Comparer la force des acides et des bases", "theme": "CTM", "section": {"code": "CTM3", "titre": "Prévoir l'état final d'un système, siège d'une transformation chimique"}, "caps": ["GEN-T-CTM.3.06.CE01", "GEN-T-CTM.3.06.AE01", "GEN-T-CTM.3.07.CE01", "GEN-T-CTM.3.07.CE02", "GEN-T-CTM.3.07.CE03", "GEN-T-CTM.3.07.AE01", "GEN-T-CTM.3.07.CN01", "GEN-T-CTM.3.07.CM01", "GEN-T-CTM.3.08.CE01", "GEN-T-CTM.3.09.CE01", "GEN-T-CTM.3.09.CE02", "GEN-T-CTM.3.09.CE03", "GEN-T-CTM.3.09.CN01", "GEN-T-CTM.3.10.CE01"]}, {"code": "CTM3C", "letter": "C", "titre": "Forcer le sens d'évolution d'un système (électrolyse)", "theme": "CTM", "section": {"code": "CTM3", "titre": "Prévoir l'état final d'un système, siège d'une transformation chimique"}, "caps": ["GEN-T-CTM.3.11.CE01", "GEN-T-CTM.3.11.CE02", "GEN-T-CTM.3.11.AE01"]}, {"code": "CTM4A", "letter": "A", "titre": "Structures, propriétés et nomenclature", "theme": "CTM", "section": {"code": "CTM4", "titre": "Élaborer des stratégies en synthèse organique"}, "caps": ["GEN-T-CTM.4.01.CE01", "GEN-T-CTM.4.01.CE02", "GEN-T-CTM.4.02.CE01", "GEN-T-CTM.4.02.CE02"]}, {"code": "CTM4B", "letter": "B", "titre": "Stratégie de synthèse multi-étapes", "theme": "CTM", "section": {"code": "CTM4", "titre": "Élaborer des stratégies en synthèse organique"}, "caps": ["GEN-T-CTM.4.03.CE01", "GEN-T-CTM.4.03.CE02", "GEN-T-CTM.4.03.AE01", "GEN-T-CTM.4.04.CE01", "GEN-T-CTM.4.04.CE02", "GEN-T-CTM.4.04.CE03", "GEN-T-CTM.4.04.AE01", "GEN-T-CTM.4.05.CE01"]}, {"code": "MOU1A", "letter": "A", "titre": "Décrire un mouvement (vitesse, accélération)", "theme": "MOU", "section": {"code": "MOU1", "titre": "Décrire un mouvement"}, "caps": ["GEN-T-MOU.1.01.CE01", "GEN-T-MOU.1.01.CE02", "GEN-T-MOU.1.02.CE01", "GEN-T-MOU.1.03.CE01", "GEN-T-MOU.1.03.AE01", "GEN-T-MOU.1.03.CN01", "GEN-T-MOU.1.03.CM01"]}, {"code": "MOU2A", "letter": "A", "titre": "Mouvement dans un champ uniforme", "theme": "MOU", "section": {"code": "MOU2", "titre": "Relier les actions appliquées à un système à son mouvement"}, "caps": ["GEN-T-MOU.2.01.CE01", "GEN-T-MOU.2.02.CE01", "GEN-T-MOU.2.02.CE02", "GEN-T-MOU.2.03.CE01", "GEN-T-MOU.2.03.CE02", "GEN-T-MOU.2.03.CE03", "GEN-T-MOU.2.03.CE04", "GEN-T-MOU.2.04.CE01", "GEN-T-MOU.2.05.CE01", "GEN-T-MOU.2.05.AE01", "GEN-T-MOU.2.05.CN01", "GEN-T-MOU.2.05.CM01"]}, {"code": "MOU2B", "letter": "B", "titre": "Mouvement des satellites et des planètes (lois de Kepler)", "theme": "MOU", "section": {"code": "MOU2", "titre": "Relier les actions appliquées à un système à son mouvement"}, "caps": ["GEN-T-MOU.2.06.CE01", "GEN-T-MOU.2.06.CE02", "GEN-T-MOU.2.06.CN01"]}, {"code": "MOU3A", "letter": "A", "titre": "Modéliser l'écoulement d'un fluide", "theme": "MOU", "section": {"code": "MOU3", "titre": "Modéliser l'écoulement d'un fluide"}, "caps": ["GEN-T-MOU.3.01.CE01", "GEN-T-MOU.3.01.CE02", "GEN-T-MOU.3.01.AE01", "GEN-T-MOU.3.01.CE03", "GEN-T-MOU.3.02.CE01", "GEN-T-MOU.3.02.AE01"]}, {"code": "ENE1A", "letter": "A", "titre": "Décrire un système thermodynamique (gaz parfait)", "theme": "ENE", "section": {"code": "ENE1", "titre": "Décrire un système thermodynamique : le modèle du gaz parfait"}, "caps": ["GEN-T-ENE.1.01.CE01", "GEN-T-ENE.1.02.CE01", "GEN-T-ENE.1.02.CE02"]}, {"code": "ENE2A", "letter": "A", "titre": "Premier principe et énergie interne", "theme": "ENE", "section": {"code": "ENE2", "titre": "Effectuer des bilans d'énergie : premier principe de la thermodynamique"}, "caps": ["GEN-T-ENE.2.01.CE01", "GEN-T-ENE.2.02.CE01", "GEN-T-ENE.2.02.CE02", "GEN-T-ENE.2.03.CE01", "GEN-T-ENE.2.03.AE01"]}, {"code": "ENE2B", "letter": "B", "titre": "Transferts thermiques et bilan thermique de la Terre", "theme": "ENE", "section": {"code": "ENE2", "titre": "Effectuer des bilans d'énergie : premier principe de la thermodynamique"}, "caps": ["GEN-T-ENE.2.04.CE01", "GEN-T-ENE.2.04.CE02", "GEN-T-ENE.2.05.CE01", "GEN-T-ENE.2.05.CE02", "GEN-T-ENE.2.06.CE01", "GEN-T-ENE.2.06.AE01", "GEN-T-ENE.2.06.CM01"]}, {"code": "OND1A", "letter": "A", "titre": "Intensité sonore et effet Doppler", "theme": "OND", "section": {"code": "OND1", "titre": "Caractériser les phénomènes ondulatoires"}, "caps": ["GEN-T-OND.1.01.CE01", "GEN-T-OND.1.01.AE01", "GEN-T-OND.1.01.CM01", "GEN-T-OND.1.05.CE01", "GEN-T-OND.1.05.CE02", "GEN-T-OND.1.05.CE03", "GEN-T-OND.1.05.AE01"]}, {"code": "OND1B", "letter": "B", "titre": "Diffraction et interférences", "theme": "OND", "section": {"code": "OND1", "titre": "Caractériser les phénomènes ondulatoires"}, "caps": ["GEN-T-OND.1.02.CE01", "GEN-T-OND.1.02.CE02", "GEN-T-OND.1.02.AE01", "GEN-T-OND.1.02.AE02", "GEN-T-OND.1.03.CE01", "GEN-T-OND.1.03.CE02", "GEN-T-OND.1.03.AE01", "GEN-T-OND.1.04.CE01", "GEN-T-OND.1.04.AE01", "GEN-T-OND.1.04.CN01"]}, {"code": "OND2A", "letter": "A", "titre": "La lunette astronomique", "theme": "OND", "section": {"code": "OND2", "titre": "Former des images, décrire la lumière par un flux de photons"}, "caps": ["GEN-T-OND.2.01.CE01", "GEN-T-OND.2.01.CE02", "GEN-T-OND.2.01.CE03", "GEN-T-OND.2.01.CE04", "GEN-T-OND.2.01.AE01", "GEN-T-OND.2.01.AE02"]}, {"code": "OND2B", "letter": "B", "titre": "Effet photoélectrique et flux de photons", "theme": "OND", "section": {"code": "OND2", "titre": "Former des images, décrire la lumière par un flux de photons"}, "caps": ["GEN-T-OND.2.02.CE01", "GEN-T-OND.2.02.CE02", "GEN-T-OND.2.02.CE03", "GEN-T-OND.2.02.CE04", "GEN-T-OND.2.03.CE01", "GEN-T-OND.2.03.CE02"]}, {"code": "OND3A", "letter": "A", "titre": "Dynamique du dipôle RC", "theme": "OND", "section": {"code": "OND3", "titre": "Étudier la dynamique d'un système électrique"}, "caps": ["GEN-T-OND.3.01.CE01", "GEN-T-OND.3.02.CE01", "GEN-T-OND.3.03.CE01", "GEN-T-OND.3.03.AE01", "GEN-T-OND.3.03.AE02", "GEN-T-OND.3.04.CE01", "GEN-T-OND.3.05.CE01", "GEN-T-OND.3.05.AE01", "GEN-T-OND.3.05.AE02", "GEN-T-OND.3.05.CM01"]}], "canon": ["CTM1A", "CTM1B", "CTM1C", "CTM2A", "CTM2B", "CTM2C", "CTM3A", "CTM3B", "CTM3C", "CTM4A", "CTM4B", "MOU1A", "MOU2A", "MOU2B", "MOU3A", "ENE1A", "ENE2A", "ENE2B", "OND1A", "OND1B", "OND2A", "OND2B", "OND3A"], "cahier": ["CTM1A", "CTM1B", "CTM1C", "OND1A", "OND2A", "CTM2A", "CTM2B", "CTM2C", "CTM3A", "MOU1A", "MOU2A", "MOU2B", "CTM3B", "CTM3C", "MOU3A", "CTM4B", "OND3A", "OND2B", "ENE2A", "CTM4A", "ENE1A", "ENE2B", "OND1B"]} };
+var CHAPSET_ACTIVE = null;   // null = vue B.O. de base ; sinon id du jeu de parties actif
 function applyChapSet(fines){
   CHAPITRES = (fines||[]).map(function(f){
-    return {id:f.theme+"."+f.code, theme:f.theme, themeLabel:(THEME_LABEL[f.theme]||f.theme),
-            code:f.code, titre:f.titre, caps:(f.caps||[]).slice()};
+    return {id:f.section.code+"."+f.code, theme:f.theme, themeLabel:(THEME_LABEL[f.theme]||f.theme),
+            code:f.code, letter:f.letter, titre:f.titre, section:f.section, caps:(f.caps||[]).slice()};
   });
   CHAP_BY_ID={}; CHAPITRES.forEach(function(ch){CHAP_BY_ID[ch.id]=ch;});
   DEFAULT_ORDER = CHAPITRES.map(function(ch){return ch.id;});
   TOTAL_CAPS = CHAPITRES.reduce(function(n,c){return n+c.caps.length;},0) + ((typeof MI_CAPS!=="undefined"&&MI_CAPS)?MI_CAPS.length:0);
 }
 var PROPOSITIONS_ALL = {
-  // Tale spé PC — jeux de chapitres FINS (20 chapitres du livre), mêmes capacités, ordres différents.
+  // Tale spé PC — mêmes 23 parties, ordres différents (le grain = la partie).
   Tspe: [
-    {id:"livre", label:"Livre BELIN — 20 chapitres (fin)", chapset:"Tspe"},
-    {id:"cahier_nicolas", label:"Nicolas — cahier réel 2025-26 (fin, daté)", chapset:"Tspe", orderCodes:["L1", "L2", "L3", "L17", "L18", "L4", "L5", "L6", "L7", "L12", "L13", "L14", "L8", "L9", "L15", "L11", "L20", "L19", "L16", "L10"]}
+    {id:"bo", label:"B.O. — parties (ordre officiel)", chapset:"Tspe"},
+    {id:"cahier_nicolas", label:"Nicolas — cahier réel (parties, daté)", chapset:"Tspe", useCahier:true}
   ]
 };
 function propositionsForLevel(lv){
-  var bo={id:"bo", label:"B.O. — 12 chapitres (défaut)"};
-  return [bo].concat(PROPOSITIONS_ALL[lv]||[]);
+  if(FINECHAP_ALL[lv]) return PROPOSITIONS_ALL[lv].slice();   // niveau à parties : bo = déjà des parties
+  return [{id:"bo", label:"B.O. (référentiel)"}].concat(PROPOSITIONS_ALL[lv]||[]);
 }
 function orderByChapCodes(codes){
   var byCode={}; DEFAULT_ORDER.forEach(function(id){ var ch=CHAP_BY_ID[id]; if(ch) byCode[String(ch.code).toUpperCase()]=id; });
@@ -3472,9 +3506,9 @@ function applyProposition(pid){
   var p=props.filter(function(x){return x.id===pid;})[0]||props[0];
   STATE.proposition=p.id;
   var fine=(p.chapset && FINECHAP_ALL[level]) ? FINECHAP_ALL[level] : null;
-  if(fine){ applyChapSet(fine.chapters); CHAPSET_ACTIVE=p.chapset; }
+  if(fine){ applyChapSet(fine.parties); CHAPSET_ACTIVE=p.chapset; }
   else if(CHAPSET_ACTIVE){ rebuildDerived(level); CHAPSET_ACTIVE=null; }
-  var codes = p.orderCodes ? p.orderCodes : (fine ? fine.canon : (p.chapCodeOrder||null));
+  var codes = p.useCahier ? fine.cahier : (p.orderCodes ? p.orderCodes : (fine ? fine.canon : (p.chapCodeOrder||null)));
   STATE.order = codes ? orderByChapCodes(codes)
               : p.order ? p.order.slice()
               : p.themeOrder ? orderByThemes(p.themeOrder)
@@ -3498,7 +3532,7 @@ function boot(){
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
-    try{ if(STATE.proposition && STATE.proposition!=="bo" && FINECHAP_ALL[level]) applyProposition(STATE.proposition); }catch(e){}   /*FINECHAP_V30 : ré-applique le jeu de chapitres fin sauvegardé*/
+    try{ if(FINECHAP_ALL[level]) applyProposition(STATE.proposition||"bo"); }catch(e){}   /*PARTIES_V31 : niveau à parties -> applique le jeu (bo=parties par défaut)*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");
