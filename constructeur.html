@@ -179,6 +179,15 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .mi-item .mi-n{margin-left:6px;font-size:11px;font-weight:700;color:var(--MI);font-variant-numeric:tabular-nums}
 .mi-item .mi-rm{margin-left:4px;color:#ef4444;cursor:pointer;font-weight:700;border:none;background:none;font-size:13px;line-height:1}
 </style>
+<style id="seance_grain_v32">
+.arbre-seances-det{margin:2px 0 8px 22px;display:flex;flex-direction:column;gap:2px}
+.se-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:3px 0;border-top:1px dashed var(--line)}
+.se-row:first-child{border-top:none}
+.se-caps{display:flex;flex-wrap:wrap;gap:7px;font-size:11px;align-items:center}
+.se-caps .cap-ok{color:#22b985}.se-caps .cap-no{color:var(--line-strong,#889)}
+.se-caps span{white-space:nowrap}
+.se-row.se-autre .se-chip{background:#c9ced4;color:#26303a}
+</style>
 </head>
 <body>
 <script src="classes_annee.js"></script>
@@ -1541,6 +1550,50 @@ function _seStrip(ses){
   });
   return h+'</div>';
 }
+/* SEANCE_GRAIN_V32 : la séance devient le grain documenté (Phase 1, auto).
+   Chaque séance générée (Activité/Cours/TP/TD/DS, déjà datée + capacités déjà réparties par
+   construirePlan) reçoit le(s) document(s) réel(s) de sa partie qui correspond(ent) à son TYPE :
+   cours -> Cours/Activité ; chaque TP réel -> une séance TP ; exos -> TD ; ds -> DS. Rendu seul,
+   aucune date modifiée (calage 1:1 sur le vécu = Phase 2, cahier de textes). */
+function _docBucketForType(t){ return t==='tp'?'tp':t==='exos'?'exos':t==='ds'?'ds':'cours'; }
+function _seBucket(bt){ return (bt==='TP'||bt==='TP évalué')?'tp':bt==='TD'?'exos':bt==='DS'?'ds':(bt==='Activité'||bt==='Cours')?'cours':null; }
+function _assignSeDocs(ch,ses){
+  var docs=docsForPartie(ch)||[]; var byT={cours:[],tp:[],exos:[],ds:[]};
+  docs.forEach(function(d){ byT[_docBucketForType(d.type)].push(d); });
+  var res={};
+  var tpSe=ses.filter(function(s){return _seBucket(s.baseType)==='tp';});
+  byT.tp.forEach(function(d,i){ var s=tpSe.length?tpSe[i%tpSe.length]:null; if(s){(res[s.id]=res[s.id]||[]).push(d);} });
+  ses.forEach(function(s){ var b=_seBucket(s.baseType);
+    if(b==='cours'&&byT.cours.length){ res[s.id]=(res[s.id]||[]).concat(byT.cours); }
+    else if(b==='exos'&&byT.exos.length){ res[s.id]=(res[s.id]||[]).concat(byT.exos); }
+    else if(b==='ds'&&byT.ds.length){ res[s.id]=(res[s.id]||[]).concat(byT.ds); }
+  });
+  return res;
+}
+function _seDocChip(x){ var deb=(x.deborde&&x.deborde.length)?(' — déborde : '+x.deborde.join(', ')):'';
+  return '<span class="doc-chip doc-'+_docType(x.type)+'" title="'+_aesc(x.doc)+' ['+_aesc(x.source||'')+']'+_aesc(deb)+'">'+_docIcon(x.type)+' '+_aesc(x.doc.replace(/\.(pdf|docx|odt|odp|ods)$/i,''))+'</span>'; }
+function _seDetail(ch,ses){
+  if(!ses||!ses.length) return "";
+  var map=_assignSeDocs(ch,ses), assigned={};
+  var h='<div class="arbre-seances-det">';
+  ses.forEach(function(s){
+    if(s.baseType==='Tampon') return;
+    var t=s.baseType||s.slot||'Cours', d=_seDate(s.date), ds=map[s.id]||[];
+    ds.forEach(function(x){assigned[x.doc]=1;});
+    h+='<div class="se-row se-'+_seType(t)+'">';
+    h+='<span class="se-chip se-'+_seType(t)+'">'+_aesc(_seLbl(t))+(d?' <b>'+d+'</b>':'')+'</span>';
+    ds.forEach(function(x){ h+=_seDocChip(x); });
+    if(s.caps&&s.caps.length){ h+='<span class="se-caps">';
+      s.caps.forEach(function(cid){ var tr=capTravaillee(ch,cid);
+        h+='<span class="'+(tr?'cap-ok':'cap-no')+'" title="'+_aesc(capLibelle(cid))+'">'+(tr?'●':'○')+' '+_aesc(_acref(cid))+'</span>'; });
+      h+='</span>'; }
+    h+='</div>';
+  });
+  var docs=docsForPartie(ch)||[]; var left=docs.filter(function(x){return !assigned[x.doc];});
+  if(left.length){ h+='<div class="se-row se-autre"><span class="se-chip">Autres</span>'; left.forEach(function(x){h+=_seDocChip(x);}); h+='</div>'; }
+  return h+'</div>';
+}
+
 function renderArbre(){
   var host=document.getElementById('arbreTree'); if(!host) return;
   var order=(STATE&&STATE.order&&STATE.order.length)?STATE.order:DEFAULT_ORDER;
@@ -1551,7 +1604,7 @@ function renderArbre(){
   var themeSeq=[]; order.forEach(function(id){var ch=CHAP_BY_ID[id]; if(ch&&themeSeq.indexOf(ch.theme)<0)themeSeq.push(ch.theme);});
   (ORDRE_THEMES||[]).forEach(function(t){if(themeSeq.indexOf(t)<0)themeSeq.push(t);});
   var propLbl=(function(){ try{ var ps=propositionsForLevel(level), pid=(STATE&&STATE.proposition)||"bo", p=ps.filter(function(x){return x.id===pid;})[0]||ps[0]; return p?p.label:""; }catch(e){ return ""; } })();
-  var html='<p class="arbre-srclbl">D\u00e9coupage <b>'+_aesc(propLbl)+'</b> \u2014 grain = la <b>partie</b> (A/B/C) d\u00e9velopp\u00e9e en s\u00e9ances dat\u00e9es (Activit\u00e9 / Cours / TD / TP / DS). Chaque partie liste ses <b>documents rattach\u00e9s</b> (\ud83d\udcce) et marque les capacit\u00e9s <span style="color:#22b985">\u25cf</span> <b>en cours d\'acquisition</b> (travaill\u00e9es par un document) vs <span style="color:#8a8f95">\u25cb</span> non encore travaill\u00e9es.</p>';
+  var html='<p class="arbre-srclbl">Découpage <b>'+_aesc(propLbl)+'</b> — grain = la <b>séance</b> : chaque partie (A/B/C) est développée en séances datées (Activité / Cours / TD / TP / DS) et <b>chaque séance porte ses documents</b> (\ud83d\udcce) et ses <b>capacités</b> <span style=\"color:#22b985\">●</span> en cours d\'acquisition / <span style=\"color:#8a8f95\">○</span> non travaillées.</p>';
   function _renderPartie(ch){
     var ses=seMap[ch.id]||[];
     var span=""; var dated=ses.filter(function(s){return s.date;});
@@ -1562,14 +1615,7 @@ function renderArbre(){
     var docBadge = docs ? ' \u00b7 <span style="color:#37b98a">'+docs.length+' doc'+(docs.length>1?'s':'')+'</span>' : '';
     html+='<details class="arbre-chap"><summary>'+head+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+docBadge+'</span></summary>';
     html+=_seStrip(ses);
-    if(docs && docs.length){
-      html+='<div class="arbre-docs">\ud83d\udcce Documents rattach\u00e9s : ';
-      docs.forEach(function(d){
-        var deb=(d.deborde&&d.deborde.length)?(' \u2014 d\u00e9borde : '+d.deborde.join(', ')):'';
-        html+='<span class="doc-chip doc-'+_docType(d.type)+'" title="'+_aesc(d.doc)+' ['+_aesc(d.source||'')+']'+_aesc(deb)+'">'+_docIcon(d.type)+' '+_aesc(d.doc.replace(/\.(pdf|docx)$/i,''))+'</span>';
-      });
-      html+='</div>';
-    }
+    html+=_seDetail(ch,ses);
     html+='<ul class="arbre-caps">';
     (ch.caps||[]).forEach(function(cid){
       var exp=estExp(cid), math=estMath(cid), he=!!(CAPS[cid]&&CAPS[cid].hors_ecrit), tr=capTravaillee(ch,cid);
