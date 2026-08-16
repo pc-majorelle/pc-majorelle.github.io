@@ -58,7 +58,7 @@ window.Store = (function(){
   function niveauToken(id){
     id=String(id||"").toUpperCase();
     if(/NSI/.test(id)) return null;
-    if(/ENS/.test(id)||/^1G/.test(id)||/^TG/.test(id)) return null; // ens. scientifique
+    if(/ENS/.test(id)||/^TG/.test(id)||/^1G/.test(id)){ return /^1/.test(id) ? "1ens" : "Tens"; } // ens. scientifique (1ENS->1ens, TENS->Tens)
     if(/^TSTI/.test(id)||/^TSISPH/.test(id)||/^TSI/.test(id)) return "Tsti";
     if(/^1STI/.test(id)) return "1sti";
     if(/^TPC/.test(id)||/^TSPE/.test(id)) return "Tspe";
