@@ -202,6 +202,10 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .arbre-section[open]>summary::before{content:'\25BE'}
 .arbre-section .seccode{color:var(--accent);font-weight:800;margin-right:6px;font-size:12px}
 .arbre-chap .pl{color:var(--t-tpe);font-weight:800;margin-right:2px}
+.arbre-docs{margin:2px 0 6px 22px;font-size:12px;color:var(--ink-soft,#889);display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.doc-chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--ink);white-space:nowrap;max-width:340px;overflow:hidden;text-overflow:ellipsis}
+.doc-chip.doc-tp{border-color:#1baf7a;color:#1baf7a}.doc-chip.doc-cours{border-color:#5b9bd5;color:#5b9bd5}.doc-chip.doc-exos{border-color:#eb8f34;color:#eb8f34}
+.arbre-caps .cap-ok{color:#22b985;font-size:11px}.arbre-caps .cap-no{color:var(--line-strong,#889);font-size:11px}
 .arbre-chap{margin:4px 8px 8px 20px;border-left:2px solid var(--line);padding-left:10px}
 .arbre-chap>summary{cursor:pointer;padding:6px 4px;list-style:none;font-weight:600}
 .arbre-chap>summary::-webkit-details-marker{display:none}
@@ -1538,19 +1542,29 @@ function renderArbre(){
   var themeSeq=[]; order.forEach(function(id){var ch=CHAP_BY_ID[id]; if(ch&&themeSeq.indexOf(ch.theme)<0)themeSeq.push(ch.theme);});
   (ORDRE_THEMES||[]).forEach(function(t){if(themeSeq.indexOf(t)<0)themeSeq.push(t);});
   var propLbl=(function(){ try{ var ps=propositionsForLevel(level), pid=(STATE&&STATE.proposition)||"bo", p=ps.filter(function(x){return x.id===pid;})[0]||ps[0]; return p?p.label:""; }catch(e){ return ""; } })();
-  var html='<p class="arbre-srclbl">D\u00e9coupage <b>'+_aesc(propLbl)+'</b> \u2014 grain = la <b>partie</b> (A/B/C), d\u00e9velopp\u00e9e en s\u00e9ances dat\u00e9es (Activit\u00e9 / Cours / TD / TP / DS). Les sections B.O. regroupent les parties.</p>';
+  var html='<p class="arbre-srclbl">D\u00e9coupage <b>'+_aesc(propLbl)+'</b> \u2014 grain = la <b>partie</b> (A/B/C) d\u00e9velopp\u00e9e en s\u00e9ances dat\u00e9es (Activit\u00e9 / Cours / TD / TP / DS). Chaque partie liste ses <b>documents rattach\u00e9s</b> (\ud83d\udcce) et marque les capacit\u00e9s <span style="color:#22b985">\u25cf</span> <b>en cours d\'acquisition</b> (travaill\u00e9es par un document) vs <span style="color:#8a8f95">\u25cb</span> non encore travaill\u00e9es.</p>';
   function _renderPartie(ch){
     var ses=seMap[ch.id]||[];
     var span=""; var dated=ses.filter(function(s){return s.date;});
     if(dated.length){ span=" \u00b7 "+_seDate(dated[0].date)+"\u2192"+_seDate(dated[dated.length-1].date); }
     var head = ch.letter ? ('<b class="pl">'+_aesc(ch.letter)+')</b> '+_aesc(ch.titre))
                          : (_aesc(ch.code)+(ch.titre?(' \u2014 '+_aesc(ch.titre)):''));
-    html+='<details class="arbre-chap"><summary>'+head+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+'</span></summary>';
+    var docs=docsForPartie(ch);
+    var docBadge = docs ? ' \u00b7 <span style="color:#37b98a">'+docs.length+' doc'+(docs.length>1?'s':'')+'</span>' : '';
+    html+='<details class="arbre-chap"><summary>'+head+'<span class="arbre-badge">'+(ch.caps?ch.caps.length:0)+' capacit\u00e9s \u00b7 '+ses.length+' s\u00e9ances'+span+docBadge+'</span></summary>';
     html+=_seStrip(ses);
+    if(docs && docs.length){
+      html+='<div class="arbre-docs">\ud83d\udcce Documents rattach\u00e9s : ';
+      docs.forEach(function(d){
+        var deb=(d.deborde&&d.deborde.length)?(' \u2014 d\u00e9borde : '+d.deborde.join(', ')):'';
+        html+='<span class="doc-chip doc-'+_docType(d.type)+'" title="'+_aesc(d.doc)+' ['+_aesc(d.source||'')+']'+_aesc(deb)+'">'+_docIcon(d.type)+' '+_aesc(d.doc.replace(/\.(pdf|docx)$/i,''))+'</span>';
+      });
+      html+='</div>';
+    }
     html+='<ul class="arbre-caps">';
     (ch.caps||[]).forEach(function(cid){
-      var exp=estExp(cid), math=estMath(cid), he=!!(CAPS[cid]&&CAPS[cid].hors_ecrit);
-      html+='<li><span class="cref">'+_aesc(_acref(cid))+'</span><span class="'+(exp?'exp':'')+'">'+_aesc(capLibelle(cid))+'</span>'+(exp?' <span class="arbre-badge">\u2697 exp</span>':'')+(math?' <span class="arbre-badge">\u0192 maths</span>':'')+(he?' <span class="arbre-badge" style="color:#d0873f">hors \u00e9crit</span>':'')+'</li>';
+      var exp=estExp(cid), math=estMath(cid), he=!!(CAPS[cid]&&CAPS[cid].hors_ecrit), tr=capTravaillee(ch,cid);
+      html+='<li>'+(tr?'<span class="cap-ok" title="en cours d\'acquisition : travaill\u00e9e par un document rattach\u00e9">\u25cf</span> ':'<span class="cap-no" title="aucun document rattach\u00e9 ne la travaille encore">\u25cb</span> ')+'<span class="cref">'+_aesc(_acref(cid))+'</span><span class="'+(exp?'exp':'')+'">'+_aesc(capLibelle(cid))+'</span>'+(exp?' <span class="arbre-badge">\u2697 exp</span>':'')+(math?' <span class="arbre-badge">\u0192 maths</span>':'')+(he?' <span class="arbre-badge" style="color:#d0873f">hors \u00e9crit</span>':'')+'</li>';
     });
     html+='</ul></details>';
   }
@@ -3464,6 +3478,18 @@ function applyChapSet(fines){
   DEFAULT_ORDER = CHAPITRES.map(function(ch){return ch.id;});
   TOTAL_CAPS = CHAPITRES.reduce(function(n,c){return n+c.caps.length;},0) + ((typeof MI_CAPS!=="undefined"&&MI_CAPS)?MI_CAPS.length:0);
 }
+/* DOCS_V31 : documents réels rattachés à chaque PARTIE + capacités qu'ils travaillent (issu de
+   l'analyse de contenu, docs_capacites_Tspe.json). Une capacité est « en cours d'acquisition »
+   dès qu'un document rattaché la travaille. */
+var DOCS_ALL = {"Tspe":{"CTM1A":[{"doc":"T1C1 … cours prof.pdf","type":"cours","caps":["01","02?","03","04"],"source":"contenu"},{"doc":"C1_TP1 MESURES DE PH.pdf","type":"tp","caps":["04","04.AE"],"deborde":["CTM3B.07","CTM3B.08"],"source":"direct"},{"doc":"Exercices T1C1.pdf","type":"exos","caps":["01","03","04"],"source":"ocr"}],"CTM1B":[{"doc":"T1C2 … cours prof.pdf","type":"cours","caps":["05","06"],"source":"contenu"},{"doc":"TP T1C2 dosages spectro+conducti.pdf","type":"tp","caps":["05","05.AE"],"source":"contenu"},{"doc":"C2_TP2 Analyse spectrale IR.pdf","type":"tp","caps":["06"],"source":"direct"}],"CTM1C":[{"doc":"T1C3 … cours prof.pdf","type":"cours","caps":["07","08"],"source":"contenu"},{"doc":"C3_TP1 Dosage pH-métrique.pdf","type":"tp","caps":["08","08.AE"],"deborde":["CTM3B.09"],"source":"contenu"},{"doc":"C3_TP2 Dosage conductimétrie (Destop).pdf","type":"tp","caps":["08.AE","08.CE03"],"source":"direct"}],"CTM2A":[{"doc":"T1C4 … cours prof.pdf","type":"cours","caps":["01"],"source":"contenu"},{"doc":"C4_TP1 Facteurs cinétiques.pdf","type":"tp","caps":["01.AE"],"source":"direct"}],"CTM2B":[{"doc":"T1C5 … cours prof.pdf","type":"cours","caps":["02","03"],"source":"contenu"}],"CTM2C":[{"doc":"T1C6 … cours prof.pdf","type":"cours","caps":["04"],"source":"contenu"}],"CTM3A":[{"doc":"T1C7 … cours prof.pdf","type":"cours","caps":["01","02","03","04","05","12"],"source":"contenu"},{"doc":"C7_TP1 Principe de la pile.pdf","type":"tp","caps":["04.AE"],"source":"contenu"}],"CTM3B":[{"doc":"T1C8 … cours prof.pdf","type":"cours","caps":["06","07","08","09","10"],"source":"contenu"},{"doc":"C8_TP1 Détermination de Ka (conductimétrie).pdf","type":"tp","caps":["06.AE"],"source":"direct"}],"CTM3C":[{"doc":"T1C9 … cours prof.pdf","type":"cours","caps":["11"],"source":"contenu"},{"doc":"C9_TP1 Batterie au plomb.pdf","type":"tp","caps":["11.AE"],"deborde":["CTM3A.12"],"source":"contenu"}],"CTM4A":[{"doc":"T1C10 … cours prof.pdf","type":"cours","caps":["01","02"],"deborde":["CTM1A.02"],"source":"contenu"}],"CTM4B":[{"doc":"C10_TP Synthèse de l'aspirine.pdf","type":"tp","caps":["03","03.AE"],"source":"direct"},{"doc":"T1C11 … cours prof.pdf","type":"cours","caps":["03","04","05"],"source":"contenu"}],"MOU1A":[{"doc":"T2C12 … cours prof.pdf","type":"cours","caps":["01","02","03"],"source":"contenu"},{"doc":"TP1 T2C12 Études de mouvements.pdf","type":"tp","caps":["03.AE"],"source":"contenu"}],"MOU2A":[{"doc":"T2C13 … cours prof.pdf","type":"cours","caps":["01","02","03","04","05"],"source":"contenu"},{"doc":"TP T2C13 Mouvement & 2e loi de Newton.pdf","type":"tp","caps":["05.AE"],"source":"contenu"}],"MOU2B":[{"doc":"T2C14 … cours prof.pdf","type":"cours","caps":["06"],"source":"contenu"},{"doc":"C13_TP1 Kepler.pdf","type":"tp","caps":["06.CN"],"source":"contenu"}],"MOU3A":[{"doc":"T2C15 … cours prof.pdf","type":"cours","caps":["01","02"],"source":"contenu"},{"doc":"C14_TP1 Archimède.pdf","type":"tp","caps":["01.AE"],"source":"direct"},{"doc":"TP2 T2C15 Pitot (Bernoulli).pdf","type":"tp","caps":["02.AE"],"source":"contenu"}],"ENE1A":[{"doc":"T3C16 Étude d'un système thermodynamique … prof.pdf","type":"cours","caps":["01","02"],"source":"contenu"}],"ENE2A":[{"doc":"T3C16 Étude d'un système thermodynamique … prof.pdf","type":"cours","caps":["01","02","03"],"source":"contenu"},{"doc":"C15_TP1 Capacité thermique.pdf","type":"tp","caps":["03.AE"],"source":"direct"}],"ENE2B":[{"doc":"T3C16' Bilan d'énergie thermique … prof.pdf","type":"cours","caps":["04","05","06"],"source":"contenu"},{"doc":"C16_TP1 Modéliser l'évolution de la température.pdf","type":"tp","caps":["06.AE"],"source":"contenu"}],"OND1A":[{"doc":"T4C17 Propriétés des ondes … prof.pdf","type":"cours","caps":["01","05"],"deborde":["OND1B"],"source":"contenu"},{"doc":"C17_TP Effet Doppler.pdf","type":"tp","caps":["05.AE"],"source":"contenu"}],"OND1B":[{"doc":"T4C17 Propriétés des ondes … prof.pdf","type":"cours","caps":["02","03","04"],"source":"contenu"},{"doc":"C18_TP1 Diffraction.pdf","type":"tp","caps":["02.AE"],"source":"contenu"},{"doc":"C18_TP2 Interférences.pdf","type":"tp","caps":["03.AE","04.AE"],"source":"contenu"}],"OND2A":[{"doc":"T4C18 La lunette astronomique … prof.pdf","type":"cours","caps":["01"],"source":"contenu"}],"OND2B":[{"doc":"T4C19 Effet photoélectrique … prof.pdf","type":"cours","caps":["02","03"],"source":"contenu"}],"OND3A":[{"doc":"T4C20 Dynamique d'un système électrique … prof.pdf","type":"cours","caps":["01","02","03","04","05"],"source":"contenu"},{"doc":"C21_TP1 Dipôle RC.pdf","type":"tp","caps":["03.AE","05.AE"],"source":"contenu"}]}};
+function docsForPartie(ch){ try{ return (CHAPSET_ACTIVE && DOCS_ALL[level] && ch && DOCS_ALL[level][ch.code]) ? DOCS_ALL[level][ch.code] : null; }catch(e){ return null; } }
+function _notion(capRef){ var p=String(capRef).split("."); return p[p.length-2]; }   // "01"
+function capTravaillee(ch, capRef){
+  var ds=docsForPartie(ch); if(!ds) return false; var n=_notion(capRef);
+  return ds.some(function(d){ return (d.caps||[]).some(function(c){ return String(c).split(".")[0]===n; }); });
+}
+function _docType(t){ return t==="tp"?"tp":t==="exos"?"exos":"cours"; }
+function _docIcon(t){ return t==="tp"?"🧪":t==="exos"?"✎":"📘"; }
 var PROPOSITIONS_ALL = {
   // Tale spé PC — mêmes 23 parties, ordres différents (le grain = la partie).
   Tspe: [
