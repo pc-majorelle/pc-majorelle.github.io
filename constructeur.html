@@ -188,6 +188,54 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 .se-caps span{white-space:nowrap}
 .se-row.se-autre .se-chip{background:#c9ced4;color:#26303a}
 </style>
+<style>/*EDITEUR_SEANCES_V33*/
+/* ===================== EDITEUR_SEANCES_V33 — styles ===================== */
+#secEditeur .ed-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+#secEditeur .ed-note{font-size:12px;color:var(--ink-soft);margin:2px 0 8px}
+#secEditeur .ed-stats{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px}
+#secEditeur .ed-stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px}
+#secEditeur .ed-stat b{font-size:15px;font-variant-numeric:tabular-nums}
+#secEditeur .ed-stat.good{border-color:#2e7d32}
+#secEditeur .ed-stat.warn{border-color:#ef6c00}
+#secEditeur .ed-stat.bad{border-color:#c62828}
+#secEditeur .ed-group{border:1px solid var(--line);border-left:6px solid var(--gc,#888);border-radius:10px;background:var(--panel);margin:0 0 8px;overflow:hidden}
+#secEditeur .ed-ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:var(--panel2)}
+#secEditeur .ed-ghead .g-handle,#secEditeur .s-handle{cursor:grab;opacity:.55;user-select:none}
+#secEditeur .ed-gcode{font-weight:700;color:var(--gc,#888)}
+#secEditeur .ed-gtitle{font-weight:600}
+#secEditeur .ed-gmeta{margin-left:auto;font-size:11.5px;color:var(--ink-soft);text-align:right;line-height:1.3}
+#secEditeur ul.ed-seances{list-style:none;margin:0;padding:4px 8px 2px}
+#secEditeur li.ed-se{border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin:0 0 4px;padding:4px 6px}
+#secEditeur .ed-setop{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px}
+#secEditeur .ed-badge{color:#fff;border-radius:5px;padding:1px 7px;font-weight:700;font-size:11.5px}
+#secEditeur .ed-date{font-variant-numeric:tabular-nums;font-weight:600}
+#secEditeur .ed-day{color:var(--ink-soft)}
+#secEditeur .ed-none{color:#c62828;font-weight:600}
+#secEditeur .ed-span{background:var(--line);border-radius:5px;padding:1px 6px;font-size:11px}
+#secEditeur .ed-lbl{color:var(--ink-soft);font-style:italic;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#secEditeur .ed-free{background:#ef6c0022;border:1px dashed #ef6c00;border-radius:5px;padding:1px 6px;font-size:11px}
+#secEditeur .ed-freeadd{font-size:10.5px;padding:0 5px;margin-left:2px}
+#secEditeur .ed-dur{display:inline-flex;align-items:center;gap:4px;margin-left:auto}
+#secEditeur .ed-dur input[type=range]{width:110px}
+#secEditeur .ed-dur .val{font-variant-numeric:tabular-nums;min-width:52px;font-size:11.5px}
+#secEditeur .ed-caps{margin-top:4px;padding-top:4px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+#secEditeur .ed-hint{font-size:11px;color:var(--ink-soft);margin-right:4px}
+#secEditeur .ed-cap{border:1px solid var(--line);border-radius:11px;padding:1px 7px;font-size:11px;cursor:pointer;background:var(--panel)}
+#secEditeur .ed-cap.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#secEditeur .ed-cap .n{opacity:.75;margin-left:3px;font-size:10px}
+#secEditeur .ed-cap .x{margin-left:4px;font-weight:700}
+#secEditeur .ed-ref{margin:2px 8px 8px;font-size:11.5px}
+#secEditeur .ed-ref .rc{display:inline-block;border:1px solid var(--line);border-radius:11px;padding:1px 7px;margin:2px 2px 0;font-size:11px}
+#secEditeur .ed-ref .rc.z{border-color:#ef6c00;color:#ef6c00}
+#secEditeur .ed-foot{padding:0 8px 8px;display:flex;gap:4px;flex-wrap:wrap}
+#secEditeur .ed-foot button,#secEditeur .ed-freeadd{cursor:pointer}
+#secEditeur .ed-edt{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:8px 10px;margin:0 0 10px}
+#secEditeur .ed-edt table{border-collapse:collapse;font-size:12.5px}
+#secEditeur .ed-edt td,#secEditeur .ed-edt th{padding:2px 6px;border-bottom:1px solid var(--line);text-align:left}
+#secEditeur .ed-edt input[type=time]{padding:1px 3px}
+#secEditeur .ed-edt input[type=number]{width:62px;padding:1px 3px}
+#secEditeur .sortable-ghost{opacity:.4}
+</style>
 </head>
 <body>
 <script src="classes_annee.js"></script>
@@ -276,7 +324,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
         <option value="2026-2027">2026-2027</option>
       </select>
     </label>
-    <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="true" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button></span>
+    <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="true" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button><button type="button" id="modeEditeur" aria-pressed="false" title="Vue édition : la progression séance par séance (créneaux réels, durées, capacités)">📝 Séances</button></span>
     <button id="resetBtn" title="Revenir à la progression stricte auto-générée">↺ Réinitialiser</button>
     <button id="exportBoKeysBtn" title="Exporter les capacités datées (boKeys) pour le gestionnaire de classe">⬇ Exporter les boKeys datés</button><span id="expInfo" class="small" style="margin-left:6px;opacity:.75"></span>
   </header>
@@ -388,6 +436,22 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
     <div id="arbreTree"></div>
   </section>
 
+  <!-- ============ EDITEUR DE SEANCES (3e vue du meme STATE) — EDITEUR_SEANCES_V33 ============ -->
+  <section id="secEditeur" style="display:none">
+    <div class="ed-bar">
+      <h2 style="font-size:16px;margin:0">Éditeur de séances — la progression, séance par séance</h2>
+      <span class="spacer" style="flex:1"></span>
+      <button type="button" id="edEdtBtn" title="Régler les créneaux réels de la classe (jour · heure · durée)">🗓 Mon EDT</button>
+      <button type="button" id="edFoldBtn" title="Replier / déplier tous les chapitres">⊟ Tout replier</button>
+      <button type="button" id="edSeedBtn" title="Refabriquer toutes les séances à partir de la proposition courante (B.O. / source réelle) — remplace vos réglages">↻ Régénérer les séances</button>
+      <button type="button" id="edAutoBtn" title="Revenir au découpage automatique : la frise et l'arbre repassent en génération heuristique">↩ Revenir à l'auto</button>
+    </div>
+    <div class="ed-note" id="edNote"></div>
+    <div class="ed-edt" id="edEdtPanel" style="display:none"></div>
+    <div class="ed-stats" id="edStats"></div>
+    <div id="edBoard"></div>
+  </section>
+
   <!-- ============ PROGRESSION (chapitres) ============ -->
   <section id="secChapters">
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 8px">
@@ -403,6 +467,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 
 </div>
 
+<script>/*! Sortable 1.15.7 - MIT | git://github.com/SortableJS/Sortable.git — vendoré EDITEUR_SEANCES_V33 */
+!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?module.exports=e():"function"==typeof define&&define.amd?define(e):(t=t||self).Sortable=e()}(this,function(){"use strict";function o(t,e){(null==e||e>t.length)&&(e=t.length);for(var n=0,o=Array(e);n<e;n++)o[n]=t[n];return o}function i(t,e,n){return(e=function(t){t=function(t,e){if("object"!=typeof t||!t)return t;var n=t[Symbol.toPrimitive];if(void 0===n)return("string"===e?String:Number)(t);e=n.call(t,e||"default");if("object"!=typeof e)return e;throw new TypeError("@@toPrimitive must return a primitive value.")}(t,"string");return"symbol"==typeof t?t:t+""}(e))in t?Object.defineProperty(t,e,{value:n,enumerable:!0,configurable:!0,writable:!0}):t[e]=n,t}function a(){return(a=Object.assign?Object.assign.bind():function(t){for(var e=1;e<arguments.length;e++){var n,o=arguments[e];for(n in o)!{}.hasOwnProperty.call(o,n)||(t[n]=o[n])}return t}).apply(null,arguments)}function r(e,t){var n,o=Object.keys(e);return Object.getOwnPropertySymbols&&(n=Object.getOwnPropertySymbols(e),t&&(n=n.filter(function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable})),o.push.apply(o,n)),o}function I(e){for(var t=1;t<arguments.length;t++){var n=null!=arguments[t]?arguments[t]:{};t%2?r(Object(n),!0).forEach(function(t){i(e,t,n[t])}):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(n)):r(Object(n)).forEach(function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(n,t))})}return e}function l(t,e){if(null==t)return{};var n,o=function(t,e){if(null==t)return{};var n,o={};for(n in t)if({}.hasOwnProperty.call(t,n)){if(-1!==e.indexOf(n))continue;o[n]=t[n]}return o}(t,e);if(Object.getOwnPropertySymbols)for(var i=Object.getOwnPropertySymbols(t),r=0;r<i.length;r++)n=i[r],-1===e.indexOf(n)&&{}.propertyIsEnumerable.call(t,n)&&(o[n]=t[n]);return o}function e(t){return function(t){if(Array.isArray(t))return o(t)}(t)||function(t){if("undefined"!=typeof Symbol&&null!=t[Symbol.iterator]||null!=t["@@iterator"])return Array.from(t)}(t)||function(t,e){if(t){if("string"==typeof t)return o(t,e);var n={}.toString.call(t).slice(8,-1);return"Map"===(n="Object"===n&&t.constructor?t.constructor.name:n)||"Set"===n?Array.from(t):"Arguments"===n||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)?o(t,e):void 0}}(t)||function(){throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function s(t){return(s="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function t(t){if("undefined"!=typeof window&&window.navigator)return!!navigator.userAgent.match(t)}var y=t(/(?:Trident.*rv[ :]?11\.|msie|iemobile|Windows Phone)/i),w=t(/Edge/i),c=t(/firefox/i),u=t(/safari/i)&&!t(/chrome/i)&&!t(/android/i),d=t(/iP(ad|od|hone)/i),n=t(/chrome/i)&&t(/android/i),h={capture:!1,passive:!1};function f(t,e,n){t.addEventListener(e,n,!y&&h)}function p(t,e,n){t.removeEventListener(e,n,!y&&h)}function g(t,e){if(e&&(">"===e[0]&&(e=e.substring(1)),t))try{if(t.matches)return t.matches(e);if(t.msMatchesSelector)return t.msMatchesSelector(e);if(t.webkitMatchesSelector)return t.webkitMatchesSelector(e)}catch(t){return}}function m(t){return t.host&&t!==document&&t.host.nodeType&&t.host!==t?t.host:t.parentNode}function P(t,e,n,o){if(t){n=n||document;do{if(null!=e&&(">"!==e[0]||t.parentNode===n)&&g(t,e)||o&&t===n)return t}while(t!==n&&(t=m(t)))}return null}var v,b=/\s+/g;function k(t,e,n){var o;t&&e&&(t.classList?t.classList[n?"add":"remove"](e):(o=(" "+t.className+" ").replace(b," ").replace(" "+e+" "," "),t.className=(o+(n?" "+e:"")).replace(b," ")))}function R(t,e,n){var o=t&&t.style;if(o){if(void 0===n)return document.defaultView&&document.defaultView.getComputedStyle?n=document.defaultView.getComputedStyle(t,""):t.currentStyle&&(n=t.currentStyle),void 0===e?n:n[e];o[e=!(e in o||-1!==e.indexOf("webkit"))?"-webkit-"+e:e]=n+("string"==typeof n?"":"px")}}function D(t,e){var n="";if("string"==typeof t)n=t;else do{var o=R(t,"transform")}while(o&&"none"!==o&&(n=o+" "+n),!e&&(t=t.parentNode));var i=window.DOMMatrix||window.WebKitCSSMatrix||window.CSSMatrix||window.MSCSSMatrix;return i&&new i(n)}function E(t,e,n){if(t){var o=t.getElementsByTagName(e),i=0,r=o.length;if(n)for(;i<r;i++)n(o[i],i);return o}return[]}function O(){var t=document.scrollingElement;return t||document.documentElement}function X(t,e,n,o,i){if(t.getBoundingClientRect||t===window){var r,a,l,s,c,u,d=t!==window&&t.parentNode&&t!==O()?(a=(r=t.getBoundingClientRect()).top,l=r.left,s=r.bottom,c=r.right,u=r.height,r.width):(l=a=0,s=window.innerHeight,c=window.innerWidth,u=window.innerHeight,window.innerWidth);if((e||n)&&t!==window&&(i=i||t.parentNode,!y))do{if(i&&i.getBoundingClientRect&&("none"!==R(i,"transform")||n&&"static"!==R(i,"position"))){var h=i.getBoundingClientRect();a-=h.top+parseInt(R(i,"border-top-width")),l-=h.left+parseInt(R(i,"border-left-width")),s=a+r.height,c=l+r.width;break}}while(i=i.parentNode);return o&&t!==window&&(o=(e=D(i||t))&&e.a,t=e&&e.d,e&&(s=(a/=t)+(u/=t),c=(l/=o)+(d/=o))),{top:a,left:l,bottom:s,right:c,width:d,height:u}}}function Y(t,e,n){for(var o=M(t,!0),i=X(t)[e];o;){var r=X(o)[n];if(!("top"===n||"left"===n?r<=i:i<=r))return o;if(o===O())break;o=M(o,!1)}return!1}function B(t,e,n,o){for(var i=0,r=0,a=t.children;r<a.length;){if("none"!==a[r].style.display&&a[r]!==Ht.ghost&&(o||a[r]!==Ht.dragged)&&P(a[r],n.draggable,t,!1)){if(i===e)return a[r];i++}r++}return null}function F(t,e){for(var n=t.lastElementChild;n&&(n===Ht.ghost||"none"===R(n,"display")||e&&!g(n,e));)n=n.previousElementSibling;return n||null}function j(t,e){var n=0;if(!t||!t.parentNode)return-1;for(;t=t.previousElementSibling;)"TEMPLATE"===t.nodeName.toUpperCase()||t===Ht.clone||e&&!g(t,e)||n++;return n}function S(t){var e=0,n=0,o=O();if(t)do{var i=D(t),r=i.a,i=i.d}while(e+=t.scrollLeft*r,n+=t.scrollTop*i,t!==o&&(t=t.parentNode));return[e,n]}function M(t,e){if(!t||!t.getBoundingClientRect)return O();var n=t,o=!1;do{if(n.clientWidth<n.scrollWidth||n.clientHeight<n.scrollHeight){var i=R(n);if(n.clientWidth<n.scrollWidth&&("auto"==i.overflowX||"scroll"==i.overflowX)||n.clientHeight<n.scrollHeight&&("auto"==i.overflowY||"scroll"==i.overflowY)){if(!n.getBoundingClientRect||n===document.body)return O();if(o||e)return n;o=!0}}}while(n=n.parentNode);return O()}function _(t,e){return Math.round(t.top)===Math.round(e.top)&&Math.round(t.left)===Math.round(e.left)&&Math.round(t.height)===Math.round(e.height)&&Math.round(t.width)===Math.round(e.width)}function C(e,n){return function(){var t;v||(1===(t=arguments).length?e.call(this,t[0]):e.apply(this,t),v=setTimeout(function(){v=void 0},n))}}function H(t,e,n){t.scrollLeft+=e,t.scrollTop+=n}function T(t){var e=window.Polymer,n=window.jQuery||window.Zepto;return e&&e.dom?e.dom(t).cloneNode(!0):n?n(t).clone(!0)[0]:t.cloneNode(!0)}function x(t,e){R(t,"position","absolute"),R(t,"top",e.top),R(t,"left",e.left),R(t,"width",e.width),R(t,"height",e.height)}function A(t){R(t,"position",""),R(t,"top",""),R(t,"left",""),R(t,"width",""),R(t,"height","")}function L(n,o,i){var r={};return Array.from(n.children).forEach(function(t){var e;P(t,o.draggable,n,!1)&&!t.animated&&t!==i&&(e=X(t),r.left=Math.min(null!==(t=r.left)&&void 0!==t?t:1/0,e.left),r.top=Math.min(null!==(t=r.top)&&void 0!==t?t:1/0,e.top),r.right=Math.max(null!==(t=r.right)&&void 0!==t?t:-1/0,e.right),r.bottom=Math.max(null!==(t=r.bottom)&&void 0!==t?t:-1/0,e.bottom))}),r.width=r.right-r.left,r.height=r.bottom-r.top,r.x=r.left,r.y=r.top,r}var K="Sortable"+(new Date).getTime();function N(){var e,o=[];return{captureAnimationState:function(){o=[],this.options.animation&&[].slice.call(this.el.children).forEach(function(t){var e,n;"none"!==R(t,"display")&&t!==Ht.ghost&&(o.push({target:t,rect:X(t)}),e=I({},o[o.length-1].rect),!t.thisAnimationDuration||(n=D(t,!0))&&(e.top-=n.f,e.left-=n.e),t.fromRect=e)})},addAnimationState:function(t){o.push(t)},removeAnimationState:function(t){o.splice(function(t,e){for(var n in t)if(t.hasOwnProperty(n))for(var o in e)if(e.hasOwnProperty(o)&&e[o]===t[n][o])return Number(n);return-1}(o,{target:t}),1)},animateAll:function(t){var c=this;if(!this.options.animation)return clearTimeout(e),void("function"==typeof t&&t());var u=!1,d=0;o.forEach(function(t){var e=0,n=t.target,o=n.fromRect,i=X(n),r=n.prevFromRect,a=n.prevToRect,l=t.rect,s=D(n,!0);s&&(i.top-=s.f,i.left-=s.e),n.toRect=i,n.thisAnimationDuration&&_(r,i)&&!_(o,i)&&(l.top-i.top)/(l.left-i.left)==(o.top-i.top)/(o.left-i.left)&&(t=l,s=r,r=a,a=c.options,e=Math.sqrt(Math.pow(s.top-t.top,2)+Math.pow(s.left-t.left,2))/Math.sqrt(Math.pow(s.top-r.top,2)+Math.pow(s.left-r.left,2))*a.animation),_(i,o)||(n.prevFromRect=o,n.prevToRect=i,e=e||c.options.animation,c.animate(n,l,i,e)),e&&(u=!0,d=Math.max(d,e),clearTimeout(n.animationResetTimer),n.animationResetTimer=setTimeout(function(){n.animationTime=0,n.prevFromRect=null,n.fromRect=null,n.prevToRect=null,n.thisAnimationDuration=null},e),n.thisAnimationDuration=e)}),clearTimeout(e),u?e=setTimeout(function(){"function"==typeof t&&t()},d):"function"==typeof t&&t(),o=[]},animate:function(t,e,n,o){var i,r;o&&(R(t,"transition",""),R(t,"transform",""),i=(r=D(this.el))&&r.a,r=r&&r.d,i=(e.left-n.left)/(i||1),r=(e.top-n.top)/(r||1),t.animatingX=!!i,t.animatingY=!!r,R(t,"transform","translate3d("+i+"px,"+r+"px,0)"),this.forRepaintDummy=t.offsetWidth,R(t,"transition","transform "+o+"ms"+(this.options.easing?" "+this.options.easing:"")),R(t,"transform","translate3d(0,0,0)"),"number"==typeof t.animated&&clearTimeout(t.animated),t.animated=setTimeout(function(){R(t,"transition",""),R(t,"transform",""),t.animated=!1,t.animatingX=!1,t.animatingY=!1},o))}}}var W=[],z={initializeByDefault:!0},G={mount:function(e){for(var t in z)!z.hasOwnProperty(t)||t in e||(e[t]=z[t]);W.forEach(function(t){if(t.pluginName===e.pluginName)throw"Sortable: Cannot mount plugin ".concat(e.pluginName," more than once")}),W.push(e)},pluginEvent:function(e,n,o){var t=this;this.eventCanceled=!1,o.cancel=function(){t.eventCanceled=!0};var i=e+"Global";W.forEach(function(t){n[t.pluginName]&&(n[t.pluginName][i]&&n[t.pluginName][i](I({sortable:n},o)),n.options[t.pluginName]&&n[t.pluginName][e]&&n[t.pluginName][e](I({sortable:n},o)))})},initializePlugins:function(n,o,i,t){for(var e in W.forEach(function(t){var e=t.pluginName;(n.options[e]||t.initializeByDefault)&&((t=new t(n,o,n.options)).sortable=n,t.options=n.options,n[e]=t,a(i,t.defaults))}),n.options){var r;n.options.hasOwnProperty(e)&&(void 0!==(r=this.modifyOption(n,e,n.options[e]))&&(n.options[e]=r))}},getEventProperties:function(e,n){var o={};return W.forEach(function(t){"function"==typeof t.eventProperties&&a(o,t.eventProperties.call(n[t.pluginName],e))}),o},modifyOption:function(e,n,o){var i;return W.forEach(function(t){e[t.pluginName]&&t.optionListeners&&"function"==typeof t.optionListeners[n]&&(i=t.optionListeners[n].call(e[t.pluginName],o))}),i}};function U(t){var e=t.sortable,n=t.rootEl,o=t.name,i=t.targetEl,r=t.cloneEl,a=t.toEl,l=t.fromEl,s=t.oldIndex,c=t.newIndex,u=t.oldDraggableIndex,d=t.newDraggableIndex,h=t.originalEvent,f=t.putSortable,p=t.extraEventProperties;if(e=e||n&&n[K]){var g,m=e.options,t="on"+o.charAt(0).toUpperCase()+o.substr(1);!window.CustomEvent||y||w?(g=document.createEvent("Event")).initEvent(o,!0,!0):g=new CustomEvent(o,{bubbles:!0,cancelable:!0}),g.to=a||n,g.from=l||n,g.item=i||n,g.clone=r,g.oldIndex=s,g.newIndex=c,g.oldDraggableIndex=u,g.newDraggableIndex=d,g.originalEvent=h,g.pullMode=f?f.lastPutMode:void 0;var v,b=I(I({},p),G.getEventProperties(o,e));for(v in b)g[v]=b[v];n&&n.dispatchEvent(g),m[t]&&m[t].call(e,g)}}function q(t,e){var n=(o=2<arguments.length&&void 0!==arguments[2]?arguments[2]:{}).evt,o=l(o,V);G.pluginEvent.bind(Ht)(t,e,I({dragEl:$,parentEl:Q,ghostEl:J,rootEl:tt,nextEl:et,lastDownEl:nt,cloneEl:ot,cloneHidden:it,dragStarted:vt,putSortable:ut,activeSortable:Ht.active,originalEvent:n,oldIndex:rt,oldDraggableIndex:lt,newIndex:at,newDraggableIndex:st,hideGhostForTarget:Yt,unhideGhostForTarget:Bt,cloneNowHidden:function(){it=!0},cloneNowShown:function(){it=!1},dispatchSortableEvent:function(t){Z({sortable:e,name:t,originalEvent:n})}},o))}var V=["evt"];function Z(t){U(I({putSortable:ut,cloneEl:ot,targetEl:$,rootEl:tt,oldIndex:rt,oldDraggableIndex:lt,newIndex:at,newDraggableIndex:st},t))}var $,Q,J,tt,et,nt,ot,it,rt,at,lt,st,ct,ut,dt,ht,ft,pt,gt,mt,vt,bt,yt,wt,Dt,Et=!1,St=!1,_t=[],Ct=!1,Tt=!1,xt=[],Ot=!1,Mt=[],At="undefined"!=typeof document,Nt=d,It=w||y?"cssFloat":"float",Pt=At&&!n&&!d&&"draggable"in document.createElement("div"),kt=function(){if(At){if(y)return!1;var t=document.createElement("x");return t.style.cssText="pointer-events:auto","auto"===t.style.pointerEvents}}(),Rt=function(t,e){var n=R(t),o=parseInt(n.width)-parseInt(n.paddingLeft)-parseInt(n.paddingRight)-parseInt(n.borderLeftWidth)-parseInt(n.borderRightWidth),i=B(t,0,e),r=B(t,1,e),a=i&&R(i),l=r&&R(r),s=a&&parseInt(a.marginLeft)+parseInt(a.marginRight)+X(i).width,t=l&&parseInt(l.marginLeft)+parseInt(l.marginRight)+X(r).width;if("flex"===n.display)return"column"===n.flexDirection||"column-reverse"===n.flexDirection?"vertical":"horizontal";if("grid"===n.display)return n.gridTemplateColumns.split(" ").length<=1?"vertical":"horizontal";if(i&&a.float&&"none"!==a.float){e="left"===a.float?"left":"right";return!r||"both"!==l.clear&&l.clear!==e?"horizontal":"vertical"}return i&&("block"===a.display||"flex"===a.display||"table"===a.display||"grid"===a.display||o<=s&&"none"===n[It]||r&&"none"===n[It]&&o<s+t)?"vertical":"horizontal"},Xt=function(t){function l(r,a){return function(t,e,n,o){var i=t.options.group.name&&e.options.group.name&&t.options.group.name===e.options.group.name;if(null==r&&(a||i))return!0;if(null==r||!1===r)return!1;if(a&&"clone"===r)return r;if("function"==typeof r)return l(r(t,e,n,o),a)(t,e,n,o);e=(a?t:e).options.group.name;return!0===r||"string"==typeof r&&r===e||r.join&&-1<r.indexOf(e)}}var e={},n=t.group;n&&"object"==s(n)||(n={name:n}),e.name=n.name,e.checkPull=l(n.pull,!0),e.checkPut=l(n.put),e.revertClone=n.revertClone,t.group=e},Yt=function(){!kt&&J&&R(J,"display","none")},Bt=function(){!kt&&J&&R(J,"display","")};At&&!n&&document.addEventListener("click",function(t){if(St)return t.preventDefault(),t.stopPropagation&&t.stopPropagation(),t.stopImmediatePropagation&&t.stopImmediatePropagation(),St=!1},!0);function Ft(t){if($){t=t.touches?t.touches[0]:t;var e=(i=t.clientX,r=t.clientY,_t.some(function(t){var e=t[K].options.emptyInsertThreshold;if(e&&!F(t)){var n=X(t),o=i>=n.left-e&&i<=n.right+e,e=r>=n.top-e&&r<=n.bottom+e;return o&&e?a=t:void 0}}),a);if(e){var n,o={};for(n in t)t.hasOwnProperty(n)&&(o[n]=t[n]);o.target=o.rootEl=e,o.preventDefault=void 0,o.stopPropagation=void 0,e[K]._onDragOver(o)}}var i,r,a}function jt(t){$&&$.parentNode[K]._isOutsideThisEl(t.target)}function Ht(t,e){if(!t||!t.nodeType||1!==t.nodeType)throw"Sortable: `el` must be an HTMLElement, not ".concat({}.toString.call(t));this.el=t,this.options=e=a({},e),t[K]=this;var n,o,i={group:null,sort:!0,disabled:!1,store:null,handle:null,draggable:/^[uo]l$/i.test(t.nodeName)?">li":">*",swapThreshold:1,invertSwap:!1,invertedSwapThreshold:null,removeCloneOnHide:!0,direction:function(){return Rt(t,this.options)},ghostClass:"sortable-ghost",chosenClass:"sortable-chosen",dragClass:"sortable-drag",ignore:"a, img",filter:null,preventOnFilter:!0,animation:0,easing:null,setData:function(t,e){t.setData("Text",e.textContent)},dropBubble:!1,dragoverBubble:!1,dataIdAttr:"data-id",delay:0,delayOnTouchOnly:!1,touchStartThreshold:(Number.parseInt?Number:window).parseInt(window.devicePixelRatio,10)||1,forceFallback:!1,fallbackClass:"sortable-fallback",fallbackOnBody:!1,fallbackTolerance:0,fallbackOffset:{x:0,y:0},supportPointer:!1!==Ht.supportPointer&&"PointerEvent"in window&&(!u||d),emptyInsertThreshold:5};for(n in G.initializePlugins(this,t,i),i)n in e||(e[n]=i[n]);for(o in Xt(e),this)"_"===o.charAt(0)&&"function"==typeof this[o]&&(this[o]=this[o].bind(this));this.nativeDraggable=!e.forceFallback&&Pt,this.nativeDraggable&&(this.options.touchStartThreshold=1),e.supportPointer?f(t,"pointerdown",this._onTapStart):(f(t,"mousedown",this._onTapStart),f(t,"touchstart",this._onTapStart)),this.nativeDraggable&&(f(t,"dragover",this),f(t,"dragenter",this)),_t.push(this.el),e.store&&e.store.get&&this.sort(e.store.get(this)||[]),a(this,N())}function Lt(t,e,n,o,i,r,a,l){var s,c,u=t[K],d=u.options.onMove;return!window.CustomEvent||y||w?(s=document.createEvent("Event")).initEvent("move",!0,!0):s=new CustomEvent("move",{bubbles:!0,cancelable:!0}),s.to=e,s.from=t,s.dragged=n,s.draggedRect=o,s.related=i||e,s.relatedRect=r||X(e),s.willInsertAfter=l,s.originalEvent=a,t.dispatchEvent(s),c=d?d.call(u,s,a):c}function Kt(t){t.draggable=!1}function Wt(){Ot=!1}function zt(t){return setTimeout(t,0)}function Gt(t){return clearTimeout(t)}Ht.prototype={constructor:Ht,_isOutsideThisEl:function(t){this.el.contains(t)||t===this.el||(bt=null)},_getDirection:function(t,e){return"function"==typeof this.options.direction?this.options.direction.call(this,t,e,$):this.options.direction},_onTapStart:function(e){if(e.cancelable){var n=this,o=this.el,t=this.options,i=t.preventOnFilter,r=e.type,a=e.touches&&e.touches[0]||e.pointerType&&"touch"===e.pointerType&&e,l=(a||e).target,s=e.target.shadowRoot&&(e.path&&e.path[0]||e.composedPath&&e.composedPath()[0])||l,c=t.filter;if(!function(t){Mt.length=0;var e=t.getElementsByTagName("input"),n=e.length;for(;n--;){var o=e[n];o.checked&&Mt.push(o)}}(o),!$&&!(/mousedown|pointerdown/.test(r)&&0!==e.button||t.disabled)&&!s.isContentEditable&&(this.nativeDraggable||!u||!l||"SELECT"!==l.tagName.toUpperCase())&&!((l=P(l,t.draggable,o,!1))&&l.animated||nt===l)){if(rt=j(l),lt=j(l,t.draggable),"function"==typeof c){if(c.call(this,e,l,this))return Z({sortable:n,rootEl:s,name:"filter",targetEl:l,toEl:o,fromEl:o}),q("filter",n,{evt:e}),void(i&&e.preventDefault())}else if(c=c&&c.split(",").some(function(t){if(t=P(s,t.trim(),o,!1))return Z({sortable:n,rootEl:t,name:"filter",targetEl:l,fromEl:o,toEl:o}),q("filter",n,{evt:e}),!0}))return void(i&&e.preventDefault());t.handle&&!P(s,t.handle,o,!1)||this._prepareDragStart(e,a,l)}}},_prepareDragStart:function(t,e,n){var o,i=this,r=i.el,a=i.options,l=r.ownerDocument;n&&!$&&n.parentNode===r&&(o=X(n),tt=r,Q=($=n).parentNode,et=$.nextSibling,nt=n,ct=a.group,dt={target:Ht.dragged=$,clientX:(e||t).clientX,clientY:(e||t).clientY},gt=dt.clientX-o.left,mt=dt.clientY-o.top,this._lastX=(e||t).clientX,this._lastY=(e||t).clientY,$.style["will-change"]="all",o=function(){q("delayEnded",i,{evt:t}),Ht.eventCanceled?i._onDrop():(i._disableDelayedDragEvents(),!c&&i.nativeDraggable&&($.draggable=!0),i._triggerDragStart(t,e),Z({sortable:i,name:"choose",originalEvent:t}),k($,a.chosenClass,!0))},a.ignore.split(",").forEach(function(t){E($,t.trim(),Kt)}),f(l,"dragover",Ft),f(l,"mousemove",Ft),f(l,"touchmove",Ft),a.supportPointer?(f(l,"pointerup",i._onDrop),this.nativeDraggable||f(l,"pointercancel",i._onDrop)):(f(l,"mouseup",i._onDrop),f(l,"touchend",i._onDrop),f(l,"touchcancel",i._onDrop)),c&&this.nativeDraggable&&(this.options.touchStartThreshold=4,$.draggable=!0),q("delayStart",this,{evt:t}),!a.delay||a.delayOnTouchOnly&&!e||this.nativeDraggable&&(w||y)?o():Ht.eventCanceled?this._onDrop():(a.supportPointer?(f(l,"pointerup",i._disableDelayedDrag),f(l,"pointercancel",i._disableDelayedDrag)):(f(l,"mouseup",i._disableDelayedDrag),f(l,"touchend",i._disableDelayedDrag),f(l,"touchcancel",i._disableDelayedDrag)),f(l,"mousemove",i._delayedDragTouchMoveHandler),f(l,"touchmove",i._delayedDragTouchMoveHandler),a.supportPointer&&f(l,"pointermove",i._delayedDragTouchMoveHandler),i._dragStartTimer=setTimeout(o,a.delay)))},_delayedDragTouchMoveHandler:function(t){t=t.touches?t.touches[0]:t;Math.max(Math.abs(t.clientX-this._lastX),Math.abs(t.clientY-this._lastY))>=Math.floor(this.options.touchStartThreshold/(this.nativeDraggable&&window.devicePixelRatio||1))&&this._disableDelayedDrag()},_disableDelayedDrag:function(){$&&Kt($),clearTimeout(this._dragStartTimer),this._disableDelayedDragEvents()},_disableDelayedDragEvents:function(){var t=this.el.ownerDocument;p(t,"mouseup",this._disableDelayedDrag),p(t,"touchend",this._disableDelayedDrag),p(t,"touchcancel",this._disableDelayedDrag),p(t,"pointerup",this._disableDelayedDrag),p(t,"pointercancel",this._disableDelayedDrag),p(t,"mousemove",this._delayedDragTouchMoveHandler),p(t,"touchmove",this._delayedDragTouchMoveHandler),p(t,"pointermove",this._delayedDragTouchMoveHandler)},_triggerDragStart:function(t,e){e=e||"touch"==t.pointerType&&t,!this.nativeDraggable||e?this.options.supportPointer?f(document,"pointermove",this._onTouchMove):f(document,e?"touchmove":"mousemove",this._onTouchMove):(f($,"dragend",this),f(tt,"dragstart",this._onDragStart));try{document.selection?zt(function(){document.selection.empty()}):window.getSelection().removeAllRanges()}catch(t){}},_dragStarted:function(t,e){var n;Et=!1,tt&&$?(q("dragStarted",this,{evt:e}),this.nativeDraggable&&f(document,"dragover",jt),n=this.options,t||k($,n.dragClass,!1),k($,n.ghostClass,!0),Ht.active=this,t&&this._appendGhost(),Z({sortable:this,name:"start",originalEvent:e})):this._nulling()},_emulateDragOver:function(){if(ht){this._lastX=ht.clientX,this._lastY=ht.clientY,Yt();for(var t=document.elementFromPoint(ht.clientX,ht.clientY),e=t;t&&t.shadowRoot&&(t=t.shadowRoot.elementFromPoint(ht.clientX,ht.clientY))!==e;)e=t;if($.parentNode[K]._isOutsideThisEl(t),e)do{if(e[K])if(e[K]._onDragOver({clientX:ht.clientX,clientY:ht.clientY,target:t,rootEl:e})&&!this.options.dragoverBubble)break}while(e=m(t=e));Bt()}},_onTouchMove:function(t){if(dt){var e=this.options,n=e.fallbackTolerance,o=e.fallbackOffset,i=t.touches?t.touches[0]:t,r=J&&D(J,!0),a=J&&r&&r.a,l=J&&r&&r.d,e=Nt&&Dt&&S(Dt),a=(i.clientX-dt.clientX+o.x)/(a||1)+(e?e[0]-xt[0]:0)/(a||1),l=(i.clientY-dt.clientY+o.y)/(l||1)+(e?e[1]-xt[1]:0)/(l||1);if(!Ht.active&&!Et){if(n&&Math.max(Math.abs(i.clientX-this._lastX),Math.abs(i.clientY-this._lastY))<n)return;this._onDragStart(t,!0)}J&&(r?(r.e+=a-(ft||0),r.f+=l-(pt||0)):r={a:1,b:0,c:0,d:1,e:a,f:l},r="matrix(".concat(r.a,",").concat(r.b,",").concat(r.c,",").concat(r.d,",").concat(r.e,",").concat(r.f,")"),R(J,"webkitTransform",r),R(J,"mozTransform",r),R(J,"msTransform",r),R(J,"transform",r),ft=a,pt=l,ht=i),t.cancelable&&t.preventDefault()}},_appendGhost:function(){if(!J){var t=this.options.fallbackOnBody?document.body:tt,e=X($,!0,Nt,!0,t),n=this.options;if(Nt){for(Dt=t;"static"===R(Dt,"position")&&"none"===R(Dt,"transform")&&Dt!==document;)Dt=Dt.parentNode;Dt!==document.body&&Dt!==document.documentElement?(Dt===document&&(Dt=O()),e.top+=Dt.scrollTop,e.left+=Dt.scrollLeft):Dt=O(),xt=S(Dt)}k(J=$.cloneNode(!0),n.ghostClass,!1),k(J,n.fallbackClass,!0),k(J,n.dragClass,!0),R(J,"transition",""),R(J,"transform",""),R(J,"box-sizing","border-box"),R(J,"margin",0),R(J,"top",e.top),R(J,"left",e.left),R(J,"width",e.width),R(J,"height",e.height),R(J,"opacity","0.8"),R(J,"position",Nt?"absolute":"fixed"),R(J,"zIndex","100000"),R(J,"pointerEvents","none"),Ht.ghost=J,t.appendChild(J),R(J,"transform-origin",gt/parseInt(J.style.width)*100+"% "+mt/parseInt(J.style.height)*100+"%")}},_onDragStart:function(t,e){var n=this,o=t.dataTransfer,i=n.options;q("dragStart",this,{evt:t}),Ht.eventCanceled?this._onDrop():(q("setupClone",this),Ht.eventCanceled||((ot=T($)).removeAttribute("id"),ot.draggable=!1,ot.style["will-change"]="",this._hideClone(),k(ot,this.options.chosenClass,!1),Ht.clone=ot),n.cloneId=zt(function(){q("clone",n),Ht.eventCanceled||(n.options.removeCloneOnHide||tt.insertBefore(ot,$),n._hideClone(),Z({sortable:n,name:"clone"}))}),e||k($,i.dragClass,!0),e?(St=!0,n._loopId=setInterval(n._emulateDragOver,50)):(p(document,"mouseup",n._onDrop),p(document,"touchend",n._onDrop),p(document,"touchcancel",n._onDrop),o&&(o.effectAllowed="move",i.setData&&i.setData.call(n,o,$)),f(document,"drop",n),R($,"transform","translateZ(0)")),Et=!0,n._dragStartId=zt(n._dragStarted.bind(n,e,t)),f(document,"selectstart",n),vt=!0,window.getSelection().removeAllRanges(),u&&R(document.body,"user-select","none"))},_onDragOver:function(n){var o,i,r,t,e,a=this.el,l=n.target,s=this.options,c=s.group,u=Ht.active,d=ct===c,h=s.sort,f=ut||u,p=this,g=!1;if(!Ot){if(void 0!==n.preventDefault&&n.cancelable&&n.preventDefault(),l=P(l,s.draggable,a,!0),O("dragOver"),Ht.eventCanceled)return g;if($.contains(n.target)||l.animated&&l.animatingX&&l.animatingY||p._ignoreWhileAnimating===l)return A(!1);if(St=!1,u&&!s.disabled&&(d?h||(i=Q!==tt):ut===this||(this.lastPutMode=ct.checkPull(this,u,$,n))&&c.checkPut(this,u,$,n))){if(r="vertical"===this._getDirection(n,l),o=X($),O("dragOverValid"),Ht.eventCanceled)return g;if(i)return Q=tt,M(),this._hideClone(),O("revert"),Ht.eventCanceled||(et?tt.insertBefore($,et):tt.appendChild($)),A(!0);var m=F(a,s.draggable);if(m&&(S=n,c=r,x=X(F((E=this).el,E.options.draggable)),E=L(E.el,E.options,J),!(c?S.clientX>E.right+10||S.clientY>x.bottom&&S.clientX>x.left:S.clientY>E.bottom+10||S.clientX>x.right&&S.clientY>x.top)||m.animated)){if(m&&(t=n,e=r,C=X(B((_=this).el,0,_.options,!0)),_=L(_.el,_.options,J),e?t.clientX<_.left-10||t.clientY<C.top&&t.clientX<C.right:t.clientY<_.top-10||t.clientY<C.bottom&&t.clientX<C.left)){var v=B(a,0,s,!0);if(v===$)return A(!1);if(D=X(l=v),!1!==Lt(tt,a,$,o,l,D,n,!1))return M(),a.insertBefore($,v),Q=a,N(),A(!0)}else if(l.parentNode===a){var b,y,w,D=X(l),E=$.parentNode!==a,S=(S=$.animated&&$.toRect||o,x=l.animated&&l.toRect||D,_=(e=r)?S.left:S.top,t=e?S.right:S.bottom,C=e?S.width:S.height,v=e?x.left:x.top,S=e?x.right:x.bottom,x=e?x.width:x.height,!(_===v||t===S||_+C/2===v+x/2)),_=r?"top":"left",C=Y(l,"top","top")||Y($,"top","top"),v=C?C.scrollTop:void 0;if(bt!==l&&(y=D[_],Ct=!1,Tt=!S&&s.invertSwap||E),0!==(b=function(t,e,n,o,i,r,a,l){var s=o?t.clientY:t.clientX,c=o?n.height:n.width,t=o?n.top:n.left,o=o?n.bottom:n.right,n=!1;if(!a)if(l&&wt<c*i){if(Ct=!Ct&&(1===yt?t+c*r/2<s:s<o-c*r/2)?!0:Ct)n=!0;else if(1===yt?s<t+wt:o-wt<s)return-yt}else if(t+c*(1-i)/2<s&&s<o-c*(1-i)/2)return function(t){return j($)<j(t)?1:-1}(e);if((n=n||a)&&(s<t+c*r/2||o-c*r/2<s))return t+c/2<s?1:-1;return 0}(n,l,D,r,S?1:s.swapThreshold,null==s.invertedSwapThreshold?s.swapThreshold:s.invertedSwapThreshold,Tt,bt===l)))for(var T=j($);(w=Q.children[T-=b])&&("none"===R(w,"display")||w===J););if(0===b||w===l)return A(!1);yt=b;var x=(bt=l).nextElementSibling,E=!1,S=Lt(tt,a,$,o,l,D,n,E=1===b);if(!1!==S)return 1!==S&&-1!==S||(E=1===S),Ot=!0,setTimeout(Wt,30),M(),E&&!x?a.appendChild($):l.parentNode.insertBefore($,E?x:l),C&&H(C,0,v-C.scrollTop),Q=$.parentNode,void 0===y||Tt||(wt=Math.abs(y-X(l)[_])),N(),A(!0)}}else{if(m===$)return A(!1);if((l=m&&a===n.target?m:l)&&(D=X(l)),!1!==Lt(tt,a,$,o,l,D,n,!!l))return M(),m&&m.nextSibling?a.insertBefore($,m.nextSibling):a.appendChild($),Q=a,N(),A(!0)}if(a.contains($))return A(!1)}return!1}function O(t,e){q(t,p,I({evt:n,isOwner:d,axis:r?"vertical":"horizontal",revert:i,dragRect:o,targetRect:D,canSort:h,fromSortable:f,target:l,completed:A,onMove:function(t,e){return Lt(tt,a,$,o,t,X(t),n,e)},changed:N},e))}function M(){O("dragOverAnimationCapture"),p.captureAnimationState(),p!==f&&f.captureAnimationState()}function A(t){return O("dragOverCompleted",{insertion:t}),t&&(d?u._hideClone():u._showClone(p),p!==f&&(k($,(ut||u).options.ghostClass,!1),k($,s.ghostClass,!0)),ut!==p&&p!==Ht.active?ut=p:p===Ht.active&&ut&&(ut=null),f===p&&(p._ignoreWhileAnimating=l),p.animateAll(function(){O("dragOverAnimationComplete"),p._ignoreWhileAnimating=null}),p!==f&&(f.animateAll(),f._ignoreWhileAnimating=null)),(l===$&&!$.animated||l===a&&!l.animated)&&(bt=null),s.dragoverBubble||n.rootEl||l===document||($.parentNode[K]._isOutsideThisEl(n.target),t||Ft(n)),!s.dragoverBubble&&n.stopPropagation&&n.stopPropagation(),g=!0}function N(){at=j($),st=j($,s.draggable),Z({sortable:p,name:"change",toEl:a,newIndex:at,newDraggableIndex:st,originalEvent:n})}},_ignoreWhileAnimating:null,_offMoveEvents:function(){p(document,"mousemove",this._onTouchMove),p(document,"touchmove",this._onTouchMove),p(document,"pointermove",this._onTouchMove),p(document,"dragover",Ft),p(document,"mousemove",Ft),p(document,"touchmove",Ft)},_offUpEvents:function(){var t=this.el.ownerDocument;p(t,"mouseup",this._onDrop),p(t,"touchend",this._onDrop),p(t,"pointerup",this._onDrop),p(t,"pointercancel",this._onDrop),p(t,"touchcancel",this._onDrop),p(document,"selectstart",this)},_onDrop:function(t){var e=this.el,n=this.options;at=j($),st=j($,n.draggable),q("drop",this,{evt:t}),Q=$&&$.parentNode,at=j($),st=j($,n.draggable),Ht.eventCanceled||(Ct=Tt=Et=!1,clearInterval(this._loopId),clearTimeout(this._dragStartTimer),Gt(this.cloneId),Gt(this._dragStartId),this.nativeDraggable&&(p(document,"drop",this),p(e,"dragstart",this._onDragStart)),this._offMoveEvents(),this._offUpEvents(),u&&R(document.body,"user-select",""),R($,"transform",""),t&&(vt&&(t.cancelable&&t.preventDefault(),n.dropBubble||t.stopPropagation()),J&&J.parentNode&&J.parentNode.removeChild(J),(tt===Q||ut&&"clone"!==ut.lastPutMode)&&ot&&ot.parentNode&&ot.parentNode.removeChild(ot),$&&(this.nativeDraggable&&p($,"dragend",this),Kt($),$.style["will-change"]="",vt&&!Et&&k($,(ut||this).options.ghostClass,!1),k($,this.options.chosenClass,!1),Z({sortable:this,name:"unchoose",toEl:Q,newIndex:null,newDraggableIndex:null,originalEvent:t}),tt!==Q?(0<=at&&(Z({rootEl:Q,name:"add",toEl:Q,fromEl:tt,originalEvent:t}),Z({sortable:this,name:"remove",toEl:Q,originalEvent:t}),Z({rootEl:Q,name:"sort",toEl:Q,fromEl:tt,originalEvent:t}),Z({sortable:this,name:"sort",toEl:Q,originalEvent:t})),ut&&ut.save()):at!==rt&&0<=at&&(Z({sortable:this,name:"update",toEl:Q,originalEvent:t}),Z({sortable:this,name:"sort",toEl:Q,originalEvent:t})),Ht.active&&(null!=at&&-1!==at||(at=rt,st=lt),Z({sortable:this,name:"end",toEl:Q,originalEvent:t}),this.save())))),this._nulling()},_nulling:function(){q("nulling",this),tt=$=Q=J=et=ot=nt=it=dt=ht=vt=at=st=rt=lt=bt=yt=ut=ct=Ht.dragged=Ht.ghost=Ht.clone=Ht.active=null;var e=this.el;Mt.forEach(function(t){e.contains(t)&&(t.checked=!0)}),Mt.length=ft=pt=0},handleEvent:function(t){switch(t.type){case"drop":case"dragend":this._onDrop(t);break;case"dragenter":case"dragover":$&&(this._onDragOver(t),function(t){t.dataTransfer&&(t.dataTransfer.dropEffect="move");t.cancelable&&t.preventDefault()}(t));break;case"selectstart":t.preventDefault()}},toArray:function(){for(var t,e=[],n=this.el.children,o=0,i=n.length,r=this.options;o<i;o++)P(t=n[o],r.draggable,this.el,!1)&&e.push(t.getAttribute(r.dataIdAttr)||function(t){var e=t.tagName+t.className+t.src+t.href+t.textContent,n=e.length,o=0;for(;n--;)o+=e.charCodeAt(n);return o.toString(36)}(t));return e},sort:function(t,e){var n={},o=this.el;this.toArray().forEach(function(t,e){e=o.children[e];P(e,this.options.draggable,o,!1)&&(n[t]=e)},this),e&&this.captureAnimationState(),t.forEach(function(t){n[t]&&(o.removeChild(n[t]),o.appendChild(n[t]))}),e&&this.animateAll()},save:function(){var t=this.options.store;t&&t.set&&t.set(this)},closest:function(t,e){return P(t,e||this.options.draggable,this.el,!1)},option:function(t,e){var n=this.options;if(void 0===e)return n[t];var o=G.modifyOption(this,t,e);n[t]=void 0!==o?o:e,"group"===t&&Xt(n)},destroy:function(){q("destroy",this);var t=this.el;t[K]=null,p(t,"mousedown",this._onTapStart),p(t,"touchstart",this._onTapStart),p(t,"pointerdown",this._onTapStart),this.nativeDraggable&&(p(t,"dragover",this),p(t,"dragenter",this)),Array.prototype.forEach.call(t.querySelectorAll("[draggable]"),function(t){t.removeAttribute("draggable")}),this._onDrop(),this._disableDelayedDragEvents(),_t.splice(_t.indexOf(this.el),1),this.el=t=null},_hideClone:function(){it||(q("hideClone",this),Ht.eventCanceled||(R(ot,"display","none"),this.options.removeCloneOnHide&&ot.parentNode&&ot.parentNode.removeChild(ot),it=!0))},_showClone:function(t){"clone"===t.lastPutMode?it&&(q("showClone",this),Ht.eventCanceled||($.parentNode!=tt||this.options.group.revertClone?et?tt.insertBefore(ot,et):tt.appendChild(ot):tt.insertBefore(ot,$),this.options.group.revertClone&&this.animate($,ot),R(ot,"display",""),it=!1)):this._hideClone()}},At&&f(document,"touchmove",function(t){(Ht.active||Et)&&t.cancelable&&t.preventDefault()}),Ht.utils={on:f,off:p,css:R,find:E,is:function(t,e){return!!P(t,e,t,!1)},extend:function(t,e){if(t&&e)for(var n in e)e.hasOwnProperty(n)&&(t[n]=e[n]);return t},throttle:C,closest:P,toggleClass:k,clone:T,index:j,nextTick:zt,cancelNextTick:Gt,detectDirection:Rt,getChild:B,expando:K},Ht.get=function(t){return t[K]},Ht.mount=function(){for(var t=arguments.length,e=new Array(t),n=0;n<t;n++)e[n]=arguments[n];(e=e[0].constructor===Array?e[0]:e).forEach(function(t){if(!t.prototype||!t.prototype.constructor)throw"Sortable: Mounted plugin must be a constructor function, not ".concat({}.toString.call(t));t.utils&&(Ht.utils=I(I({},Ht.utils),t.utils)),G.mount(t)})},Ht.create=function(t,e){return new Ht(t,e)};var Ut,qt,Vt,Zt,$t,Qt,Jt=[],te=!(Ht.version="1.15.7");function ee(){Jt.forEach(function(t){clearInterval(t.pid)}),Jt=[]}function ne(){clearInterval(Qt)}var oe,ie=C(function(n,t,e,o){if(t.scroll){var i,r=(n.touches?n.touches[0]:n).clientX,a=(n.touches?n.touches[0]:n).clientY,l=t.scrollSensitivity,s=t.scrollSpeed,c=O(),u=!1;qt!==e&&(qt=e,ee(),Ut=t.scroll,i=t.scrollFn,!0===Ut&&(Ut=M(e,!0)));var d=0,h=Ut;do{var f=h,p=X(f),g=p.top,m=p.bottom,v=p.left,b=p.right,y=p.width,w=p.height,D=void 0,E=void 0,S=f.scrollWidth,_=f.scrollHeight,C=R(f),T=f.scrollLeft,p=f.scrollTop,E=f===c?(D=y<S&&("auto"===C.overflowX||"scroll"===C.overflowX||"visible"===C.overflowX),w<_&&("auto"===C.overflowY||"scroll"===C.overflowY||"visible"===C.overflowY)):(D=y<S&&("auto"===C.overflowX||"scroll"===C.overflowX),w<_&&("auto"===C.overflowY||"scroll"===C.overflowY)),T=D&&(Math.abs(b-r)<=l&&T+y<S)-(Math.abs(v-r)<=l&&!!T),p=E&&(Math.abs(m-a)<=l&&p+w<_)-(Math.abs(g-a)<=l&&!!p);if(!Jt[d])for(var x=0;x<=d;x++)Jt[x]||(Jt[x]={});Jt[d].vx==T&&Jt[d].vy==p&&Jt[d].el===f||(Jt[d].el=f,Jt[d].vx=T,Jt[d].vy=p,clearInterval(Jt[d].pid),0==T&&0==p||(u=!0,Jt[d].pid=setInterval(function(){o&&0===this.layer&&Ht.active._onTouchMove($t);var t=Jt[this.layer].vy?Jt[this.layer].vy*s:0,e=Jt[this.layer].vx?Jt[this.layer].vx*s:0;"function"==typeof i&&"continue"!==i.call(Ht.dragged.parentNode[K],e,t,n,$t,Jt[this.layer].el)||H(Jt[this.layer].el,e,t)}.bind({layer:d}),24))),d++}while(t.bubbleScroll&&h!==c&&(h=M(h,!1)));te=u}},30),n=function(t){var e=t.originalEvent,n=t.putSortable,o=t.dragEl,i=t.activeSortable,r=t.dispatchSortableEvent,a=t.hideGhostForTarget,t=t.unhideGhostForTarget;e&&(i=n||i,a(),e=e.changedTouches&&e.changedTouches.length?e.changedTouches[0]:e,e=document.elementFromPoint(e.clientX,e.clientY),t(),i&&!i.el.contains(e)&&(r("spill"),this.onSpill({dragEl:o,putSortable:n})))};function re(){}function ae(){}re.prototype={startIndex:null,dragStart:function(t){t=t.oldDraggableIndex;this.startIndex=t},onSpill:function(t){var e=t.dragEl,n=t.putSortable;this.sortable.captureAnimationState(),n&&n.captureAnimationState();t=B(this.sortable.el,this.startIndex,this.options);t?this.sortable.el.insertBefore(e,t):this.sortable.el.appendChild(e),this.sortable.animateAll(),n&&n.animateAll()},drop:n},a(re,{pluginName:"revertOnSpill"}),ae.prototype={onSpill:function(t){var e=t.dragEl,t=t.putSortable||this.sortable;t.captureAnimationState(),e.parentNode&&e.parentNode.removeChild(e),t.animateAll()},drop:n},a(ae,{pluginName:"removeOnSpill"});var le,se,ce,ue,de,he=[],fe=[],pe=!1,ge=!1,me=!1;function ve(n,o){fe.forEach(function(t,e){e=o.children[t.sortableIndex+(n?Number(e):0)];e?o.insertBefore(t,e):o.appendChild(t)})}function be(){he.forEach(function(t){t!==ce&&t.parentNode&&t.parentNode.removeChild(t)})}return Ht.mount(new function(){function t(){for(var t in this.defaults={scroll:!0,forceAutoScrollFallback:!1,scrollSensitivity:30,scrollSpeed:10,bubbleScroll:!0},this)"_"===t.charAt(0)&&"function"==typeof this[t]&&(this[t]=this[t].bind(this))}return t.prototype={dragStarted:function(t){t=t.originalEvent;this.sortable.nativeDraggable?f(document,"dragover",this._handleAutoScroll):this.options.supportPointer?f(document,"pointermove",this._handleFallbackAutoScroll):t.touches?f(document,"touchmove",this._handleFallbackAutoScroll):f(document,"mousemove",this._handleFallbackAutoScroll)},dragOverCompleted:function(t){t=t.originalEvent;this.options.dragOverBubble||t.rootEl||this._handleAutoScroll(t)},drop:function(){this.sortable.nativeDraggable?p(document,"dragover",this._handleAutoScroll):(p(document,"pointermove",this._handleFallbackAutoScroll),p(document,"touchmove",this._handleFallbackAutoScroll),p(document,"mousemove",this._handleFallbackAutoScroll)),ne(),ee(),clearTimeout(v),v=void 0},nulling:function(){$t=qt=Ut=te=Qt=Vt=Zt=null,Jt.length=0},_handleFallbackAutoScroll:function(t){this._handleAutoScroll(t,!0)},_handleAutoScroll:function(e,n){var o,i=this,r=(e.touches?e.touches[0]:e).clientX,a=(e.touches?e.touches[0]:e).clientY,t=document.elementFromPoint(r,a);$t=e,n||this.options.forceAutoScrollFallback||w||y||u?(ie(e,this.options,t,n),o=M(t,!0),!te||Qt&&r===Vt&&a===Zt||(Qt&&ne(),Qt=setInterval(function(){var t=M(document.elementFromPoint(r,a),!0);t!==o&&(o=t,ee()),ie(e,i.options,t,n)},10),Vt=r,Zt=a)):this.options.bubbleScroll&&M(t,!0)!==O()?ie(e,this.options,M(t,!1),!1):ee()}},a(t,{pluginName:"scroll",initializeByDefault:!0})}),Ht.mount(ae,re),Ht.mount(new function(){function t(){this.defaults={swapClass:"sortable-swap-highlight"}}return t.prototype={dragStart:function(t){t=t.dragEl;oe=t},dragOverValid:function(t){var e=t.completed,n=t.target,o=t.onMove,i=t.activeSortable,r=t.changed,a=t.cancel;i.options.swap&&(t=this.sortable.el,i=this.options,n&&n!==t&&(t=oe,oe=!1!==o(n)?(k(n,i.swapClass,!0),n):null,t&&t!==oe&&k(t,i.swapClass,!1)),r(),e(!0),a())},drop:function(t){var e,n,o=t.activeSortable,i=t.putSortable,r=t.dragEl,a=i||this.sortable,l=this.options;oe&&k(oe,l.swapClass,!1),oe&&(l.swap||i&&i.options.swap)&&r!==oe&&(a.captureAnimationState(),a!==o&&o.captureAnimationState(),n=oe,t=(e=r).parentNode,l=n.parentNode,t&&l&&!t.isEqualNode(n)&&!l.isEqualNode(e)&&(i=j(e),r=j(n),t.isEqualNode(l)&&i<r&&r++,t.insertBefore(n,t.children[i]),l.insertBefore(e,l.children[r])),a.animateAll(),a!==o&&o.animateAll())},nulling:function(){oe=null}},a(t,{pluginName:"swap",eventProperties:function(){return{swapItem:oe}}})}),Ht.mount(new function(){function t(o){for(var t in this)"_"===t.charAt(0)&&"function"==typeof this[t]&&(this[t]=this[t].bind(this));o.options.avoidImplicitDeselect||(o.options.supportPointer?f(document,"pointerup",this._deselectMultiDrag):(f(document,"mouseup",this._deselectMultiDrag),f(document,"touchend",this._deselectMultiDrag))),f(document,"keydown",this._checkKeyDown),f(document,"keyup",this._checkKeyUp),this.defaults={selectedClass:"sortable-selected",multiDragKey:null,avoidImplicitDeselect:!1,setData:function(t,e){var n="";he.length&&se===o?he.forEach(function(t,e){n+=(e?", ":"")+t.textContent}):n=e.textContent,t.setData("Text",n)}}}return t.prototype={multiDragKeyDown:!1,isMultiDrag:!1,delayStartGlobal:function(t){t=t.dragEl;ce=t},delayEnded:function(){this.isMultiDrag=~he.indexOf(ce)},setupClone:function(t){var e=t.sortable,t=t.cancel;if(this.isMultiDrag){for(var n=0;n<he.length;n++)fe.push(T(he[n])),fe[n].sortableIndex=he[n].sortableIndex,fe[n].draggable=!1,fe[n].style["will-change"]="",k(fe[n],this.options.selectedClass,!1),he[n]===ce&&k(fe[n],this.options.chosenClass,!1);e._hideClone(),t()}},clone:function(t){var e=t.sortable,n=t.rootEl,o=t.dispatchSortableEvent,t=t.cancel;this.isMultiDrag&&(this.options.removeCloneOnHide||he.length&&se===e&&(ve(!0,n),o("clone"),t()))},showClone:function(t){var e=t.cloneNowShown,n=t.rootEl,t=t.cancel;this.isMultiDrag&&(ve(!1,n),fe.forEach(function(t){R(t,"display","")}),e(),de=!1,t())},hideClone:function(t){var e=this,n=(t.sortable,t.cloneNowHidden),t=t.cancel;this.isMultiDrag&&(fe.forEach(function(t){R(t,"display","none"),e.options.removeCloneOnHide&&t.parentNode&&t.parentNode.removeChild(t)}),n(),de=!0,t())},dragStartGlobal:function(t){t.sortable;!this.isMultiDrag&&se&&se.multiDrag._deselectMultiDrag(),he.forEach(function(t){t.sortableIndex=j(t)}),he=he.sort(function(t,e){return t.sortableIndex-e.sortableIndex}),me=!0},dragStarted:function(t){var e,n=this,t=t.sortable;this.isMultiDrag&&(this.options.sort&&(t.captureAnimationState(),this.options.animation&&(he.forEach(function(t){t!==ce&&R(t,"position","absolute")}),e=X(ce,!1,!0,!0),he.forEach(function(t){t!==ce&&x(t,e)}),pe=ge=!0)),t.animateAll(function(){pe=ge=!1,n.options.animation&&he.forEach(function(t){A(t)}),n.options.sort&&be()}))},dragOver:function(t){var e=t.target,n=t.completed,t=t.cancel;ge&&~he.indexOf(e)&&(n(!1),t())},revert:function(t){var n,o,e=t.fromSortable,i=t.rootEl,r=t.sortable,a=t.dragRect;1<he.length&&(he.forEach(function(t){r.addAnimationState({target:t,rect:ge?X(t):a}),A(t),t.fromRect=a,e.removeAnimationState(t)}),ge=!1,n=!this.options.removeCloneOnHide,o=i,he.forEach(function(t,e){e=o.children[t.sortableIndex+(n?Number(e):0)];e?o.insertBefore(t,e):o.appendChild(t)}))},dragOverCompleted:function(t){var e,n=t.sortable,o=t.isOwner,i=t.insertion,r=t.activeSortable,a=t.parentEl,l=t.putSortable,t=this.options;i&&(o&&r._hideClone(),pe=!1,t.animation&&1<he.length&&(ge||!o&&!r.options.sort&&!l)&&(e=X(ce,!1,!0,!0),he.forEach(function(t){t!==ce&&(x(t,e),a.appendChild(t))}),ge=!0),o||(ge||be(),1<he.length?(o=de,r._showClone(n),r.options.animation&&!de&&o&&fe.forEach(function(t){r.addAnimationState({target:t,rect:ue}),t.fromRect=ue,t.thisAnimationDuration=null})):r._showClone(n)))},dragOverAnimationCapture:function(t){var e=t.dragRect,n=t.isOwner,t=t.activeSortable;he.forEach(function(t){t.thisAnimationDuration=null}),t.options.animation&&!n&&t.multiDrag.isMultiDrag&&(ue=a({},e),e=D(ce,!0),ue.top-=e.f,ue.left-=e.e)},dragOverAnimationComplete:function(){ge&&(ge=!1,be())},drop:function(t){var o,i,r,a,n,e,l,s=t.originalEvent,c=t.rootEl,u=t.parentEl,d=t.sortable,h=t.dispatchSortableEvent,f=t.oldIndex,t=t.putSortable,p=t||this.sortable;s&&(o=this.options,i=u.children,me||(o.multiDragKey&&!this.multiDragKeyDown&&this._deselectMultiDrag(),k(ce,o.selectedClass,!~he.indexOf(ce)),~he.indexOf(ce)?(he.splice(he.indexOf(ce),1),le=null,U({sortable:d,rootEl:c,name:"deselect",targetEl:ce,originalEvent:s})):(he.push(ce),U({sortable:d,rootEl:c,name:"select",targetEl:ce,originalEvent:s}),s.shiftKey&&le&&d.el.contains(le)?(r=j(le),a=j(ce),~r&&~a&&r!==a&&function(){for(var e,t=r<a?(e=r,a):(e=a,r+1),n=o.filter;e<t;e++)~he.indexOf(i[e])||P(i[e],o.draggable,u,!1)&&(n&&("function"==typeof n?n.call(d,s,i[e],d):n.split(",").some(function(t){return P(i[e],t.trim(),u,!1)}))||(k(i[e],o.selectedClass,!0),he.push(i[e]),U({sortable:d,rootEl:c,name:"select",targetEl:i[e],originalEvent:s})))}()):le=ce,se=p)),me&&this.isMultiDrag&&(ge=!1,(u[K].options.sort||u!==c)&&1<he.length&&(n=X(ce),e=j(ce,":not(."+this.options.selectedClass+")"),!pe&&o.animation&&(ce.thisAnimationDuration=null),p.captureAnimationState(),pe||(o.animation&&(ce.fromRect=n,he.forEach(function(t){var e;t.thisAnimationDuration=null,t!==ce&&(e=ge?X(t):n,t.fromRect=e,p.addAnimationState({target:t,rect:e}))})),be(),he.forEach(function(t){i[e]?u.insertBefore(t,i[e]):u.appendChild(t),e++}),f===j(ce)&&(l=!1,he.forEach(function(t){t.sortableIndex!==j(t)&&(l=!0)}),l&&(h("update"),h("sort")))),he.forEach(function(t){A(t)}),p.animateAll()),se=p),(c===u||t&&"clone"!==t.lastPutMode)&&fe.forEach(function(t){t.parentNode&&t.parentNode.removeChild(t)}))},nullingGlobal:function(){this.isMultiDrag=me=!1,fe.length=0},destroyGlobal:function(){this._deselectMultiDrag(),p(document,"pointerup",this._deselectMultiDrag),p(document,"mouseup",this._deselectMultiDrag),p(document,"touchend",this._deselectMultiDrag),p(document,"keydown",this._checkKeyDown),p(document,"keyup",this._checkKeyUp)},_deselectMultiDrag:function(t){if(!(void 0!==me&&me||se!==this.sortable||t&&P(t.target,this.options.draggable,this.sortable.el,!1)||t&&0!==t.button))for(;he.length;){var e=he[0];k(e,this.options.selectedClass,!1),he.shift(),U({sortable:this.sortable,rootEl:this.sortable.el,name:"deselect",targetEl:e,originalEvent:t})}},_checkKeyDown:function(t){t.key===this.options.multiDragKey&&(this.multiDragKeyDown=!0)},_checkKeyUp:function(t){t.key===this.options.multiDragKey&&(this.multiDragKeyDown=!1)}},a(t,{pluginName:"multiDrag",utils:{select:function(t){var e=t.parentNode[K];e&&e.options.multiDrag&&!~he.indexOf(t)&&(se&&se!==e&&(se.multiDrag._deselectMultiDrag(),se=e),k(t,e.options.selectedClass,!0),he.push(t))},deselect:function(t){var e=t.parentNode[K],n=he.indexOf(t);e&&e.options.multiDrag&&~n&&(k(t,e.options.selectedClass,!1),he.splice(n,1))}},eventProperties:function(){var n=this,o=[],i=[];return he.forEach(function(t){var e;o.push({multiDragElement:t,index:t.sortableIndex}),e=ge&&t!==ce?-1:ge?j(t,":not(."+n.options.selectedClass+")"):j(t),i.push({multiDragElement:t,index:e})}),{items:e(he),clones:[].concat(fe),oldIndicies:o,newIndicies:i}},optionListeners:{multiDragKey:function(t){return"ctrl"===(t=t.toLowerCase())?t="Control":1<t.length&&(t=t.charAt(0).toUpperCase()+t.substr(1)),t}}})}),Ht});
+</script>
 <script>
 "use strict";
 /* ============================================================================
@@ -2054,6 +2121,8 @@ function etatVide(){
     realMode: "cahier",            // source de la progression réelle : "cahier" (daté) | "chapitres" (auto-séquencé)
     compareOrder: REAL_ORDER.slice(), // ordre en mode "chapitres" (référence recopiée / édité)
     compareLabel: REAL_LABEL,      // libellé éditable de la 2e frise
+    plan: null,                    /*EDITEUR_SEANCES_V33*/ // unitéId -> [séances éditées] (modèle unique)
+    planOn: false,                 /*EDITEUR_SEANCES_V33*/ // false = génération heuristique d'origine
   };
 }
 function chargerEtat(){
@@ -2954,7 +3023,7 @@ function tableSeances(sess){
         // menu durée : figé si non découpé (1 partie) ; sinon 0,5/1/1,5 avec complément auto
         if(parts.length>=2){
           line.appendChild(selDur(p.dur,[0.5,1,1.5],(val)=>{
-            const np=partsOf(s); np[pi].dur=val; np[1-pi].dur=+(total-val).toFixed(1); setParts(s,np); renderChapters();
+            const np=partsOf(s); np[pi].dur=val; const _o=np[1-pi]; if(_o) _o.dur=+(total-val).toFixed(1); setParts(s,np); renderChapters();   /*EDITEUR_SEANCES_V33 : garde-fou >2 parties*/
           }));
         } else {
           const lab=document.createElement("span"); lab.textContent=fmtH(p.dur); lab.style.color="var(--ink-soft)"; line.appendChild(lab);
@@ -3650,6 +3719,683 @@ function applyProposition(pid){
   sauverEtat();
   fullRender();
 }
+/* ============================================================================
+   EDITEUR_SEANCES_V33 — l'éditeur de progression « à la séance » comme 3e VUE
+   d'un modèle UNIQUE (exigence MVC de Laurent, SPEC_PRODUCTION_editeur_seances_v1).
+
+   MODÈLE  : STATE.plan[unitéId] = [ {id,type,durMin,caps:[refs],note,ds,dsChapters} ]
+             STATE.planOn = true  -> frise, arbre ET éditeur lisent ce plan.
+             Plan absent -> seed depuis la génération heuristique existante (migration douce) ;
+             STATE.planOn=false -> comportement d'origine strictement inchangé.
+   TEMPS   : créneaux = EDT RÉEL de la classe (jour · heure · durée, <= 2 h en général),
+             packing par minutes ; une séance ne se coupe pas au milieu d'un créneau ;
+             > durée du créneau -> plusieurs créneaux ; temps restant AFFICHÉ et REMPLISSABLE.
+   ============================================================================ */
+
+/* ---------- types de séance (mêmes libellés que le moteur existant) ---------- */
+var TYPES_V33 = [
+  {k:"Activité",  lab:"Act.",  dur:60},
+  {k:"Cours",     lab:"Cours", dur:120},
+  {k:"TD",        lab:"TD",    dur:60},
+  {k:"TP",        lab:"TP",    dur:120},
+  {k:"TP évalué", lab:"TP✓",   dur:120},
+  {k:"DS",        lab:"DS",    dur:60}
+];
+var TYPEMAP_V33 = {}; TYPES_V33.forEach(function(t){ TYPEMAP_V33[t.k]=t; });
+function fmtMin_V33(m){ m=Math.max(0,Math.round(m)); var h=Math.floor(m/60), mm=m%60;
+  return h ? (h+" h"+(mm?(" "+("0"+mm).slice(-2)):"")) : (mm+" min"); }
+function esc_V33(x){ return String(x==null?"":x).replace(/[&<>"]/g,function(c){
+  return c==="&"?"&amp;":c==="<"?"&lt;":c===">"?"&gt;":"&quot;"; }); }
+
+/* ---------- mots-clés des capacités (734, gravés capacites_motscles_v1.json) ---------- */
+var KW_V33 = {"GEN-2-CTM.1.01.CE01": "Corps purs et mélanges", "GEN-2-CTM.1.02.CE01": "Identifier une espèce", "GEN-2-CTM.1.02.CE02": "Tests chimiques courants", "GEN-2-CTM.1.02.CE03": "Masse volumique de l'eau", "GEN-2-CTM.1.02.CE04": "Distinguer mélange et corps pur", "GEN-2-CTM.1.02.AE01": "Identification expérimentale (CCM)", "GEN-2-CTM.1.03.CE01": "Composition de l'air", "GEN-2-CTM.1.03.CE02": "Composition d'un échantillon", "GEN-2-CTM.1.03.AE01": "Mesure volumes et masses", "GEN-2-CTM.1.03.CM01": "Pourcentages et fractions", "GEN-2-CTM.1.04.CE01": "Soluté et solvant", "GEN-2-CTM.1.04.CE02": "Masse volumique vs concentration", "GEN-2-CTM.1.04.CE03": "Concentration en masse", "GEN-2-CTM.1.04.AE01": "Verrerie et solutions", "GEN-2-CTM.1.05.CE01": "Concentration maximale (saturation)", "GEN-2-CTM.1.05.AE01": "Gamme d'étalonnage", "GEN-2-CTM.1.05.CM01": "Grandeur quotient", "GEN-2-CTM.1.06.CE01": "Espèce chimique (entités)", "GEN-2-CTM.1.06.CE02": "Électroneutralité et ions", "GEN-2-CTM.1.07.CE01": "Molécule, atome, ion", "GEN-2-CTM.1.08.CE01": "Taille d'un atome", "GEN-2-CTM.1.08.CE02": "Atome et noyau", "GEN-2-CTM.1.08.CE03": "Écriture d'un noyau", "GEN-2-CTM.1.08.CM01": "Puissances de 10", "GEN-2-CTM.1.09.CE01": "Tableau périodique", "GEN-2-CTM.1.09.CE02": "Électrons de valence", "GEN-2-CTM.1.09.CE03": "Familles chimiques", "GEN-2-CTM.1.10.CE01": "Stabilité des gaz nobles", "GEN-2-CTM.1.10.CE02": "Charge des ions monoatomiques", "GEN-2-CTM.1.10.CE03": "Nommer les ions", "GEN-2-CTM.1.11.CE01": "Schéma de Lewis", "GEN-2-CTM.1.11.CE02": "Énergie de liaison", "GEN-2-CTM.1.12.CE01": "Masse d'une entité", "GEN-2-CTM.1.12.CE02": "Quantité de matière (mole)", "GEN-2-CTM.2.01.CE01": "Changements d'état", "GEN-2-CTM.2.01.CE02": "Équation de changement d'état", "GEN-2-CTM.2.01.CE03": "Fusion vs dissolution", "GEN-2-CTM.2.01.CE04": "Endo/exothermique", "GEN-2-CTM.2.01.CE05": "Énergie massique de changement d'état", "GEN-2-CTM.2.01.CE06": "Énergie et masse changée", "GEN-2-CTM.2.02.CE01": "Équation de réaction", "GEN-2-CTM.2.02.CE02": "Réactif limitant", "GEN-2-CTM.2.02.AE01": "Limitant (état final)", "GEN-2-CTM.2.02.CE03": "Combustions et acides", "GEN-2-CTM.2.02.AE02": "Suivi de température (réaction)", "GEN-2-CTM.2.02.CM01": "Proportionnalité", "GEN-2-CTM.2.03.CE01": "Synthèse laboratoire/nature", "GEN-2-CTM.2.03.CE02": "Schéma reflux et CCM", "GEN-2-CTM.2.03.AE01": "Montage à reflux", "GEN-2-CTM.2.03.AE02": "CCM comparative", "GEN-2-CTM.2.04.CE01": "Isotopes", "GEN-2-CTM.2.04.CE02": "Réactions nucléaires (Soleil)", "GEN-2-CTM.2.04.CE03": "Nature de transformation", "GEN-2-MOU.1.01.CE01": "Échelles du mouvement", "GEN-2-MOU.1.01.CE02": "Choix du référentiel", "GEN-2-MOU.1.01.CE03": "Référentiel et translation", "GEN-2-MOU.1.02.CE01": "Modèle du point", "GEN-2-MOU.1.02.CE02": "Trajectoires", "GEN-2-MOU.1.02.CN01": "Positions par programmation", "GEN-2-MOU.1.03.CE01": "Vecteur vitesse moyenne", "GEN-2-MOU.1.03.CE02": "Vecteur vitesse (déplacement)", "GEN-2-MOU.1.03.CE03": "Mouvement rectiligne uniforme", "GEN-2-MOU.1.03.AE01": "Chronophotographie et vitesse", "GEN-2-MOU.1.03.CN01": "Vecteurs vitesse par programmation", "GEN-2-MOU.1.03.CM01": "Représenter des vecteurs", "GEN-2-MOU.2.01.CE01": "Force (vecteur)", "GEN-2-MOU.2.02.CE01": "Actions réciproques", "GEN-2-MOU.2.03.CE01": "Actions à distance/contact", "GEN-2-MOU.2.03.CE02": "Forces connues a priori", "GEN-2-MOU.2.03.CE03": "Interaction gravitationnelle", "GEN-2-MOU.2.03.CE04": "Poids d'un objet", "GEN-2-MOU.2.03.CE05": "Action d'un support", "GEN-2-MOU.3.01.CE01": "Principe d'inertie", "GEN-2-MOU.3.01.CE02": "Variation de vitesse et forces", "GEN-2-OND.1.01.CE01": "Émission d'un son", "GEN-2-OND.1.01.CE02": "Propagation (milieu matériel)", "GEN-2-OND.1.02.CE01": "Vitesse du son", "GEN-2-OND.1.02.AE01": "Mesurer la vitesse du son", "GEN-2-OND.1.03.CE01": "Période et fréquence", "GEN-2-OND.1.03.AE01": "Chaîne de mesure (vibrations)", "GEN-2-OND.1.03.AE02": "Mesurer la période", "GEN-2-OND.1.03.AE03": "Microcontrôleur (son)", "GEN-2-OND.1.03.CM01": "Fonction périodique", "GEN-2-OND.1.04.CE01": "Infrasons et ultrasons", "GEN-2-OND.1.04.CE02": "Fréquence et hauteur", "GEN-2-OND.1.04.CE03": "Niveau d'intensité sonore", "GEN-2-OND.1.04.CE04": "Échelle sonore et dangers", "GEN-2-OND.1.04.AE01": "Caractériser un son", "GEN-2-OND.2.01.CE01": "Vitesse de la lumière", "GEN-2-OND.2.02.CE01": "Spectre d'un corps chaud", "GEN-2-OND.2.02.CE02": "Longueur d'onde", "GEN-2-OND.2.02.CE03": "Spectre de raies", "GEN-2-OND.2.03.CE01": "Lois de Snell-Descartes", "GEN-2-OND.2.03.AE01": "Indice de réfraction", "GEN-2-OND.2.04.CE01": "Dispersion par un prisme", "GEN-2-OND.2.04.AE01": "Spectres d'émission", "GEN-2-OND.2.05.CE01": "Foyers d'une lentille", "GEN-2-OND.2.05.CE02": "Image par une lentille", "GEN-2-OND.2.05.CE03": "Grandissement", "GEN-2-OND.2.05.CE04": "Modèle de l'œil", "GEN-2-OND.2.05.AE01": "Former une image réelle", "GEN-2-OND.2.05.CM01": "Théorème de Thalès", "GEN-2-OND.3.01.CE01": "Lois des mailles et nœuds", "GEN-2-OND.3.01.AE01": "Mesurer tension et intensité", "GEN-2-OND.3.02.CE01": "Caractéristique d'un dipôle", "GEN-2-OND.3.02.CE02": "Loi d'Ohm", "GEN-2-OND.3.02.AE01": "Tracer la caractéristique", "GEN-2-OND.3.02.CN01": "Modéliser par programmation", "GEN-2-OND.3.02.CM01": "Situation de proportionnalité", "GEN-2-OND.3.03.CE01": "Capteurs du quotidien", "GEN-2-OND.3.03.AE01": "Capteur résistif (étalonnage)", "GEN-2-OND.3.03.AE02": "Microcontrôleur et capteur", "GEN-1-CTM.1.01.CE01": "Masse molaire", "GEN-1-CTM.1.01.CE02": "Quantité de matière", "GEN-1-CTM.1.01.CE03": "Volume molaire", "GEN-1-CTM.1.01.CE04": "Composition d'un mélange", "GEN-1-CTM.1.02.CE01": "Concentration et volume", "GEN-1-CTM.1.03.CE01": "Spectre UV-visible", "GEN-1-CTM.1.03.CE02": "Dosage par étalonnage", "GEN-1-CTM.1.03.AE01": "Gamme étalon (absorbance)", "GEN-1-CTM.1.04.CE01": "Transfert d'électrons", "GEN-1-CTM.1.04.CE02": "Équation d'oxydoréduction", "GEN-1-CTM.1.04.AE01": "Réactions redox (TP)", "GEN-1-CTM.1.05.CE01": "Évolution des quantités", "GEN-1-CTM.1.05.CE02": "Tableau d'avancement", "GEN-1-CTM.1.05.CE03": "État final (transformation totale)", "GEN-1-CTM.1.05.CE04": "Avancement final et maximal", "GEN-1-CTM.1.05.AE01": "Avancement (TP)", "GEN-1-CTM.1.05.CN01": "État final par programmation", "GEN-1-CTM.1.05.CM01": "Équation du premier degré", "GEN-1-CTM.1.06.CE01": "Volume de titrant", "GEN-1-CTM.1.06.CE02": "Équivalence et réactif limitant", "GEN-1-CTM.1.06.CE03": "Relation à l'équivalence", "GEN-1-CTM.1.06.CE04": "Changement de couleur (équivalence)", "GEN-1-CTM.1.06.AE01": "Titrage colorimétrique", "GEN-1-CTM.2.01.CE01": "Schéma de Lewis", "GEN-1-CTM.2.01.CE02": "Géométrie des entités", "GEN-1-CTM.2.01.AE01": "Modèles moléculaires", "GEN-1-CTM.2.02.CE01": "Liaison polaire", "GEN-1-CTM.2.02.CE02": "Polarité d'une molécule", "GEN-1-CTM.2.03.CE01": "Cohésion des solides", "GEN-1-CTM.2.04.CE01": "Dissociation et solvatation", "GEN-1-CTM.2.04.CE02": "Équation de dissolution", "GEN-1-CTM.2.04.CE03": "Concentration des ions", "GEN-1-CTM.2.05.CE01": "Solubilité et solvant", "GEN-1-CTM.2.05.AE01": "Comparer la solubilité", "GEN-1-CTM.2.05.CE02": "Extraction liquide-liquide", "GEN-1-CTM.2.05.AE02": "Extraction (TP)", "GEN-1-CTM.2.06.CE01": "Savons amphiphiles", "GEN-1-CTM.2.06.AE01": "Propriétés des savons", "GEN-1-CTM.3.01.CE01": "Groupes caractéristiques", "GEN-1-CTM.3.02.CE01": "Nomenclature organique", "GEN-1-CTM.3.03.CE01": "Spectroscopie infrarouge", "GEN-1-CTM.3.03.AE01": "Molécules organiques (logiciel)", "GEN-1-CTM.3.04.CE01": "Étapes d'une synthèse", "GEN-1-CTM.3.04.CE02": "Choix des méthodes", "GEN-1-CTM.3.05.CE01": "Rendement d'une synthèse", "GEN-1-CTM.3.05.AE01": "Schémas de dispositifs", "GEN-1-CTM.3.05.AE02": "Montage à reflux", "GEN-1-CTM.3.05.AE03": "Isoler et purifier", "GEN-1-CTM.3.06.CE01": "Combustibles usuels", "GEN-1-CTM.3.07.CE01": "Combustion complète", "GEN-1-CTM.3.08.CE01": "Énergies de liaison", "GEN-1-CTM.3.08.AE01": "Pouvoir calorifique", "GEN-1-CTM.3.09.CE01": "Combustions et risques", "GEN-1-CTM.3.09.CE02": "Développement durable", "GEN-1-MOU.1.01.CE01": "Interaction électrostatique", "GEN-1-MOU.1.01.CE02": "Loi de Coulomb", "GEN-1-MOU.1.01.CE03": "Analogie Coulomb-gravitation", "GEN-1-MOU.1.02.CE01": "Forces et champs", "GEN-1-MOU.1.02.CE02": "Ligne de champ", "GEN-1-MOU.1.02.AE01": "Cartographier un champ", "GEN-1-MOU.2.01.CE01": "Description microscopique d'un fluide", "GEN-1-MOU.2.02.CE01": "Loi de Mariotte", "GEN-1-MOU.2.02.AE01": "Tester la loi de Mariotte", "GEN-1-MOU.2.03.CE01": "Force pressante", "GEN-1-MOU.2.04.CE01": "Statique des fluides", "GEN-1-MOU.2.04.AE01": "Tester la statique des fluides", "GEN-1-MOU.3.01.CE01": "Variation du vecteur vitesse", "GEN-1-MOU.3.01.AE01": "Chronophotographie du mouvement", "GEN-1-MOU.3.01.CN01": "Vecteur vitesse par programmation", "GEN-1-MOU.3.01.CM01": "Somme de vecteurs", "GEN-1-ENE.1.01.CE01": "Intensité et débit de charges", "GEN-1-ENE.1.02.CE01": "Résistance interne", "GEN-1-ENE.1.02.AE01": "Caractéristique d'une source", "GEN-1-ENE.1.03.CE01": "Ordres de grandeur de puissance", "GEN-1-ENE.1.03.CE02": "Rendement d'un convertisseur", "GEN-1-ENE.1.03.AE01": "Évaluer un rendement", "GEN-1-ENE.2.01.CE01": "Énergie cinétique", "GEN-1-ENE.2.01.CE02": "Travail d'une force", "GEN-1-ENE.2.01.CE03": "Théorème de l'énergie cinétique", "GEN-1-ENE.2.02.CE01": "Énergie potentielle de pesanteur", "GEN-1-ENE.2.03.CE01": "Travail des frottements", "GEN-1-ENE.2.04.CE01": "Conservation de l'énergie mécanique", "GEN-1-ENE.2.04.CE02": "Énergie mécanique (cas simples)", "GEN-1-ENE.2.04.CE03": "Forces non conservatives", "GEN-1-ENE.2.04.AE01": "Bilan énergétique (TP)", "GEN-1-ENE.2.04.CN01": "Bilan énergétique par programmation", "GEN-1-ENE.2.04.CM01": "Produit scalaire", "GEN-1-OND.1.01.CE01": "Onde mécanique progressive", "GEN-1-OND.1.01.CE02": "Modèle de propagation", "GEN-1-OND.1.01.AE01": "Visualiser une propagation", "GEN-1-OND.1.02.CE01": "Célérité et durée de propagation", "GEN-1-OND.1.02.AE01": "Mesurer une célérité", "GEN-1-OND.1.02.AE02": "Influence du milieu", "GEN-1-OND.1.03.CE01": "Périodicité spatiale et temporelle", "GEN-1-OND.1.03.CE02": "Période, longueur d'onde, célérité", "GEN-1-OND.1.03.CE03": "Caractéristiques d'une onde", "GEN-1-OND.1.03.AE01": "Mesurer une onde sinusoïdale", "GEN-1-OND.1.03.CN01": "Signal périodique (programmation)", "GEN-1-OND.1.03.CM01": "Fonctions sinus et cosinus", "GEN-1-OND.2.01.CE01": "Relations de conjugaison", "GEN-1-OND.2.01.AE01": "Image par une lentille", "GEN-1-OND.2.01.AE02": "Distance focale", "GEN-1-OND.2.01.AE03": "Tester la conjugaison", "GEN-1-OND.2.01.AE04": "Mise au point optique", "GEN-1-OND.2.01.CM01": "Théorème de Thalès", "GEN-1-OND.2.02.CE01": "Synthèse additive et soustractive", "GEN-1-OND.2.02.CE02": "Couleur perçue d'un objet", "GEN-1-OND.2.02.CE03": "Filtres colorés", "GEN-1-OND.2.02.AE01": "Illustrer la synthèse des couleurs", "GEN-1-OND.2.03.CE01": "Domaine spectral", "GEN-1-OND.2.03.CE02": "Ondes électromagnétiques", "GEN-1-OND.2.04.CE01": "Énergie d'un photon", "GEN-1-OND.2.04.CE02": "Niveaux d'énergie", "GEN-1-OND.2.04.AE01": "Spectre d'une source", "GEN-T-CTM.1.01.CE01": "Réaction acide-base", "GEN-T-CTM.1.02.CE01": "Schéma de Lewis", "GEN-T-CTM.1.03.CE01": "Espèce amphotère", "GEN-T-CTM.1.04.CE01": "pH et concentration", "GEN-T-CTM.1.04.AE01": "Mesure du pH", "GEN-T-CTM.1.04.CM01": "Logarithme décimal", "GEN-T-CTM.1.05.CE01": "Loi de Beer-Lambert", "GEN-T-CTM.1.05.AE01": "Courbe d'étalonnage", "GEN-T-CTM.1.06.CE01": "Spectres IR et UV", "GEN-T-CTM.1.07.AE01": "Préparation de solution", "GEN-T-CTM.1.08.CE01": "Composition après titrage", "GEN-T-CTM.1.08.CE02": "Exploiter un titrage", "GEN-T-CTM.1.08.CE03": "Titrage conductimétrique", "GEN-T-CTM.1.08.AE01": "Titrage pH-métrique", "GEN-T-CTM.1.08.AE02": "Suivi conductimétrique", "GEN-T-CTM.1.08.CN01": "Courbe de titrage", "GEN-T-CTM.3.01.CE01": "Transformation non totale", "GEN-T-CTM.3.01.AE01": "État final réactifs", "GEN-T-CTM.3.02.CE01": "Sens d'évolution", "GEN-T-CTM.3.02.CE02": "Taux d'avancement", "GEN-T-CTM.3.02.AE01": "Quotient de réaction", "GEN-T-CTM.3.03.AE01": "Transfert d'électrons", "GEN-T-CTM.3.04.CE01": "Demi-piles et pont salin", "GEN-T-CTM.3.04.CE02": "Fonctionnement d'une pile", "GEN-T-CTM.3.04.CE03": "Capacité d'une pile", "GEN-T-CTM.3.04.AE01": "Réaliser une pile", "GEN-T-CTM.3.05.CE01": "Oxydants et réducteurs", "GEN-T-CTM.3.05.CE02": "Métaux du bloc s", "GEN-T-CTM.3.06.CE01": "Constantes KA et Ke", "GEN-T-CTM.3.06.AE01": "Constante d'acidité", "GEN-T-CTM.3.07.CE01": "Acide fort ou faible", "GEN-T-CTM.3.07.CE02": "Composition acide apporté", "GEN-T-CTM.3.07.CE03": "Force des acides", "GEN-T-CTM.3.07.AE01": "pH et force acide", "GEN-T-CTM.3.07.CN01": "Avancement par programme", "GEN-T-CTM.3.07.CM01": "Équation du second degré", "GEN-T-CTM.3.08.CE01": "Acides et bases courants", "GEN-T-CTM.3.09.CE01": "Diagramme de prédominance", "GEN-T-CTM.3.09.CE02": "Diagramme de distribution", "GEN-T-CTM.3.09.CE03": "Choix d'indicateur coloré", "GEN-T-CTM.3.09.CN01": "Distribution par programme", "GEN-T-CTM.3.10.CE01": "Solution tampon", "GEN-T-CTM.3.11.CE01": "Réactions aux électrodes", "GEN-T-CTM.3.11.CE02": "Quantités en électrolyse", "GEN-T-CTM.3.11.AE01": "Électrolyse", "GEN-T-CTM.3.12.CE01": "Stockage d'énergie chimique", "GEN-T-CTM.4.01.CE01": "Nomenclature organique", "GEN-T-CTM.4.01.CE02": "Isomères de constitution", "GEN-T-CTM.4.02.CE01": "Motif d'un polymère", "GEN-T-CTM.4.02.CE02": "Polymères usuels", "GEN-T-CTM.4.03.CE01": "Vitesse de formation", "GEN-T-CTM.4.03.CE02": "Rendement de synthèse", "GEN-T-CTM.4.03.AE01": "Protocole de synthèse", "GEN-T-CTM.4.04.CE01": "Séquence réactionnelle", "GEN-T-CTM.4.04.CE02": "Types de réactions", "GEN-T-CTM.4.04.CE03": "Protection déprotection", "GEN-T-CTM.4.04.AE01": "Synthèse organique", "GEN-T-CTM.4.05.CE01": "Chimie et environnement", "GEN-T-MOU.1.01.CE01": "Vitesse et accélération", "GEN-T-MOU.1.01.CE02": "Coordonnées cartésiennes", "GEN-T-MOU.1.02.CE01": "Repère de Frenet", "GEN-T-MOU.1.03.CE01": "Vecteur accélération", "GEN-T-MOU.1.03.AE01": "Chronophotographie", "GEN-T-MOU.1.03.CN01": "Vecteurs par programme", "GEN-T-MOU.1.03.CM01": "Dériver une fonction", "GEN-T-MOU.2.01.CE01": "Centre de masse", "GEN-T-MOU.2.02.CE01": "Référentiel galiléen", "GEN-T-MOU.2.02.CE02": "Deuxième loi de Newton", "GEN-T-MOU.2.03.CE01": "Mouvement plan", "GEN-T-MOU.2.03.CE02": "Équations horaires", "GEN-T-MOU.2.03.CE03": "Équation de trajectoire", "GEN-T-MOU.2.03.CE04": "Champ du condensateur", "GEN-T-MOU.2.04.CE01": "Accélérateur de particules", "GEN-T-MOU.2.05.CE01": "Énergie mécanique", "GEN-T-MOU.2.05.AE01": "Étude énergétique vidéo", "GEN-T-MOU.2.05.CN01": "Énergies par programme", "GEN-T-MOU.2.05.CM01": "Équation différentielle", "GEN-T-MOU.2.06.CE01": "Champ de gravitation", "GEN-T-MOU.2.06.CE02": "Troisième loi de Kepler", "GEN-T-MOU.2.06.CN01": "Lois de Kepler", "GEN-T-MOU.3.01.CE01": "Poussée d'Archimède", "GEN-T-MOU.3.01.CE02": "Vecteur poussée d'Archimède", "GEN-T-MOU.3.01.AE01": "Test poussée d'Archimède", "GEN-T-MOU.3.01.CE03": "Débit volumique", "GEN-T-MOU.3.02.CE01": "Relation de Bernoulli", "GEN-T-MOU.3.02.AE01": "Écoulement d'un fluide", "GEN-T-ENE.1.01.CE01": "Échelles macro et micro", "GEN-T-ENE.1.02.CE01": "Équation du gaz parfait", "GEN-T-ENE.1.02.CE02": "Limites du gaz parfait", "GEN-T-ENE.2.01.CE01": "Énergie interne", "GEN-T-ENE.2.02.CE01": "Sens du transfert thermique", "GEN-T-ENE.2.02.CE02": "Bilan d'énergie", "GEN-T-ENE.2.03.CE01": "Capacité thermique", "GEN-T-ENE.2.03.AE01": "Étude thermodynamique", "GEN-T-ENE.2.04.CE01": "Modes de transfert thermique", "GEN-T-ENE.2.04.CE02": "Résistance thermique", "GEN-T-ENE.2.05.CE01": "Température terrestre", "GEN-T-ENE.2.05.CE02": "Albédo et effet de serre", "GEN-T-ENE.2.06.CE01": "Loi de Newton thermique", "GEN-T-ENE.2.06.AE01": "Évolution de température", "GEN-T-ENE.2.06.CM01": "Équation différentielle 1er ordre", "GEN-T-OND.1.01.CE01": "Niveau d'intensité sonore", "GEN-T-OND.1.01.AE01": "Atténuation du son", "GEN-T-OND.1.01.CM01": "Logarithme décimal", "GEN-T-OND.1.02.CE01": "Phénomène de diffraction", "GEN-T-OND.1.02.CE02": "Angle de diffraction", "GEN-T-OND.1.02.AE01": "Observer la diffraction", "GEN-T-OND.1.02.AE02": "Diffraction par une fente", "GEN-T-OND.1.03.CE01": "Interférences d'ondes", "GEN-T-OND.1.03.CE02": "Interférences constructives", "GEN-T-OND.1.03.AE01": "Interférences sur l'eau", "GEN-T-OND.1.04.CE01": "Trous d'Young", "GEN-T-OND.1.04.AE01": "Interfrange lumineux", "GEN-T-OND.1.04.CN01": "Somme de signaux", "GEN-T-OND.1.05.CE01": "Effet Doppler", "GEN-T-OND.1.05.CE02": "Décalage Doppler", "GEN-T-OND.1.05.CE03": "Exploiter le Doppler", "GEN-T-OND.1.05.AE01": "Doppler acoustique", "GEN-T-OND.2.01.CE01": "Lunette afocale", "GEN-T-OND.2.01.CE02": "Faisceau émergent", "GEN-T-OND.2.01.CE03": "Grossissement d'une lunette", "GEN-T-OND.2.01.CE04": "Lunette commerciale", "GEN-T-OND.2.01.AE01": "Maquette de lunette", "GEN-T-OND.2.01.AE02": "Image intermédiaire", "GEN-T-OND.2.02.CE01": "Effet photoélectrique", "GEN-T-OND.2.02.CE02": "Modèle particulaire", "GEN-T-OND.2.02.CE03": "Énergie cinétique des électrons", "GEN-T-OND.2.02.CE04": "Cellule photoélectrique", "GEN-T-OND.2.03.CE01": "Interaction photon-matière", "GEN-T-OND.2.03.CE02": "Rendement photovoltaïque", "GEN-T-OND.3.01.CE01": "Courant et charges", "GEN-T-OND.3.02.CE01": "Accumulation de charges", "GEN-T-OND.3.03.CE01": "Valeurs de capacités", "GEN-T-OND.3.03.AE01": "Comportement capacitif", "GEN-T-OND.3.03.AE02": "Géométrie du condensateur", "GEN-T-OND.3.04.CE01": "Charge du condensateur", "GEN-T-OND.3.05.CE01": "Capteurs capacitifs", "GEN-T-OND.3.05.AE01": "Dipôle RC", "GEN-T-OND.3.05.AE02": "Temps caractéristique RC", "GEN-T-OND.3.05.CM01": "Équation différentielle 1er ordre", "STI-1-ENE.1.01.CE01": "Formes d'énergie", "STI-1-ENE.1.01.CE02": "Formes et sources", "STI-1-ENE.1.02.CE01": "Puissance et énergie", "STI-1-ENE.1.02.CE02": "Ordres de grandeur puissance", "STI-1-ENE.1.03.CE01": "Conversions d'énergie", "STI-1-ENE.1.03.CE02": "Chaîne énergétique", "STI-1-ENE.1.03.AE01": "Mesure d'énergie", "STI-1-ENE.1.04.CE01": "Conservation de l'énergie", "STI-1-ENE.1.04.CE02": "Bilan énergétique", "STI-1-ENE.1.04.AE01": "Rendement", "STI-1-ENE.1.05.CE01": "Énergie renouvelable", "STI-1-ENE.2.01.CE01": "Système chimique", "STI-1-ENE.2.01.CE02": "Effet thermique", "STI-1-ENE.2.01.CE03": "Exo/endothermique", "STI-1-ENE.2.02.CE01": "Combustible et comburant", "STI-1-ENE.2.02.CE02": "Amorçage de combustion", "STI-1-ENE.2.02.CE03": "Pouvoir calorifique", "STI-1-ENE.2.02.AE01": "Mesure pouvoir calorifique", "STI-1-ENE.2.02.CE04": "Dangers des combustions", "STI-1-ENE.3.01.AE01": "Circuit électrique", "STI-1-ENE.3.01.CE01": "Branchement des appareils", "STI-1-ENE.3.02.AE01": "Signaux périodiques", "STI-1-ENE.3.02.AE02": "Réglage des appareils", "STI-1-ENE.3.02.AE03": "Valeur moyenne", "STI-1-ENE.3.02.AE04": "Valeur efficace", "STI-1-ENE.3.03.CE01": "Conventions d'orientation", "STI-1-ENE.3.03.CE02": "Lois des nœuds et mailles", "STI-1-ENE.3.04.CE01": "Transferts d'énergie", "STI-1-ENE.3.04.CE02": "Puissance électrique", "STI-1-ENE.3.04.CE03": "Dipôles résistifs", "STI-1-ENE.3.04.AE01": "Énergie d'une ligne", "STI-1-ENE.3.05.AE01": "Sécurité électrique", "STI-1-ENE.4.01.CE01": "Température et agitation", "STI-1-ENE.4.01.CE02": "Échelles de température", "STI-1-ENE.4.01.CE03": "Conversion de température", "STI-1-ENE.4.01.CE04": "Thermomètres", "STI-1-ENE.4.01.AE01": "Mesure de température", "STI-1-ENE.4.02.CE01": "Énergie interne", "STI-1-ENE.4.02.CE02": "Variation d'énergie interne", "STI-1-ENE.4.02.CE03": "Capacité thermique", "STI-1-ENE.4.02.CE04": "Changement d'état", "STI-1-ENE.4.02.CE05": "Sens du transfert", "STI-1-ENE.4.02.CE06": "Modes de transfert", "STI-1-ENE.4.02.AE01": "Bilan thermique", "STI-1-ENE.5.01.CE01": "Référentiel", "STI-1-ENE.5.01.CE02": "Types de translation", "STI-1-ENE.5.01.CE03": "Trajectoires en translation", "STI-1-ENE.5.01.CE04": "Point matériel", "STI-1-ENE.5.02.CE01": "Vitesse moyenne", "STI-1-ENE.5.02.CE02": "Vitesse instantanée", "STI-1-ENE.5.02.CE03": "Vitesse et accélération", "STI-1-ENE.5.02.AE01": "Mesure de vitesse", "STI-1-ENE.5.03.CE01": "Vecteur force", "STI-1-ENE.5.03.CE02": "Actions mécaniques", "STI-1-ENE.5.03.CE03": "Équilibre du solide", "STI-1-ENE.5.04.CE01": "Travail d'une force", "STI-1-ENE.5.04.CE02": "Énergie cinétique", "STI-1-ENE.5.04.CE03": "Mouvement accéléré ou décéléré", "STI-1-ENE.5.04.CE04": "Théorème énergie cinétique", "STI-1-ENE.5.04.CE05": "Travail et puissance", "STI-1-ENE.5.04.CE06": "Puissance et vitesse", "STI-1-ENE.5.04.CE07": "Énergie mécanique", "STI-1-ENE.5.04.CE08": "Cinétique et potentielle", "STI-1-ENE.5.04.AE01": "Conservation mécanique", "STI-1-ENE.5.04.CE09": "Puissance et frottements", "STI-1-ENE.5.04.AE02": "Évolution des énergies", "STI-1-ENE.6.01.AE01": "Mesure d'irradiance", "STI-1-ENE.6.01.CE01": "Irradiance", "STI-1-ENE.6.01.CE02": "Lumière laser", "STI-1-ENE.6.01.CE03": "Irradiance d'un laser", "STI-1-ENE.6.02.AE01": "Panneau photovoltaïque", "STI-1-MAT.1.01.CE01": "Familles de matériaux", "STI-1-MAT.1.01.AE01": "Identification de matériaux", "STI-1-MAT.1.02.CE01": "Propriétés des matériaux", "STI-1-MAT.1.02.AE01": "Caractéristiques physiques", "STI-1-MAT.1.02.CE02": "Production et recyclage", "STI-1-MAT.1.03.CE01": "Schéma de Lewis", "STI-1-MAT.1.03.CE02": "Formules chimiques", "STI-1-MAT.1.03.CE03": "Groupes caractéristiques", "STI-1-MAT.1.04.CE01": "Masse molaire", "STI-1-MAT.1.04.AE01": "Concentration", "STI-1-MAT.1.04.AE02": "Dilution et dissolution", "STI-1-MAT.1.05.AE01": "Pictogrammes de sécurité", "STI-1-MAT.2.01.CE01": "Carburants", "STI-1-MAT.2.01.AE01": "Produits de combustion", "STI-1-MAT.2.01.CE02": "Combustion complète", "STI-1-MAT.2.01.CE03": "Combustion incomplète", "STI-1-MAT.2.02.CE01": "Alcanes et alcènes", "STI-1-MAT.2.02.CE02": "Alcools", "STI-1-MAT.3.01.AE01": "Transfert d'électrons", "STI-1-MAT.3.01.CE01": "Oxydant et réducteur", "STI-1-MAT.3.01.CE02": "Demi-équation", "STI-1-MAT.3.01.CE03": "Équation d'oxydoréduction", "STI-1-MAT.3.02.CE01": "Corrosion", "STI-1-MAT.3.02.CE02": "Résistance à la corrosion", "STI-1-MAT.3.02.CE03": "Protection anticorrosion", "STI-1-MAT.3.03.CE01": "Fonctionnement d'une pile", "STI-1-MAT.3.03.AE01": "Étude d'une pile", "STI-1-ONI.1.01.CE01": "Ondes mécaniques", "STI-1-ONI.1.01.CE02": "Onde électromagnétique", "STI-1-ONI.1.01.CE03": "Transfert sans matière", "STI-1-ONI.1.01.CE04": "Longitudinale ou transversale", "STI-1-ONI.1.01.AE01": "Guide d'onde", "STI-1-ONI.1.02.CE01": "Onde périodique", "STI-1-ONI.1.02.CE02": "Longueur d'onde", "STI-1-ONI.1.03.CE01": "Onde et information", "STI-1-ONI.1.03.CE02": "Onde modulée", "STI-1-ONI.1.04.AE01": "Transmission et réflexion", "STI-1-ONI.2.01.CE01": "Propagation du son", "STI-1-ONI.2.01.CE02": "Grandeurs d'un son", "STI-1-ONI.2.01.CE03": "Célérité du son", "STI-1-ONI.2.01.AE01": "Mesure de célérité", "STI-1-ONI.2.01.AE02": "Mesure de distance", "STI-1-ONI.2.01.CE04": "Perception d'un son", "STI-1-ONI.2.01.CE05": "Hauteur et intensité", "STI-1-ONI.2.01.CE06": "Fréquences audibles", "STI-1-ONI.2.01.CE07": "Intensité acoustique", "STI-1-ONI.3.01.CE01": "Spectre électromagnétique", "STI-1-ONI.3.01.CE02": "Spectre visible", "STI-1-ONI.3.01.CE03": "Célérité de la lumière", "STI-1-ONI.3.02.CE01": "Sources lumineuses", "STI-1-ONI.3.02.CE02": "Caractéristiques d'un laser", "STI-1-ONI.3.02.CE03": "Sécurité lumineuse", "ENS-T-1.1.01": "Composition de l'atmosphère", "ENS-T-1.1.02": "Diagramme d'état de l'eau", "ENS-T-1.1.03": "Expérience de Ruben et Kamen", "ENS-T-1.1.04": "Dioxygène et indices géologiques", "ENS-T-1.1.05": "Dioxygène et biodiversité", "ENS-T-1.1.06": "Spectres ozone et ADN", "ENS-T-1.2.01": "Climat et météo", "ENS-T-1.2.02": "Tendances de température", "ENS-T-1.2.03": "Indices climatiques passés", "ENS-T-1.2.04": "Pouvoir de réchauffement", "ENS-T-1.2.05": "Indicateurs climatiques", "ENS-T-1.2.06": "CO2 et température", "ENS-T-1.2.07": "Causalité climatique", "ENS-T-1.2.08": "Fonte des glaces", "ENS-T-1.2.09": "Dilatation des océans", "ENS-T-1.3.01": "Simulation climatique", "ENS-T-1.3.02": "Modèle climatique", "ENS-T-2.1.01": "Alternateur", "ENS-T-2.1.02": "Rotation et fréquence", "ENS-T-2.1.03": "Rendement de l'alternateur", "ENS-T-2.1.04": "Semiconducteur et spectre solaire", "ENS-T-2.1.05": "Installation photovoltaïque", "ENS-T-2.2.01": "Chaînes énergétiques", "ENS-T-2.2.02": "Rendement global", "ENS-T-2.2.03": "Centrale électrique", "ENS-T-2.2.04": "Effet Joule", "ENS-T-2.2.05": "Stockage de l'énergie", "ENS-T-2.3.01": "Unités d'énergie", "ENS-T-2.3.02": "Production d'énergie", "ENS-T-2.3.03": "Ordres de grandeur énergétiques", "ENS-T-2.3.04": "Cycle du carbone", "ENS-T-2.3.05": "Durées de transformation du carbone", "ENS-T-2.3.06": "Équation de combustion", "ENS-T-2.3.07": "CO2 par combustible", "ENS-T-2.3.08": "Ozone stratosphérique et troposphérique", "ENS-T-2.3.09": "Polluants et santé", "ENS-T-2.3.10": "Empreinte carbone", "ENS-T-2.3.11": "CO2 et végétation", "ENS-T-2.3.12": "Rapports du GIEC", "ENS-T-2.3.13": "Choix énergétiques globaux", "ENS-T-2.3.14": "Choix énergétiques locaux", "ENS-T-3.1.01": "Estimer la biodiversité", "ENS-T-3.1.02": "Métagénomique", "ENS-T-3.1.03": "Échantillonnage de population", "ENS-T-3.1.04": "Capture-marquage-recapture", "ENS-T-3.1.05": "Fluctuation d'échantillonnage", "ENS-T-3.1.06": "Intervalle de confiance", "ENS-T-3.1.07": "Modèle de Hardy-Weinberg", "ENS-T-3.1.08": "Démonstration de constance", "ENS-T-3.1.09": "Simulation Hardy-Weinberg", "ENS-T-3.1.10": "Écart au modèle", "ENS-T-3.1.11": "Modification d'écosystème", "ENS-T-3.1.12": "Une seule santé", "ENS-T-3.1.13": "Fragmentation des habitats", "ENS-T-3.1.14": "Faible effectif et allèles", "ENS-T-3.1.15": "Protection des populations", "ENS-T-3.1.16": "Gestion durable d'écosystème", "ENS-T-3.2.01": "Hasard, variation, sélection", "ENS-T-3.2.02": "Évolution des populations", "ENS-T-3.3.01": "Matrices de caractères", "ENS-T-3.3.02": "Arbre phylogénétique", "ENS-T-3.3.03": "Parenté des primates", "ENS-T-3.3.04": "Espèces fossiles", "ENS-T-3.3.05": "Lignée humaine", "ENS-T-3.3.06": "Parenté d'Homo sapiens", "ENS-T-3.4.01": "Variation d'une population", "ENS-T-3.4.02": "Linéaire ou exponentiel", "ENS-T-3.4.03": "Modèle de Malthus", "ENS-T-3.4.04": "Temps de doublement", "ENS-T-3.4.05": "Croissance des ressources", "ENS-T-3.4.06": "Courbe de tendance", "ENS-T-3.4.07": "Validité du modèle", "ENS-T-3.5.01": "Traitement de l'information", "ENS-T-3.5.02": "Outils numériques programmables", "ENS-T-3.5.03": "Fichiers exécutables", "ENS-T-3.5.04": "Taille des fichiers médias", "ENS-T-3.5.05": "Taille en octets d'un texte", "ENS-T-3.5.06": "Débogage de programme", "ENS-T-3.5.07": "Applications de l'IA", "ENS-T-3.5.08": "Courbe de régression", "ENS-T-3.5.09": "Données et corrélations de l'IA", "ENS-T-3.5.10": "Biais des données", "ENS-T-3.5.11": "Corrélation et causalité", "ENS-T-3.5.12": "Éthique de l'IA", "ENS-T-3.5.13": "Tableau de contingence", "ENS-T-3.5.14": "Généraliser la classification", "ENS-P-1.1.01": "Abondance des éléments", "ENS-P-1.1.02": "Fusion ou fission", "ENS-P-1.1.03": "Demi-vies successives", "ENS-P-1.1.04": "Demi-vie graphique", "ENS-P-1.1.05": "Datation radioactive", "ENS-P-1.1.06": "Radioactivité médicale", "ENS-P-1.1.07": "Précautions radioactivité", "ENS-P-1.2.01": "Cristal de sel", "ENS-P-1.2.02": "Maille et cristal", "ENS-P-1.2.03": "Échelles de la matière", "ENS-P-1.2.04": "Structures cristallines", "ENS-P-1.2.05": "Cristaux du vivant", "ENS-P-1.2.06": "Refroidissement des roches", "ENS-P-1.3.01": "Théorie cellulaire", "ENS-P-1.3.02": "Ordres de grandeur cellulaires", "ENS-P-1.3.03": "Échelle de la cellule", "ENS-P-1.3.04": "Membrane plasmique", "ENS-P-1.3.05": "Statut des virus", "ENS-P-1.3.06": "Molécules exogènes", "ENS-P-2.1.01": "Spectre du corps noir", "ENS-P-2.1.02": "Loi de Wien", "ENS-P-2.1.03": "Puissance reçue", "ENS-P-2.1.04": "Données de températures", "ENS-P-2.1.05": "Moyennes de températures", "ENS-P-2.1.06": "Exposition au rayonnement solaire", "ENS-P-2.2.01": "Puissance solaire vers la Terre", "ENS-P-2.2.02": "Albédo et puissance", "ENS-P-2.2.03": "Absorption atmosphérique", "ENS-P-2.2.04": "Rayonnements du sol", "ENS-P-2.2.05": "Albédo et effet de serre", "ENS-P-2.3.01": "Photosynthèse planétaire", "ENS-P-2.3.02": "Apport énergétique des aliments", "ENS-P-2.3.03": "Équilibre alimentaire", "ENS-P-2.3.04": "Déséquilibres et pathologies", "ENS-P-2.4.01": "Sources d'énergie", "ENS-P-2.4.02": "Atouts et limites énergétiques", "ENS-P-2.4.03": "Origine des combustibles fossiles", "ENS-P-2.4.04": "Pouvoirs calorifiques", "ENS-P-3.1.01": "Rotondité de la Terre", "ENS-P-3.1.02": "Méridien d'Ératosthène", "ENS-P-3.1.03": "Triangulation Delambre-Méchain", "ENS-P-3.1.04": "Rayon de la Terre", "ENS-P-3.1.05": "Distance à l'horizon", "ENS-P-3.1.06": "Chemins et SIG", "ENS-P-3.2.01": "Arguments sur l'âge de la Terre", "ENS-P-3.2.02": "Controverse de l'âge", "ENS-P-3.3.01": "Théorie héliocentrique", "ENS-P-3.3.02": "Aspect de la Lune", "ENS-P-3.3.03": "Zone d'habitabilité", "ENS-P-3.3.04": "Répartition de l'eau douce", "ENS-P-3.3.05": "Volume d'une réserve d'eau", "ENS-P-4.1.01": "Spectre d'un son", "ENS-P-4.1.02": "Niveau d'intensité sonore", "ENS-P-4.1.03": "Corde vibrante", "ENS-P-4.1.04": "Notes à l'octave", "ENS-P-4.2.01": "Paramètres de numérisation", "ENS-P-4.2.02": "Taille d'un fichier audio", "ENS-P-4.2.03": "Taux de compression", "ENS-P-4.2.04": "Fichiers audio compressés", "ENS-P-4.2.05": "Énergie des échanges numériques", "ENS-P-4.3.01": "Oreille externe et moyenne", "ENS-P-4.3.02": "Pathologies auditives", "ENS-P-4.3.03": "Cellules ciliées", "ENS-P-4.3.04": "Traitement cérébral du son", "ENS-P-4.3.05": "Risque pour l'oreille interne", "ENS-P-4.3.06": "Intensité et distance", "ENS-P-4.3.07": "Épidémiologie auditive", "ENS-P-5.0.01": "Projet expérimental et numérique", "ENS-P-5.0.02": "Exploitation des mesures", "STI2D-PC-T.E.EC.01": "Pile vs accumulateur", "STI2D-PC-T.E.EC.02": "Énergie stockée (U·Q)", "STI2D-PC-T.E.EC.03": "Caractéristiques d'une pile", "STI2D-PC-T.E.EE.01": "Puissance apparente S", "STI2D-PC-T.E.EE.02": "Puissance active P", "STI2D-PC-T.E.EE.03": "Facteur de puissance", "STI2D-PC-T.E.EE.04": "Transport & distribution", "STI2D-PC-T.E.EE.05": "Réseau de distribution", "STI2D-PC-T.E.EE.06": "Facteur de puissance & pertes", "STI2D-PC-T.E.EE.07": "Rôles du transformateur", "STI2D-PC-T.E.EE.08": "Tension élevée → pertes réduites", "STI2D-PC-T.E.EE.09": "Dangerosité du courant", "STI2D-PC-T.E.EE.10": "Protection des personnes", "STI2D-PC-T.E.EE.11": "Protection du matériel", "STI2D-PC-T.E.EE.12": "Mesurer P et S", "STI2D-PC-T.E.EE.13": "Puissance active (numérique)", "STI2D-PC-T.E.EE.14": "Rendement du transformateur", "STI2D-PC-T.E.EI.01": "Flux thermique", "STI2D-PC-T.E.EI.02": "Calcul du flux thermique", "STI2D-PC-T.E.EI.03": "Résistance thermique & ΔT", "STI2D-PC-T.E.EI.04": "Isolation & flux", "STI2D-PC-T.E.EI.05": "Résistance thermique (matériau)", "STI2D-PC-T.E.EI.06": "Paroi multicouche", "STI2D-PC-T.E.EI.07": "Résistance thermique (TP)", "STI2D-PC-T.E.EM.01": "Résultante des forces", "STI2D-PC-T.E.EM.02": "Accélération & forces", "STI2D-PC-T.E.EM.03": "Énergie cinétique & frottement", "STI2D-PC-T.E.EM.04": "Vitesse linéaire ↔ angulaire", "STI2D-PC-T.E.EM.05": "Moment d'une force / couple", "STI2D-PC-T.E.EM.06": "Point de fonctionnement moteur", "STI2D-PC-T.E.EM.07": "Pression & forces pressantes", "STI2D-PC-T.E.EM.08": "Pression absolue / relative", "STI2D-PC-T.E.EM.09": "Hydrostatique", "STI2D-PC-T.E.EM.10": "Chute libre (modèle)", "STI2D-PC-T.E.EM.11": "Mesurer une accélération", "STI2D-PC-T.E.ESE.01": "Puissance instantanée", "STI2D-PC-T.E.ESE.02": "Puissance = dE/dt", "STI2D-PC-T.E.ESE.03": "Énergie sous la courbe P(t)", "STI2D-PC-T.E.ESE.04": "Autonomie d'un système", "STI2D-PC-T.E.ESE.05": "Rendement de conversion", "STI2D-PC-T.E.ESE.06": "Convertisseur réversible ?", "STI2D-PC-T.E.ESE.07": "Puissance depuis énergie (num.)", "STI2D-PC-T.E.ESE.08": "Énergie depuis puissance (num.)", "STI2D-PC-T.E.ETP.01": "Photon (matière–lumière)", "STI2D-PC-T.E.ETP.02": "ΔE = h·f", "STI2D-PC-T.E.ETP.03": "Photovoltaïque / photothermique", "STI2D-PC-T.E.ETP.04": "Point de fonctionnement (panneau)", "STI2D-PC-T.E.ETP.05": "Rendement photovoltaïque", "STI2D-PC-T.MM.C.01": "Énergie de combustion", "STI2D-PC-T.MM.ORP.01": "Oxydant & réducteur", "STI2D-PC-T.MM.ORP.02": "Bilan charge / décharge", "STI2D-PC-T.MM.ORP.03": "Pile à combustible", "STI2D-PC-T.MM.PMO.01": "Liaisons hydrogène (eau)", "STI2D-PC-T.MM.PMO.02": "Diagramme (P,T)", "STI2D-PC-T.MM.PMO.03": "Énergie de changement d'état", "STI2D-PC-T.MM.PMO.04": "Radioactivité naturelle/artificielle", "STI2D-PC-T.MM.PMO.05": "Rayonnements radioactifs", "STI2D-PC-T.MM.PMO.06": "Activité d'une source", "STI2D-PC-T.MM.PMO.07": "Demi-vie", "STI2D-PC-T.MM.PMO.08": "Comparer des demi-vies", "STI2D-PC-T.MM.PMO.09": "Fission / fusion", "STI2D-PC-T.MM.PMO.10": "Défaut de masse", "STI2D-PC-T.MM.PMO.11": "Énergie libérée (nucléaire)", "STI2D-PC-T.MM.PMO.12": "Bilan énergétique (TP)", "STI2D-PC-T.MM.RCA.01": "Acide / base (proton)", "STI2D-PC-T.MM.RCA.02": "Acide & base d'un couple", "STI2D-PC-T.MM.RCA.03": "pH et [H₃O⁺]", "STI2D-PC-T.MM.RCA.04": "pH lors d'une dilution", "STI2D-PC-T.MM.RCA.05": "Réaction acide–base", "STI2D-PC-T.MM.RCA.06": "Mesurer le pH", "STI2D-PC-T.MM.RCA.07": "Dilution (protocole)", "STI2D-PC-T.OS.NO.01": "Décomposition d'un signal", "STI2D-PC-T.OS.NO.02": "Fréquence du fondamental", "STI2D-PC-T.OS.NO.03": "Spectre d'amplitude", "STI2D-PC-T.OS.NO.04": "Rang d'un harmonique", "STI2D-PC-T.OS.NO.05": "Bande de fréquences", "STI2D-PC-T.OS.NO.06": "Spectre (TP)", "STI2D-PC-T.OS.OE.01": "Domaines fréquentiels", "STI2D-PC-T.OS.OE.02": "Transposition fréquentielle", "STI2D-PC-T.OS.OE.03": "Fréquence & taille d'antenne", "STI2D-PC-T.OS.OE.04": "Transmission radio / infrarouge", "STI2D-PC-T.OS.OE.05": "Fibre optique", "STI2D-PC-T.OS.OS.01": "Fondamental & harmoniques (son)", "STI2D-PC-T.OS.OS.02": "Timbre & hauteur", "STI2D-PC-T.OS.OS.03": "Intensité & niveau sonore", "STI2D-PC-T.OS.OS.04": "Décibel (dB)", "STI2D-PC-T.OS.OS.05": "Sensibilité de l'oreille", "STI2D-PC-T.OS.OS.06": "Spectre d'un son (num.)", "STI2D-PC-T.OS.OS.07": "Mesurer un niveau sonore", "STI2D-PC-T.OS.OS.08": "Transmission / absorption d'un son"};
+function capKw_V33(ref){ return (KW_V33 && KW_V33[ref]) || _acref(ref); }
+function capTip_V33(ref){ var t=""; try{ t=capLibelle(ref)||""; }catch(e){}
+  return _acref(ref)+(t?(" — "+t):""); }
+
+/* ============================================================================
+   EDT RÉEL PAR CLASSE  (source : ma_semaine.html du site — EDT relu au pixel)
+   j = getUTCDay (1=lun … 5=ven) · deb = "HH:MM" · dur = minutes · rep = créneau
+   DÉDOUBLÉ (même séance répétée à l'autre demi-groupe : ne consomme pas de temps de progression)
+   ============================================================================ */
+var EDT_CLASSE_V33 = {
+ "2025-2026":{
+   "2G3":    {src:"EDT réel 2025-26 — 2de G3",    cren:[{j:2,deb:"09:00",dur:90},{j:2,deb:"10:30",dur:90,rep:true},{j:5,deb:"14:30",dur:90}]},
+   "2G6":    {src:"EDT réel 2025-26 — 2de G6",    cren:[{j:3,deb:"09:00",dur:90},{j:3,deb:"10:30",dur:90,rep:true},{j:4,deb:"14:30",dur:90}]},
+   "1PC":    {src:"EDT réel 2025-26 — 1re spé PC",cren:[{j:4,deb:"08:00",dur:120},{j:2,deb:"15:30",dur:120}]},
+   "TSTI2D": {src:"EDT réel 2025-26 — Tale STI2D",cren:[{j:4,deb:"10:00",dur:120},{j:5,deb:"08:00",dur:120}]},
+   "TG5":    {src:"EDT réel 2025-26 — Tale G5 ens.sci.",cren:[{j:5,deb:"10:00",dur:60}]},
+   "TG6":    {src:"EDT réel 2025-26 — Tale G6 ens.sci.",cren:[{j:5,deb:"11:00",dur:60}]}
+ },
+ "2026-2027":{}
+};
+/* Repli par NIVEAU quand la classe n'est pas identifiée. 2026-27 = brouillon PHY.pdf (provisoire). */
+var EDT_NIVEAU_V33 = {
+ "2025-2026":{
+   "2nde":{src:"EDT réel 2025-26 (2de G3)",   cren:EDT_CLASSE_V33["2025-2026"]["2G3"].cren},
+   "1spe":{src:"EDT réel 2025-26 (1re spé PC)",cren:EDT_CLASSE_V33["2025-2026"]["1PC"].cren},
+   "Tsti":{src:"EDT réel 2025-26 (Tale STI2D)",cren:EDT_CLASSE_V33["2025-2026"]["TSTI2D"].cren},
+   "Tens":{src:"EDT réel 2025-26 (Tale G5 ens.sci.)",cren:EDT_CLASSE_V33["2025-2026"]["TG5"].cren}
+ },
+ "2026-2027":{
+   "Tspe":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:2,deb:"08:00",dur:120},{j:3,deb:"10:00",dur:120},{j:4,deb:"15:30",dur:120}]},
+   "Tsti":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:3,deb:"13:30",dur:60},{j:4,deb:"10:00",dur:120},{j:5,deb:"09:00",dur:60}]},
+   "Tens":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:5,deb:"10:00",dur:60}]},
+   "2nde":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:5,deb:"13:30",dur:180}]}
+ }
+};
+var JOURLIB_V33 = ["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."];
+function finHeure_V33(deb,dur){ var p=String(deb).split(":");
+  var m=(+p[0])*60+(+(p[1]||0))+(+dur||0);
+  return ("0"+Math.floor(m/60)).slice(-2)+":"+("0"+(m%60)).slice(-2); }
+function edtKey_V33(){
+  var cl=null; try{ cl=(__MENUCTX&&__MENUCTX.classe)||null; }catch(e){}
+  return "constructeur_edt_"+STATE.annee+"_"+(cl||level);
+}
+function edtDefaut_V33(){
+  var cl=null; try{ cl=(__MENUCTX&&__MENUCTX.classe)||null; }catch(e){}
+  var tc=EDT_CLASSE_V33[STATE.annee]||{};
+  if(cl && tc[cl]) return {src:tc[cl].src, cren:tc[cl].cren.map(function(c){return Object.assign({},c);})};
+  var tn=EDT_NIVEAU_V33[STATE.annee]||{};
+  if(tn[level]) return {src:tn[level].src, cren:tn[level].cren.map(function(c){return Object.assign({},c);})};
+  return {src:"créneaux par défaut (jeu. 10 h-12 h · ven. 8 h-10 h)",
+          cren:[{j:4,deb:"10:00",dur:120},{j:5,deb:"08:00",dur:120}]};
+}
+function edtCourant_V33(){
+  try{ var raw=localStorage.getItem(edtKey_V33());
+    if(raw){ var o=JSON.parse(raw); if(o && o.cren && o.cren.length) return o; } }catch(e){}
+  return edtDefaut_V33();
+}
+function edtSauver_V33(o){ try{ localStorage.setItem(edtKey_V33(), JSON.stringify(o)); }catch(e){} }
+function edtOublier_V33(){ try{ localStorage.removeItem(edtKey_V33()); }catch(e){} }
+
+/* Annote CRENEAUX_REELS (durée réelle + dédoublement) puis applique l'EDT à CRENEAUX. */
+function crAnnoter_V33(){
+  var m={}; CRENEAUX.forEach(function(c){ m[c.h]={min:(c.min||120), rep:!!c.rep}; });
+  (CRENEAUX_REELS||[]).forEach(function(cr){ var x=m[cr.horaire]||{min:120,rep:false};
+    cr.min=x.min; cr.rep=x.rep; });
+}
+var _chargerCalendrier_L33 = chargerCalendrier;
+chargerCalendrier = function(annee){ _chargerCalendrier_L33(annee); try{ crAnnoter_V33(); }catch(e){} };
+
+/* Créneaux D'ORIGINE du constructeur (jeu. 10-12 · ven. 8-10) : mémorisés pour pouvoir
+   revenir strictement au comportement antérieur quand l'éditeur n'est pas engagé. */
+var CRENEAUX_ORIG_V33 = CRENEAUX.map(function(c){ return {jour:c.jour, h:c.h, lib:c.lib, min:(c.min||120), rep:false}; });
+var _edtSig_V33 = null;
+function edtEngage_V33(){
+  try{ if(planActif()) return true; return !!localStorage.getItem(edtKey_V33()); }
+  catch(e){ return planActif(); }
+}
+function appliquerEDT_V33(force){
+  // EDT réel de la classe SI l'éditeur est engagé (ou si un EDT a été enregistré) ; sinon origine.
+  var engage=edtEngage_V33();
+  var cible = engage ? edtCourant_V33()
+                     : {src:"créneaux d'origine du constructeur", cren:CRENEAUX_ORIG_V33.map(function(c){
+                         return {j:c.jour, deb:c.h.split(/[–-]/)[0], dur:c.min, rep:false}; })};
+  var sig = STATE.annee+"|"+level+"|"+cible.cren.map(function(c){return c.j+"@"+c.deb+"/"+c.dur+(c.rep?"r":"");}).join(",");
+  if(!force && sig===_edtSig_V33) return cible;
+  _edtSig_V33=sig;
+  CRENEAUX.length=0;
+  cible.cren.slice().sort(function(a,b){ return (a.j-b.j) || (a.deb<b.deb?-1:1); }).forEach(function(c){
+    CRENEAUX.push({jour:+c.j, h:c.deb+"–"+finHeure_V33(c.deb,c.dur),
+                   lib:JOURLIB_V33[+c.j]||"?", min:(+c.dur||120), rep:!!c.rep});
+  });
+  chargerCalendrier(STATE.annee);
+  return cible;
+}
+/* Créneaux de l'année AGRÉGÉS PAR JOUR de classe (la frise a une case par jour) :
+   capacité du jour = somme des durées des créneaux NON dédoublés de ce jour. */
+function slotsAnnee_V33(){
+  var out=[], byIso={};
+  (CRENEAUX_REELS||[]).forEach(function(cr){
+    var k=iso(cr.date), s=byIso[k];
+    if(!s){ s=byIso[k]={date:new Date(cr.date), min:0, horaires:[], jourLib:cr.jourLib}; out.push(s); }
+    s.horaires.push(cr.horaire+(cr.rep?" (dédoublé)":""));
+    if(!cr.rep) s.min += (cr.min||120);
+  });
+  out.sort(function(a,b){ return a.date-b.date; });
+  out.forEach(function(s){ s.horaire=s.horaires.join(" + "); });
+  return out.filter(function(s){ return s.min>0; });
+}
+
+/* ============================================================================
+   LE PLAN (modèle unique)
+   ============================================================================ */
+var _seUid_V33 = 0;
+function nextSeId_V33(){ return "se"+(++_seUid_V33)+"_"+((Date.now()%100000)); }
+function planActif(){ return !!(STATE && STATE.planOn); }   // le plan lui-même est créé à la demande (planEnsure)
+function planSyncUid(){
+  var mx=0; if(!STATE.plan) return;
+  for(var k in STATE.plan) (STATE.plan[k]||[]).forEach(function(s){
+    var m=/^se(\d+)/.exec(s.id||""); if(m && +m[1]>mx) mx=+m[1]; });
+  if(mx>_seUid_V33) _seUid_V33=mx;
+}
+/* Durée « type » d'un créneau de cette classe (mode des durées non dédoublées) : le seed s'y aligne
+   pour ne pas fabriquer des séances de 2 h dans des créneaux de 1 h 30. */
+function dureeCreneauType_V33(){
+  var c={}, best=0, bv=-1;
+  CRENEAUX.forEach(function(x){ if(x.rep) return; var m=x.min||120; c[m]=(c[m]||0)+1; });
+  for(var k in c){ if(c[k]>bv){ bv=c[k]; best=+k; } }
+  return best||120;
+}
+/* Seed : fabrique les séances manquantes à partir de la génération heuristique existante. */
+function planEnsure(force){
+  if(force || !STATE.plan) STATE.plan={};
+  planSyncUid();
+  var units=unitesOrdonnees();
+  var manquants=units.filter(function(u){ return !STATE.plan[u.id]; });
+  if(!manquants.length) return;
+  var r={sessions:[]};
+  try{ r=_construirePlan_L33(STATE.order,{}); }catch(e){}
+  var crType=dureeCreneauType_V33();
+  var byUnit={}, last=null;
+  (r.sessions||[]).forEach(function(s){
+    var uid = (s.chap!=null) ? s.chap : last;
+    if(uid==null) return;
+    if(s.chap!=null) last=s.chap;
+    var dur;
+    try{ dur=Math.round(_dureeSeance_L33(s)*60); }catch(e){ dur=120; }
+    dur=Math.min(dur||120, crType);          // jamais plus long que le créneau réel de la classe
+    (byUnit[uid]=byUnit[uid]||[]).push({
+      id: nextSeId_V33(), type: s.baseType||"Cours", durMin: dur||120,
+      caps: (s.caps||[]).slice(), note: s.note||"",
+      ds: !!s.ds, dsChapters: s.dsChapters||null, capsOpen:false
+    });
+  });
+  manquants.forEach(function(u){ STATE.plan[u.id] = byUnit[u.id] || []; });
+}
+function planSeances(uid){ if(!STATE.plan) return []; return STATE.plan[uid]||[]; }
+function planFindSe(seId){
+  if(!STATE.plan) return null;
+  for(var k in STATE.plan){ var a=STATE.plan[k]||[];
+    for(var i=0;i<a.length;i++) if(a[i].id===seId) return {uid:k, i:i, se:a[i]}; }
+  return null;
+}
+
+/* ---------- construirePlan en mode PLAN : packing par minutes ---------- */
+var SEANCES_V33 = [];
+function construirePlanFromPlan(orderIds, opts){
+  opts = opts||{};
+  planEnsure(false);
+  var units = unitesOrdonnees(orderIds);
+  var slots = slotsAnnee_V33();
+  var buckets = slots.map(function(s){ return {slot:s, used:0, parts:[]}; });
+
+  var flat=[];
+  units.forEach(function(u){ planSeances(u.id).forEach(function(se){ flat.push({se:se, unit:u}); }); });
+
+  var ci=0;
+  flat.forEach(function(f){
+    var se=f.se;
+    se._date=null; se._span=1; se._hors=false; se._free=0; se._reste=0;
+    if(ci>=buckets.length){ se._hors=true; return; }
+    var cap=buckets[ci].slot.min;
+    if(se.durMin<=cap){
+      if(buckets[ci].used>0 && se.durMin > (cap-buckets[ci].used)){
+        ci++; if(ci>=buckets.length){ se._hors=true; return; } cap=buckets[ci].slot.min;
+      }
+      if(se.durMin>cap){                       // le créneau suivant est plus court : on étale
+        return etaler(f, se);
+      }
+      buckets[ci].parts.push({se:se, unit:f.unit, min:se.durMin});
+      buckets[ci].used += se.durMin; se._date=buckets[ci].slot.date;
+      if(buckets[ci].used>=cap) ci++;
+    } else {
+      if(buckets[ci].used>0){ ci++; if(ci>=buckets.length){ se._hors=true; return; } }
+      etaler(f, se);
+    }
+  });
+  function etaler(f, se){                       // séance > durée d'un créneau : plusieurs créneaux
+    var reste=se.durMin, k=0, start=ci;
+    while(reste>0 && ci<buckets.length){
+      var c2=buckets[ci].slot.min, libre=c2-buckets[ci].used;
+      if(libre<=0){ ci++; continue; }
+      var m=Math.min(reste, libre);
+      buckets[ci].parts.push({se:se, unit:f.unit, min:m, suite:k>0});
+      buckets[ci].used+=m; reste-=m; k++;
+      if(buckets[ci].used>=c2) ci++;
+    }
+    if(k===0){ se._hors=true; return; }
+    se._date=buckets[start].slot.date; se._span=k; se._reste=reste;
+  }
+  // temps libre restant dans chaque créneau -> porté par la DERNIÈRE séance du créneau
+  buckets.forEach(function(b){
+    if(!b.parts.length) return;
+    var libre=b.slot.min-b.used;
+    if(libre>0){ var lastP=b.parts[b.parts.length-1]; lastP.se._free=(lastP.se._free||0)+libre; }
+  });
+
+  // SESSIONS = un créneau occupé (contrat inchangé pour frise / compteurs / curseur)
+  var sessions=[];
+  buckets.forEach(function(b,i){
+    if(!b.parts.length) return;
+    var first=b.parts[0], caps=[];
+    b.parts.forEach(function(p){ if(!p.suite) caps=caps.concat(p.se.caps||[]); });
+    var dsp=null; b.parts.forEach(function(p){ if(p.se.ds && !dsp) dsp=p; });
+    var s={ id:"CR"+i, chap:first.unit.id, slot:first.se.type,
+            date:b.slot.date, horaire:b.slot.horaire, jourLib:b.slot.jourLib,
+            index:sessions.length+1, caps:caps, baseType:first.se.type,
+            ds:!!dsp, note:dsp?(dsp.se.note||""):(first.se.note||""),
+            suite: first.unit.kind==="suite",
+            _parts:b.parts.map(function(p){ return {type:p.se.type, dur:p.min/60, seId:p.se.id}; }),
+            _crMin:b.slot.min, _free:b.slot.min-b.used };
+    if(dsp) s.dsChapters=dsp.se.dsChapters||null;
+    sessions.push(s);
+  });
+
+  // SÉANCES (grain fin) — pour l'arbre, l'éditeur et les documents
+  var seances=[];
+  units.forEach(function(u){ planSeances(u.id).forEach(function(se){
+    seances.push({id:se.id, chap:u.id, slot:se.type, baseType:se.type, date:se._date||null,
+                  caps:(se.caps||[]).slice(), ds:!!se.ds, dsChapters:se.dsChapters||null,
+                  note:se.note||"", durMin:se.durMin, span:se._span||1,
+                  free:se._free||0, hors:!!se._hors, index:seances.length+1});
+  }); });
+  SEANCES_V33 = seances;
+
+  var chapDates={};
+  seances.forEach(function(s){
+    if(s.chap!=null && !s.ds && s.baseType!=="Tampon" && s.date && CHAP_BY_ID[s.chap]){
+      var cd=chapDates[s.chap]=chapDates[s.chap]||{debut:null,fin:null};
+      if(!cd.debut) cd.debut=s.date; cd.fin=s.date;
+    }
+  });
+  return {sessions:sessions, chapDates:chapDates, seances:seances, slots:slots,
+          chapOrder:units.filter(function(u){return u.kind==="chap";}).map(function(u){return u.id;})};
+}
+
+/* ---------- greffes non destructives sur le moteur existant ---------- */
+var _construirePlan_L33 = construirePlan;
+construirePlan = function(orderIds, opts){
+  opts = opts||{};
+  // la frise de COMPARAISON (idPrefix) et les appels explicitement « legacy » gardent l'heuristique
+  if(!planActif() || opts.legacy || opts.idPrefix) return _construirePlan_L33(orderIds, opts);
+  return construirePlanFromPlan(orderIds, opts);
+};
+var _partsOf_L33 = partsOf;
+partsOf = function(sess){
+  if(sess && sess._parts) return sess._parts.map(function(p){ return {type:p.type, dur:p.dur, seId:p.seId}; });
+  return _partsOf_L33(sess);
+};
+var _dureeSeance_L33 = dureeSeance;
+var _creneauDuree_L33 = creneauDuree;
+creneauDuree = function(sess){
+  if(sess && sess._crMin!=null) return sess._crMin/60;
+  return _creneauDuree_L33(sess);
+};
+var _splittable_L33 = splittable;
+splittable = function(sess){
+  if(planActif() && sess && sess._parts) return false;   // le découpage se fait dans l'ÉDITEUR
+  return _splittable_L33(sess);
+};
+var _setParts_L33 = setParts;
+setParts = function(s, parts){
+  if(!(planActif() && s && s._parts)) return _setParts_L33(s, parts);
+  // MVC : écrire le changement de type dans le PLAN (source unique), pas dans STATE.parts
+  (parts||[]).forEach(function(p,i){
+    var ref=s._parts[i]; if(!ref) return;
+    var f=planFindSe(ref.seId); if(!f) return;
+    if(p.type) f.se.type=p.type;
+    if(p.dur!=null && Math.abs(p.dur-ref.dur)>1e-6) f.se.durMin=Math.round(p.dur*60);
+  });
+  sauverEtat(); majPlan_V33();
+};
+var _seancesParChap_L33 = _seancesParChap;
+_seancesParChap = function(order){
+  if(!planActif()) return _seancesParChap_L33(order);
+  var map={};
+  try{
+    var r=construirePlan(order);
+    (r.seances||[]).forEach(function(s){
+      if(s.chap!=null && CHAP_BY_ID[s.chap]) (map[s.chap]=map[s.chap]||[]).push(s);
+    });
+  }catch(e){}
+  return map;
+};
+/* La frise a une case par JOUR DE CLASSE : ces jours viennent maintenant de l'EDT. */
+var _construireFrise_L33 = construireFrise;
+construireFrise = function(){
+  var jours={}; CRENEAUX.forEach(function(c){ jours[c.jour]=1; });
+  var items=[], cur=new Date(DATE_RENTREE);
+  while(cur<=DATE_FIN){
+    var v=inVacances(cur);
+    if(v){ items.push({type:"vac", nom:v.nom, a:d(v.a), b:d(v.b)}); cur=addDays(d(v.b),1); continue; }
+    if(jours[cur.getUTCDay()]){
+      var f=isFerie(cur);
+      items.push({type:"cell", date:new Date(cur), isFerie:!!f, ferieNom:f?f.nom:null});
+    }
+    cur=addDays(cur,1);
+  }
+  return items;
+};
+var _renderCounters_L33 = renderCounters;
+renderCounters = function(){
+  _renderCounters_L33();
+  if(!planActif()) return;
+  try{
+    var c=document.getElementById("counters"); if(!c) return;
+    var l=c.querySelector(".kpi .l"); if(l) l.textContent="créneaux occupés";
+    c.insertAdjacentHTML("afterbegin",
+      '<div class="kpi"><div class="v">'+(SEANCES_V33||[]).length+'</div><div class="l">séances planifiées (éditeur)</div></div>');
+  }catch(e){}
+};
+
+/* Rafraîchit tout ce qui dépend du plan, sans re-rendre les cartes-chapitres (coûteux). */
+function majPlan_V33(){
+  rebuild(); syncCursorRange(); renderCounters(); renderTimeline(); renderCursorReadout();
+  try{ if(document.documentElement.getAttribute("data-cmode")==="editeur") renderEditeur(); }catch(e){}
+}
+
+/* ============================================================================
+   VUE ÉDITEUR
+   ============================================================================ */
+var _edFolded_V33=false;
+var _edFoldSet_V33={};
+function edStatsHTML_V33(){
+  var slots=slotsAnnee_V33();
+  var dispo=slots.reduce(function(a,s){return a+s.min;},0);
+  var used=0, hors=0, nse=0, ngr=0;
+  var placeesParRef={}, totalRefs={};
+  unitesOrdonnees().forEach(function(u){
+    ngr++;
+    var ch=u.chap; var refs=(u.kind==="suite")?(u.caps||[]):((ch&&ch.caps)||[]);
+    refs.forEach(function(r){ totalRefs[r]=1; });
+    planSeances(u.id).forEach(function(se){
+      nse++; if(se._hors) hors++; else used+=se.durMin;
+      (se.caps||[]).forEach(function(r){ placeesParRef[r]=(placeesParRef[r]||0)+1; });
+    });
+  });
+  var totN=Object.keys(totalRefs).length;
+  var placN=Object.keys(totalRefs).filter(function(r){ return placeesParRef[r]>0; }).length;
+  var manque=totN-placN;
+  var crOcc=0; try{ crOcc=(PLAN||[]).length; }catch(e){}
+  return ''
+   +'<div class="ed-stat '+(hors?"bad":"good")+'">Créneaux &nbsp;<b>'+crOcc+'</b> / '+slots.length
+     +' <small>'+(hors?("· "+hors+" séance(s) hors année !"):"· tout tient dans l'année")+'</small></div>'
+   +'<div class="ed-stat">Temps &nbsp;<b>'+fmtMin_V33(used)+'</b> <small>/ '+fmtMin_V33(dispo)+' disponibles</small></div>'
+   +'<div class="ed-stat '+(manque?"warn":"good")+'">Couverture &nbsp;<b>'+placN+'</b> / '+totN
+     +' <small>capacités'+(manque?(" · "+manque+" à placer"):" · complète")+'</small></div>'
+   +'<div class="ed-stat">Séances &nbsp;<b>'+nse+'</b> <small>· '+ngr+' chapitres</small></div>';
+}
+function renderEditeur(){
+  var board=document.getElementById("edBoard"); if(!board) return;
+  planEnsure(false);
+  var r=construirePlan();          // (re)calcule les dates du plan
+  var st=document.getElementById("edStats"); if(st) st.innerHTML=edStatsHTML_V33();
+  var note=document.getElementById("edNote");
+  if(note){
+    var e=appliquerEDT_V33();
+    note.innerHTML="Modèle unique : ce que vous éditez ici pilote AUSSI la frise et l'arbre. "
+      +"Créneaux : <b>"+esc_V33(e.src)+"</b> — "
+      +e.cren.map(function(c){ return (JOURLIB_V33[+c.j]||"?")+" "+c.deb+" ("+fmtMin_V33(c.dur)+(c.rep?", dédoublé":"")+")"; }).join(" · ")
+      +" &nbsp;·&nbsp; glisser ⠿ pour réordonner · curseur = durée (pas de 10 min) · ⏳ = temps libre remplissable.";
+  }
+  var units=unitesOrdonnees();
+  var html="";
+  if(!slotsAnnee_V33().length){
+    board.innerHTML='<div class="ed-stat bad">Aucun créneau : réglez « 🗓 Mon EDT » pour cette classe.</div>';
+    return;
+  }
+  units.forEach(function(u){
+    var ch=u.chap; if(!ch) return;
+    var refs=(u.kind==="suite")?(u.caps||[]):(ch.caps||[]);
+    var ses=planSeances(u.id);
+    var cnt={}; ses.forEach(function(s){ (s.caps||[]).forEach(function(r){ cnt[r]=(cnt[r]||0)+1; }); });
+    var placees=refs.filter(function(r){ return cnt[r]>0; }).length;
+    var d1=null,d2=null; ses.forEach(function(s){ if(s._date){ if(!d1)d1=s._date; d2=s._date; } });
+    var seHTML="";
+    ses.forEach(function(s){
+      var t=TYPEMAP_V33[s.type]||{lab:s.type};
+      var caps="";
+      if(s.capsOpen){
+        caps='<div class="ed-caps"><span class="ed-hint">capacités du chapitre — cliquer pour (dé)placer :</span>';
+        refs.forEach(function(rf){
+          var on=(s.caps||[]).indexOf(rf)>=0, n=cnt[rf]||0;
+          caps+='<span class="ed-cap'+(on?" on":"")+'" data-se="'+esc_V33(s.id)+'" data-ref="'+esc_V33(rf)+'" title="'+esc_V33(capTip_V33(rf))+'">'
+               +esc_V33(capKw_V33(rf))+(n>0?'<span class="n">×'+n+'</span>':'')+(on?'<span class="x">✕</span>':'')+'</span>';
+        });
+        if(!refs.length) caps+='<span class="ed-hint">(aucune capacité rattachée)</span>';
+        caps+='</div>';
+      }
+      seHTML+='<li class="ed-se" data-id="'+esc_V33(s.id)+'"><div class="ed-setop">'
+        +'<span class="s-handle" title="Glisser pour déplacer la séance">⠿</span>'
+        +'<span class="ed-badge" style="background:var('+tvar(s.type)+')">'+esc_V33(t.lab||s.type)+'</span>'
+        +(s._date?('<span class="ed-date">'+frShort(s._date)+'</span><span class="ed-day">'+JOURS[s._date.getUTCDay()]+'</span>')
+                 :'<span class="ed-none">hors année</span>')
+        +(s.note?('<span class="ed-lbl" title="'+esc_V33(s.note)+'">— '+esc_V33(s.note)+'</span>'):'')
+        +((s._span>1)?('<span class="ed-span">'+s._span+' créneaux</span>'):'')
+        +((s._free>0)?('<span class="ed-free">⏳ '+fmtMin_V33(s._free)+' libre</span>'
+            +TYPES_V33.map(function(x){ return '<button class="ed-freeadd" data-fill="'+esc_V33(s.id)+'" data-t="'+esc_V33(x.k)+'" title="remplir ce temps avec '+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')
+          ):'')
+        +'<span class="ed-dur"><input type="range" min="10" max="240" step="10" value="'+s.durMin+'" data-dur="'+esc_V33(s.id)+'" aria-label="durée de la séance">'
+        +'<span class="val">'+fmtMin_V33(s.durMin)+'</span></span>'
+        +'<button class="ed-capsbtn" data-caps="'+esc_V33(s.id)+'">'+(s.capsOpen?"▾":"▸")+' cap. <b>'+((s.caps||[]).length)+'</b></button>'
+        +'<button class="ed-del" data-del="'+esc_V33(s.id)+'" title="Supprimer cette séance (les capacités restent au référentiel du chapitre)">✕</button>'
+        +'</div>'+caps+'</li>';
+    });
+    var ref="";
+    if(refs.length){
+      ref='<details class="ed-ref"><summary>📚 Référentiel du chapitre — '+refs.length+' capacités · '+placees+' placées'
+        +((refs.length-placees)?(' · <b style="color:#ef6c00">'+(refs.length-placees)+' à placer</b>'):'')+'</summary><div>';
+      refs.forEach(function(rf){ var n=cnt[rf]||0;
+        ref+='<span class="rc'+(n?"":" z")+'" title="'+esc_V33(capTip_V33(rf))+'"><b>'+esc_V33(capKw_V33(rf))+'</b> '+(n?("×"+n):"· à placer")+'</span>'; });
+      ref+='</div></details>';
+    }
+    html+='<div class="ed-group" data-id="'+esc_V33(u.id)+'" style="--gc:var('+themeColor(ch.theme)+')">'
+      +'<div class="ed-ghead"><span class="g-handle" title="Glisser pour réordonner le chapitre">⠿</span>'
+      +'<span class="ed-gcode">'+esc_V33(ch.code)+(u.kind==="suite"?" (suite)":"")+'</span>'
+      +'<span class="ed-gtitle">'+esc_V33(ch.titre||ch.themeLabel||"")+'</span>'
+      +'<span class="ed-gmeta">'+ses.length+' séances'+(refs.length?(' · '+placees+'/'+refs.length+' cap.'):'')
+        +'<br>'+(d1?frShort(d1):"—")+' → '+(d2?frShort(d2):"—")+'</span>'
+      +'<button class="ed-fold" data-fold="'+esc_V33(u.id)+'">'+(_edFoldSet_V33[u.id]?"▸":"▾")+'</button></div>'
+      +(_edFoldSet_V33[u.id]?"":('<ul class="ed-seances" data-id="'+esc_V33(u.id)+'">'+seHTML+'</ul>'
+        +'<div class="ed-foot">'+TYPES_V33.map(function(x){ return '<button data-add="'+esc_V33(u.id)+'" data-t="'+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')+'</div>'
+        +ref))
+      +'</div>';
+  });
+  board.innerHTML=html;
+  edWire_V33(board);
+}
+
+function edWire_V33(board){
+  function commit(){ sauverEtat(); majPlan_V33(); }
+  board.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-del")); if(!f) return;
+    STATE.plan[f.uid].splice(f.i,1); commit(); }; });
+  board.querySelectorAll("[data-caps]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-caps")); if(!f) return;
+    f.se.capsOpen=!f.se.capsOpen; sauverEtat(); renderEditeur(); }; });
+  board.querySelectorAll(".ed-cap").forEach(function(c){ c.onclick=function(){
+    var f=planFindSe(c.getAttribute("data-se")); if(!f) return;
+    var rf=c.getAttribute("data-ref"), a=(f.se.caps=f.se.caps||[]), i=a.indexOf(rf);
+    if(i>=0) a.splice(i,1); else a.push(rf);
+    commit(); }; });
+  board.querySelectorAll("[data-add]").forEach(function(b){ b.onclick=function(){
+    var uid=b.getAttribute("data-add"), tk=b.getAttribute("data-t");
+    planEnsure(false); (STATE.plan[uid]=STATE.plan[uid]||[]).push(
+      {id:nextSeId_V33(), type:tk, durMin:(TYPEMAP_V33[tk]||{dur:60}).dur, caps:[], note:"", capsOpen:false});
+    commit(); }; });
+  board.querySelectorAll("[data-fill]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-fill")); if(!f) return;
+    var tk=b.getAttribute("data-t");
+    var libre=f.se._free||(TYPEMAP_V33[tk]||{dur:60}).dur;
+    STATE.plan[f.uid].splice(f.i+1,0,
+      {id:nextSeId_V33(), type:tk, durMin:Math.max(10,Math.round(libre/10)*10), caps:[], note:"", capsOpen:false});
+    commit(); }; });
+  board.querySelectorAll("[data-fold]").forEach(function(b){ b.onclick=function(){
+    var uid=b.getAttribute("data-fold");
+    _edFoldSet_V33[uid]=!_edFoldSet_V33[uid]; renderEditeur(); }; });
+  board.querySelectorAll("[data-dur]").forEach(function(r){
+    r.oninput=function(){ var v=r.parentNode.querySelector(".val"); if(v) v.textContent=fmtMin_V33(+r.value); };
+    r.onchange=function(){ var f=planFindSe(r.getAttribute("data-dur")); if(!f) return;
+      f.se.durMin=Math.max(10,+r.value||10); commit(); };
+  });
+  try{
+    if(window.Sortable){
+      Sortable.create(board,{handle:".g-handle",draggable:".ed-group",animation:140,onEnd:function(){
+        var ids=[].map.call(board.querySelectorAll(".ed-group"), function(e){ return e.getAttribute("data-id"); });
+        appliquerOrdre(ids);            // écrit STATE.order -> frise + arbre suivent
+        renderEditeur();
+      }});
+      board.querySelectorAll("ul.ed-seances").forEach(function(ul){
+        Sortable.create(ul,{group:"seances-v33", handle:".s-handle", draggable:".ed-se", animation:140,
+          onEnd:function(){
+            var all={}; for(var k in STATE.plan) (STATE.plan[k]||[]).forEach(function(s){ all[s.id]=s; });
+            board.querySelectorAll("ul.ed-seances").forEach(function(u2){
+              var uid=u2.getAttribute("data-id");
+              STATE.plan[uid]=[].map.call(u2.querySelectorAll(".ed-se"), function(li){ return all[li.getAttribute("data-id")]; })
+                                 .filter(Boolean);
+            });
+            commit();
+          }});
+      });
+    }
+  }catch(e){}
+}
+
+/* ---------- panneau « Mon EDT » ---------- */
+function renderEdtPanel_V33(){
+  var host=document.getElementById("edEdtPanel"); if(!host) return;
+  var e=edtCourant_V33();
+  var rows=e.cren.map(function(c,i){
+    return '<tr data-i="'+i+'">'
+      +'<td><select data-f="j">'+[1,2,3,4,5,6].map(function(j){ return '<option value="'+j+'"'+(+c.j===j?" selected":"")+'>'+JOURLIB_V33[j]+'</option>'; }).join("")+'</select></td>'
+      +'<td><input type="time" data-f="deb" value="'+esc_V33(c.deb)+'"></td>'
+      +'<td><input type="number" data-f="dur" min="10" max="360" step="10" value="'+(+c.dur||120)+'"> min</td>'
+      +'<td><label style="font-size:11.5px"><input type="checkbox" data-f="rep"'+(c.rep?" checked":"")+'> dédoublé (même séance répétée)</label></td>'
+      +'<td><button data-rm="'+i+'" title="Retirer ce créneau">✕</button></td></tr>';
+  }).join("");
+  host.innerHTML='<div style="font-weight:700;margin-bottom:4px">🗓 Mon EDT — créneaux réels de la classe</div>'
+    +'<div class="ed-note">Source actuelle : <b>'+esc_V33(e.src)+'</b>. Un créneau « dédoublé » (TP en demi-groupes) '
+    +'ne compte qu\'une fois dans le temps de progression. Enregistré pour cette classe et cette année.</div>'
+    +'<table><tr><th>Jour</th><th>Début</th><th>Durée</th><th></th><th></th></tr>'+rows+'</table>'
+    +'<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'
+    +'<button id="edtAdd">➕ ajouter un créneau</button>'
+    +'<button id="edtSave">✔ enregistrer et replanifier</button>'
+    +'<button id="edtReset" title="Revenir à l\'EDT de référence de cette classe">↺ EDT de référence</button>'
+    +'<button id="edtClose">fermer</button></div>';
+  function lire(){
+    var out=[];
+    host.querySelectorAll("tr[data-i]").forEach(function(tr){
+      out.push({ j:+tr.querySelector('[data-f="j"]').value,
+                 deb:tr.querySelector('[data-f="deb"]').value||"08:00",
+                 dur:+tr.querySelector('[data-f="dur"]').value||120,
+                 rep:!!tr.querySelector('[data-f="rep"]').checked });
+    });
+    return out;
+  }
+  host.querySelectorAll("[data-rm]").forEach(function(b){ b.onclick=function(){
+    var cur=lire(); cur.splice(+b.getAttribute("data-rm"),1);
+    edtSauver_V33({src:"EDT personnalisé", cren:cur.length?cur:edtDefaut_V33().cren}); renderEdtPanel_V33(); }; });
+  var add=document.getElementById("edtAdd"); if(add) add.onclick=function(){
+    var cur=lire(); cur.push({j:4,deb:"10:00",dur:120,rep:false});
+    edtSauver_V33({src:"EDT personnalisé", cren:cur}); renderEdtPanel_V33(); };
+  var sv=document.getElementById("edtSave"); if(sv) sv.onclick=function(){
+    edtSauver_V33({src:"EDT personnalisé", cren:lire()});
+    STATE.planOn=true; appliquerEDT_V33(); STATE.cursorIdx=-1; sauverEtat(); fullRender(); renderEdtPanel_V33(); };
+  var rs=document.getElementById("edtReset"); if(rs) rs.onclick=function(){
+    edtOublier_V33(); appliquerEDT_V33(); STATE.cursorIdx=-1; sauverEtat(); fullRender(); renderEdtPanel_V33(); };
+  var cl=document.getElementById("edtClose"); if(cl) cl.onclick=function(){ host.style.display="none"; };
+}
+
+/* Les champs de calcul (_date, _span, _free, _hors) ne sont JAMAIS persistés. */
+var _sauverEtat_L33 = sauverEtat;
+sauverEtat = function(){
+  try{
+    localStorage.setItem(lsKey(), JSON.stringify(STATE, function(k,v){ return (String(k).charAt(0)==="_")?undefined:v; }));
+    localStorage.setItem("constructeur_level", level);
+  }catch(e){}
+};
+
+/* ---------- 3e mode : bascule Frise / Arbre / Éditeur ---------- */
+var _setMode_L33 = setMode;
+setMode = function(m){
+  var etait=null; try{ etait=document.documentElement.getAttribute("data-cmode"); }catch(e){}
+  if(m!=="editeur"){
+    var sE=document.getElementById("secEditeur"); if(sE) sE.style.display="none";
+    var be=document.getElementById("modeEditeur"); if(be) be.setAttribute("aria-pressed","false");
+    var res=_setMode_L33(m);
+    if(etait==="editeur"){ try{ fullRender(); }catch(e){} }   // cartes-chapitres re-datées
+    return res;
+  }
+  try{ localStorage.setItem("constructeur_mode","editeur"); }catch(e){}
+  ["secFrise","secChapters","secArbre"].forEach(function(id){ var s=document.getElementById(id); if(s) s.style.display="none"; });
+  var sE2=document.getElementById("secEditeur"); if(sE2) sE2.style.display="";
+  ["modeFrise","modeArbre"].forEach(function(id){ var b=document.getElementById(id); if(b) b.setAttribute("aria-pressed","false"); });
+  var be2=document.getElementById("modeEditeur"); if(be2) be2.setAttribute("aria-pressed","true");
+  try{ document.documentElement.setAttribute("data-cmode","editeur"); }catch(e){}
+  var sub=document.getElementById("subLine");
+  if(sub) sub.textContent="Mode Éditeur (séances) — "+((TREE&&TREE.label)?TREE.label:"");
+  // 1re ouverture : on passe en modèle « plan » (migration douce, seed = heuristique actuelle),
+  // l'EDT réel de la classe étant appliqué AVANT le seed (durées alignées sur les vrais créneaux).
+  var neuf=!planActif();
+  if(neuf) STATE.planOn=true;
+  appliquerEDT_V33();
+  if(neuf){ planEnsure(false); sauverEtat(); }
+  fullRender();
+  renderEditeur();
+};
+
+/* ---------- greffes sur fullRender / boot ---------- */
+var _fullRender_L33 = fullRender;
+fullRender = function(){
+  try{ appliquerEDT_V33(); }catch(e){}
+  _fullRender_L33();
+  try{ if(document.documentElement.getAttribute("data-cmode")==="editeur") renderEditeur(); }catch(e){}
+};
+/* ============================================================================
+   ENSSCI_FILTRE_BOOT_V33 — correctif : le filtre Discipline (défaut « PC + mixte ») était
+   affiché mais JAMAIS appliqué au chargement -> l'arbre, les compteurs et le validateur
+   comptaient les sous-parties SVT. On l'applique au boot, en PRÉSERVANT l'ordre du prof
+   (applyEnsFilter, lui, réinitialise order/proposition).
+   ============================================================================ */
+function ensBootFilter_V33(){
+  try{
+    if(typeof isEns!=="function" || !isEns(level)) return;
+    if(ensFilterMode==="tout") return;
+    var ordreSauve=(STATE&&STATE.order)?STATE.order.slice():null;
+    var propSauve=(STATE&&STATE.proposition)||null;
+    applyEnsFilter(ensFilterMode);
+    if(ordreSauve){
+      var ok=ordreSauve.filter(function(id){ return CHAP_BY_ID[id]; });
+      DEFAULT_ORDER.forEach(function(id){ if(ok.indexOf(id)<0) ok.push(id); });
+      if(ok.length) STATE.order=ok;
+    }
+    if(propSauve) STATE.proposition=propSauve;
+    sauverEtat();
+  }catch(e){ try{ console.error("[ENSSCI_FILTRE_BOOT_V33]",e); }catch(_){} }
+}
+
+function bootEditeur_V33(){
+  try{
+    ensBootFilter_V33();  // ens.sci. : n'afficher/compter que PC (+ mixte), pas la SVT
+    appliquerEDT_V33();   // n'agit que si l'éditeur est engagé / un EDT a été enregistré
+    var b=document.getElementById("modeEditeur");
+    if(b) b.addEventListener("click", function(){ setMode("editeur"); });
+    var fb=document.getElementById("edFoldBtn");
+    if(fb) fb.addEventListener("click", function(){
+      _edFolded_V33=!_edFolded_V33;
+      unitesOrdonnees().forEach(function(u){ _edFoldSet_V33[u.id]=_edFolded_V33; });
+      fb.textContent=_edFolded_V33?"⊞ Tout déplier":"⊟ Tout replier";
+      renderEditeur(); });
+    var sb=document.getElementById("edSeedBtn");
+    if(sb) sb.addEventListener("click", function(){
+      if(!confirm("Refabriquer toutes les séances depuis la proposition courante ? Vos réglages de séances seront remplacés.")) return;
+      planEnsure(true); STATE.planOn=true; sauverEtat(); fullRender(); renderEditeur(); });
+    var ab=document.getElementById("edAutoBtn");
+    if(ab) ab.addEventListener("click", function(){
+      STATE.planOn=false; sauverEtat(); fullRender(); renderEditeur(); });
+    var eb=document.getElementById("edEdtBtn");
+    if(eb) eb.addEventListener("click", function(){
+      var h=document.getElementById("edEdtPanel"); if(!h) return;
+      var vis=(h.style.display!=="none");
+      h.style.display=vis?"none":""; if(!vis) renderEdtPanel_V33(); });
+    var m=null; try{ m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode"); }catch(e){}
+    if(m==="editeur") setMode("editeur");
+  }catch(e){ try{ console.error("[EDITEUR_SEANCES_V33]",e); }catch(_){} }
+}
+/* ===================== fin EDITEUR_SEANCES_V33 ===================== */
+
 function boot(){
   try{
     injectLevelColors();
@@ -3666,6 +4412,7 @@ function boot(){
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
     try{ if(FINECHAP_ALL[level]) applyProposition(STATE.proposition||"bo"); }catch(e){}   /*PARTIES_V31 : niveau à parties -> applique le jeu (bo=parties par défaut)*/
+    try{ bootEditeur_V33(); }catch(e){}   /*EDITEUR_SEANCES_V33*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
     const b=document.getElementById("errBanner");
