@@ -107,6 +107,8 @@
         <span class="ico">🗓️</span><span class="lab"><b>Ma semaine</b><small>EDT + la séance du jour</small></span><span class="go">›</span></a>
       <a class="item" href="gestion_v0.1.html?tab=seances">
         <span class="ico">📓</span><span class="lab"><b>Cahier de textes / séances</b><small>ce qui est fait, le travail donné</small></span><span class="go">›</span></a>
+      <a class="item" href="activites_web.html">
+        <span class="ico">🧪</span><span class="lab"><b>Activités</b><small>394 activités, filtrables par niveau, thème et méthode</small></span><span class="go">›</span></a>
       <a class="item" href="gestion_v0.1.html?tab=suivi">
         <span class="ico">✅</span><span class="lab"><b>Cocher ce qui est fait</b><small>Suivi de progression</small></span><span class="go">›</span></a>
     </div>
@@ -230,9 +232,15 @@
     if(/^TPC/.test(id)) return "Tspe";
     if(/^1STI/.test(id)) return "1sti";
     if(/^TSTI/.test(id)||/^TSISPH/.test(id)||/^TSI/.test(id)) return "Tsti";
-    return null; // ens.sci (1G/TG), NSI : pas de niveau constructeur
+    /* ENSSCI_CONSTR_V37 : le constructeur gère ens1/ensT depuis v34 — ils avaient été oubliés ici,
+       ce qui privait TG5 et TG6 de tout accès à l'outil depuis ce menu. NSI reste hors périmètre. */
+    if(/^\dNSI/.test(id)||/^TNSI/.test(id)) return null;
+    if(/^TG/.test(id)) return "ensT";
+    if(/^1G/.test(id)) return "ens1";
+    return null;
   }
-  var TOKLAB={"2nde":"Seconde","1spe":"1re spé PC","Tspe":"Tale spé PC","1sti":"1re STI2D","Tsti":"Tale STI2D"};
+  var TOKLAB={"2nde":"Seconde","1spe":"1re spé PC","Tspe":"Tale spé PC","1sti":"1re STI2D","Tsti":"Tale STI2D",
+              "ens1":"1re ens. sci.","ensT":"Tale ens. sci."};
 
   function anneeCourante(){
     var cur; try{cur=localStorage.getItem("gestion_majorelle_annee");}catch(e){}

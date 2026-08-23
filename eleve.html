@@ -99,9 +99,14 @@
       html+=tile("revision_sti2d_tale.html","🎯","Révision du jour",
                  "Rituel 2 min : diagnostic, révisions espacées, carte des concepts.",false,"Tale STI2D");
     }
+    /* Tes séquences : Seconde uniquement (18 séquences rédigées) */
+    if(tok==="2nde"){
+      html+=tile("prototype_sequences_2nde_v2.html","🧭","Tes séquences de l'année",
+                 "Les 18 chapitres, dans l'ordre : ce qu'on cherche, ce qu'il faut retenir.",false,"Seconde");
+    }
     /* Réviser par niveau : active */
     html+=tile("maquette_socle_unifie_v0.17.html?niveau="+tok+"&acces="+tok,"📚","Réviser par niveau",
-               "Prérequis, activités et exercices de ton niveau.",false);
+               "Fiches de prérequis et exercices de ton niveau.",false);
     /* S'entraîner : toujours active */
     html+=tile("exerciseur_resolution.html","✏️","S'entraîner (exercices)",
                "Résolution pas-à-pas, étape par étape.",false);

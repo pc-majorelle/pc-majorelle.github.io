@@ -330,7 +330,6 @@
     <div class="lab">Mode</div>
     <div class="modes" id="modes">
       <button class="mode on" data-m="prerequis">Prérequis</button>
-      <button class="mode" data-m="activite">Activité</button>
       <button class="mode" data-m="exercice">Exercice</button>
     </div>
   </div>
@@ -478,10 +477,8 @@ function ficheHTML(id){
   if(pr.length){h+='<div class="prereq" data-frag="prereq"><b>Prérequis :</b><ul>';
     pr.forEach(p=>h+='<li>'+_fx(p.titre||'')+(p.niveau?' <span style="color:var(--texteDoux)">['+_fx(p.niveau)+']</span>':'')+'</li>');
     h+='</ul></div>';}
-  if(typeof ACTLINK!=='undefined' && ACTLINK[id] && ACTLINK[id].length){
-    h+='<div class="prereq" data-frag="activites"><b>Activités liées :</b><ul>';
-    ACTLINK[id].forEach(function(a){h+='<li>'+_fx(a[1])+' <span style="color:var(--texteDoux)">['+_fx(a[0])+' · '+_fx(a[2])+']</span></li>';});
-    h+='</ul></div>';}
+  /* ACTIVITES_COTE_PROF_V37 : les activités sont conduites par le professeur ;
+     leur liste n'a plus à figurer dans la fiche de l'élève. */
   h+=_ficheMedia(id, sorted.some(function(fr){return fr.type==='visuel';}));
   h+='</div>';
   return h;
@@ -1094,9 +1091,10 @@ function renderTree(){
 function countFor(cap){
   const a=ACTMAP.filter(x=>x.caps.includes(cap.k)).length;
   const e=EXOMAP.filter(x=>x.caps.includes(cap.k)).length;
-  if(state.mode==='activite')return a+' activité'+(a>1?'s':'');
+  /* ACTIVITES_COTE_PROF_V37 : le mode Activité est passé côté prof (prof.html -> activites_web.html).
+     L'élève ne voit plus que ses prérequis et ses exercices. */
   if(state.mode==='exercice')return e+' exercice'+(e>1?'s':'');
-  return a+' act · '+e+' exo';
+  return e+' exercice'+(e>1?'s':'');
 }
 
 function renderCap(cap,chName){
