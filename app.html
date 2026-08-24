@@ -16,11 +16,11 @@
   html,body{margin:0;padding:0}
   body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 calc(40px + env(safe-area-inset-bottom))}
   .wrap{max-width:560px;margin:0 auto;padding:0 14px}
-  .appbar{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:calc(13px + env(safe-area-inset-top)) 16px 12px}
+  .appbar{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--onaccent,#fff);padding:calc(13px + env(safe-area-inset-top)) 16px 12px}
   .appbar h1{margin:0;font-size:17px;font-weight:600}
   .appbar .who{margin:2px 0 0;font-size:12px;opacity:.9}
   .cls{margin-top:6px}
-  .clschip{display:inline-block;color:#fff;font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:1px 9px;margin:3px 4px 0 0;background:rgba(255,255,255,.18)}
+  .clschip{display:inline-block;color:var(--onaccent,#fff);font-weight:600;font-size:11px;line-height:1.5;border-radius:999px;padding:1px 9px;margin:3px 4px 0 0;background:rgba(255,255,255,.18)}
   .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
   .anneebox{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 11px;font-size:14px}
   .anneebox label{color:var(--muted);font-size:13px}
@@ -151,20 +151,8 @@
   });
 })();
 </script>
-<script>
-/* THEME KIT — PC Majorelle (identique aux autres pages : une seule palette) */
-(function(){
-  var THEMES={atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},neon:{nom:"Néon",bg:"#0d0d14",card:"#171722",ink:"#e8e8f0",muted:"#9a9ab0",line:"#2c2c40",accent:"#00d4ff"},herbier:{nom:"Herbier",bg:"#f3efe2",card:"#fbf9f2",ink:"#3a4128",muted:"#5f6347",line:"#d7d0bc",accent:"#5a7a8c"},riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"},feu:{nom:"Feu",bg:"#1a0a05",card:"#2a1109",ink:"#ffe3d0",muted:"#e6a988",line:"#5c2917",accent:"#ff4d1a"},foret:{nom:"Forêt",bg:"#0a1a0f",card:"#112a19",ink:"#daefdd",muted:"#93c1a0",line:"#224a31",accent:"#2fae52"}};
-  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie","feu","foret"];var KEY="pcmajo_theme";
-  function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
-  function apply(id){var th=THEMES[id];if(!th)return;var r=document.documentElement.style;r.setProperty('--bg',th.bg);r.setProperty('--card',th.card);r.setProperty('--card2',th.line);r.setProperty('--ink',th.ink);r.setProperty('--muted',th.muted);r.setProperty('--line',th.line);r.setProperty('--accent',th.accent);var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',th.accent);}
-  function render(){var host=document.getElementById('themePick');if(!host)return;var c=cur();var n=host.querySelectorAll('[data-th]');for(var i=0;i<n.length;i++)n[i].setAttribute('aria-pressed',n[i].getAttribute('data-th')===c?'true':'false');}
-  function set(id){if(!THEMES[id])return;try{localStorage.setItem(KEY,id);}catch(e){}apply(id);render();}
-  var c=cur();if(c)apply(c);
-  window.PCTheme={set:set,swatches:function(h){var host=document.getElementById(h);if(!host)return;host.innerHTML=ORDER.map(function(id){var th=THEMES[id];return '<button type="button" class="thsw" data-th="'+id+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';}).join('');render();}};
-})();
-(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();
-</script>
+<!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ (source unique pcmajo_ui.js). -->
+<script src="pcmajo_ui.js"></script>
 <script>
 /* Déconnexion : efface la session et revient au login */
 (function(){ var b=document.getElementById("logout"); if(!b) return;

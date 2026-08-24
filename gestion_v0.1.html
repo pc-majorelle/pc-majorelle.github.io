@@ -36,7 +36,7 @@
   select:focus,input:focus{outline:none;border-color:var(--accent)}
   button{cursor:pointer;background:var(--card2);transition:.13s}
   button:hover{border-color:var(--accent)}
-  button.primary{background:var(--accent);color:#04203f;border-color:var(--accent);font-weight:600}
+  button.primary{background:var(--accent);color:var(--onaccent,#04203f);border-color:var(--accent);font-weight:600}  /* THEME_CONTRASTE_V38 */
   button.primary:hover{filter:brightness(1.08)}
   button.ghost{background:transparent}
   button.mini{padding:3px 8px;font-size:.8rem;border-radius:6px}
@@ -48,6 +48,16 @@
     border:1px solid var(--line);color:var(--muted);background:var(--card2)}
   .pill.acc{color:var(--accent);border-color:var(--accent)}
   table{border-collapse:collapse;width:100%;font-size:.88rem}
+  /* MOBILE_V38 : un tableau large défile DANS son cadre au lieu de pousser la page. */
+  .tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tblwrap>table{min-width:560px}
+  /* MOBILE_V38 : une liste déroulante prend la largeur de sa plus longue option. Bornée à la
+     largeur de son conteneur, elle débordait quand même — « Comparer à : » la décale de 37 px
+     avant qu'elle commence. Le libellé devient donc une boîte flexible et la liste y rétrécit
+     (`min-width:0`, sans quoi un élément flex refuse de descendre sous son contenu). */
+  select{max-width:100%}
+  label.lblsel{display:flex;align-items:center;gap:6px;max-width:100%;min-width:0}
+  label.lblsel>select{flex:1 1 auto;min-width:0}
   th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--muted);font-weight:500;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
   tr:hover td{background:rgba(255,255,255,.02)}
@@ -157,7 +167,10 @@
 .chap{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:7px 0}
 .chead{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .chead .rang{font-weight:700;color:var(--muted);min-width:20px}
-.chtitre{font-weight:600;font-size:.94rem;background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 5px;min-width:280px;color:var(--ink)}
+/* MOBILE_V38 : `min-width:280px` était un plancher inconditionnel — sur un écran de 320 px,
+   le titre de chapitre poussait la page dehors à lui seul. Le plancher ne vaut que si la
+   place existe : en dessous, le titre revient à la ligne au lieu de déborder. */
+.chtitre{font-weight:600;font-size:.94rem;background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 5px;min-width:min(280px,100%);max-width:100%;color:var(--ink)}
 .chtitre:not(.ro):hover,.chtitre:not(.ro):focus{border-color:var(--line);background:var(--card2)}
 .chead .tth{font-size:.72rem;font-weight:700}.chead .periode{font-size:.74rem;color:var(--muted)}
 .chead .cover{margin-left:auto;font-size:.78rem;color:var(--accent2)}.chead .evl{font-size:.74rem;color:#f0cf8a}
@@ -1181,7 +1194,10 @@ function renderEleves(){
   if(!els.length){
     h+=`<p class="muted small">Aucun élève. Importez un relevé Skolengo ou ajoutez un nom à la main.</p>`;
   } else {
-    h+=`<table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Groupe TP</th>${evs.length?`<th>Moy.</th><th>Notes</th>`:""}<th></th></tr></thead><tbody>`;
+    /* MOBILE_V38 : la liste des élèves (7 colonnes, champs de saisie à largeur fixe) faisait
+       584 px de large — c'est elle qui poussait TOUTE la page hors de l'écran à 390 px.
+       Elle défile désormais dans son propre cadre, comme les grilles de compétences. */
+    h+=`<div class="tblwrap"><table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Groupe TP</th>${evs.length?`<th>Moy.</th><th>Notes</th>`:""}<th></th></tr></thead><tbody>`;
     els.forEach((e,i)=>{
       let grpCell;
       if(sec){
@@ -1209,7 +1225,7 @@ function renderEleves(){
         <td><button class="mini del ghost" onclick="delEleve(${i})" title="Retirer">✕</button></td>
       </tr>`;
     });
-    h+=`</tbody></table>`;
+    h+=`</tbody></table></div>`;   /* MOBILE_V38 */
   }
   h+=`</div>`;
   el.innerHTML=h;
@@ -1644,7 +1660,7 @@ function renderProgressions(){ fillReel();
     ${act&&act.verrouillee?`<button class="mini primary" onclick="cloneProgForEdit(activeClass())" title="Repartir de cette progression, même incomplète, et la modifier librement">↧ S'en inspirer (copie éditable)</button>`:''}
     <button class="mini ghost" onclick="renderLyceeMat(activeClass())" title="Matériel déduit des TP connus (2nde/1re/Tale) + catalogue à compléter">🧪 Matériel du lycée</button>
     ${Object.keys(progClassBucket(c.id).user).length?`<button class="mini del ghost" onclick="progEraseAll(activeClass())" title="Effacer TOUTES vos progressions perso (les préréglages restent)">🗑 Tout effacer</button>`:''}
-    <label class="small muted">Comparer à : <select id="progDiff" onchange="renderProgressions()">
+    <label class="small muted lblsel">Comparer à : <select id="progDiff" onchange="renderProgressions()">
       <option value="">—</option>${all.filter(p=>p.id!==actId).map(p=>`<option value="${p.id}"${(window._progDiff===p.id)?' selected':''}>${esc(p.label)}</option>`).join('')}
     </select></label>
   </div>
@@ -2095,30 +2111,41 @@ document.getElementById("fileIn").addEventListener("change",function(e){
 
 
 /* ===================== CONSTRUCTEUR_V29 (frise + arbre + pont boKeys->Suivi) ===================== */
-var _constrView="frise";
+/* IFRAME_CONSTRUCTEUR_V38 : `_constrView` ne sert plus (il pilotait la vue de l'iframe retirée). */
+/* IFRAME_CONSTRUCTEUR_V38 — l'onglet n'embarque plus le constructeur, il y renvoie.
+   Ce qu'il faisait : `<iframe src="constructeur_frise.html|constructeur_arbre.html">`. Or ces deux
+   fichiers sont FIGÉS AU 11/08 (modèles v27) ; l'outil réel est `constructeur.html`, unifié depuis
+   v30 et tenu à jour depuis (PARTIES_V31, SECONDE_V32, EDITEUR_SEANCES_V33, SEQUENCES_V35,
+   QUINZAINE_V37). Un prof passant par ici travaillait donc sur une version d'il y a deux semaines,
+   sans le savoir — pire qu'un lien mort, qui au moins se voit.
+   Et Laurent avait déjà tranché en v29 : « BOF un iframe » → plein écran contextualisé.
+   Ce que l'onglet garde, parce que c'est sa vraie valeur : le PONT boKeys → Suivi. */
 function renderConstr(){
   var el=document.getElementById("p-constr");
-  var src=(_constrView==="arbre")?"constructeur_arbre.html":"constructeur_frise.html";
+  var c=activeClass();
+  var tok=constrLevelToken(c);
+  var q="?annee="+encodeURIComponent(ANNEE)
+       +(tok?"&niveau="+encodeURIComponent(tok):"")
+       +(c?"&classe="+encodeURIComponent(c.id):"");
+  var quoi=c?((c.libelle||c.id)+(tok?" · "+tok:"")):"aucune classe active";
   el.innerHTML =
    '<div class="card">'
-   +'<div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'
-   +'<div><b>Constructeur de progression</b> <span class="small muted">— vue unifiée, remplace prévisionnel / progression</span></div>'
-   +'<div class="row" style="gap:6px">'
-   +'<button id="cv-frise" class="tab '+(_constrView==="frise"?"on":"")+'" title="Progression datée (frise temps)">🗓 Frise (dates)</button>'
-   +'<button id="cv-arbre" class="tab '+(_constrView==="arbre"?"on":"")+'" title="Découpage en séances (arbre + curseurs)">🌳 Arbre (séances)</button>'
+   +'<div><b>Constructeur de progression</b> <span class="small muted">— bâtir la progression de l\'année, puis en tirer les boKeys datés</span></div>'
+   +'<p class="hint" style="margin:8px 0">Il s\'ouvre en <b>pleine page</b> sur <b>'+esc(quoi)+'</b>'
+     +'<span class="small muted"> (année '+esc(ANNEE)+')</span>. Reviens ensuite ici pour reporter le travail dans le Suivi.</p>'
+   +'<div class="row" style="gap:8px;flex-wrap:wrap">'
+   +'<a class="mini primary" style="text-decoration:none;display:inline-block" href="constructeur.html'+q+'&mode=frise" title="Progression datée sur l\'année">🗓 Ouvrir la frise (dates)</a>'
+   +'<a class="mini" style="text-decoration:none;display:inline-block" href="constructeur.html'+q+'&mode=arbre" title="Découpage du programme en séances">🌳 Ouvrir l\'arbre (séances)</a>'
    +'</div></div>'
-   +'<p class="hint" style="margin:6px 0">La <b>frise</b> génère les <b>boKeys datés</b> (bouton « ⬇ Exporter les boKeys datés » en haut de l’outil). Récupère-les ici pour cocher automatiquement le <b>Suivi</b> de la classe active.</p>'
+   +'<div class="card">'
+   +'<div><b>Reporter dans le Suivi</b></div>'
+   +'<p class="hint" style="margin:6px 0">Dans la frise, bouton « ⬇ Exporter les boKeys datés ». Récupère-les ici pour cocher automatiquement le <b>Suivi</b> de la classe active.</p>'
    +'<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'
    +'<button id="constrImportLS">⤵ Importer depuis la frise (cet appareil)</button>'
    +'<button id="constrImportFile">📂 Importer un fichier boKeys…</button>'
    +'<input type="file" id="constrFileIn" accept="application/json" style="display:none">'
    +'<span id="constrInfo" class="small muted"></span>'
-   +'</div></div>'
-   +'<div class="card" style="padding:0;overflow:hidden">'
-   +'<iframe id="constrFrame" src="'+src+'" style="width:100%;height:76vh;border:0;display:block" title="Constructeur"></iframe>'
-   +'</div>';
-  document.getElementById("cv-frise").onclick=function(){_constrView="frise";renderConstr();};
-  document.getElementById("cv-arbre").onclick=function(){_constrView="arbre";renderConstr();};
+   +'</div></div>';
   document.getElementById("constrImportLS").onclick=function(){constrImportLS();};
   document.getElementById("constrImportFile").onclick=function(){document.getElementById("constrFileIn").click();};
   document.getElementById("constrFileIn").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){constrApply(r.result);};r.readAsText(f);};
@@ -2130,7 +2157,12 @@ function constrLevelToken(c){
   if(pr==="tale|pc|gen") return "Tspe";
   if(pr==="1ere|pc|gen") return "1spe";
   if(pr==="2nde|pc|gen") return "2nde";
-  return null; // ens.sci et autres : pas de niveau frise -> import par fichier uniquement
+  /* JETON_ENSSCI_V38 : le constructeur gère l'ens. scientifique depuis v32 sous les noms
+     "Tens"/"1ens" (cf. son <select id="lvlSel">). Ils manquaient ici, comme ils manquaient
+     dans prof.html : TG5/TG6 n'avaient aucun accès contextualisé à l'outil. */
+  if(pr==="tale|pc|ens") return "Tens";
+  if(pr==="1ere|pc|ens") return "1ens";
+  return null;
 }
 function constrImportLS(){
   var c=activeClass(); if(!c){alert("Choisis d’abord une classe.");return;}
@@ -2504,42 +2536,10 @@ function ncImportFile(e){
 }
 </script>
 
-<script>
-/* ===== THEME KIT (gestion-aware) — PC Majorelle — thèmes des prérequis ===== */
-(function(){
-  var THEMES={
-    atelier:{nom:"Atelier",bg:"#f6f3ec",card:"#ffffff",ink:"#2b2b2b",muted:"#6b6b63",line:"#d8d3c4",accent:"#3E6E97"},
-    neon:{nom:"Néon",bg:"#0d0d14",card:"#171722",ink:"#e8e8f0",muted:"#9a9ab0",line:"#2c2c40",accent:"#00d4ff"},
-    herbier:{nom:"Herbier",bg:"#f3efe2",card:"#fbf9f2",ink:"#3a4128",muted:"#5f6347",line:"#d7d0bc",accent:"#5a7a8c"},
-    riso:{nom:"Riso",bg:"#fdf6ec",card:"#ffffff",ink:"#2a2a3a",muted:"#7a5a60",line:"#efd9d0",accent:"#2b4bdd"},
-    blueprint:{nom:"Blueprint",bg:"#0a2540",card:"#103055",ink:"#cfe0f0",muted:"#7f9cc0",line:"#284c6e",accent:"#5b9bd5"},
-    crepuscule:{nom:"Crépuscule",bg:"#2a1a3e",card:"#37254c",ink:"#ffd0e8",muted:"#c0a0d0",line:"#4a3560",accent:"#ff9e7a"},
-    sumie:{nom:"Sumi-e",bg:"#faf8f4",card:"#ffffff",ink:"#1a1a1a",muted:"#555555",line:"#e2ded6",accent:"#5a6268"},
-    feu:{nom:"Feu",bg:"#1a0a05",card:"#2a1109",ink:"#ffe3d0",muted:"#e6a988",line:"#5c2917",accent:"#ff4d1a"},
-    foret:{nom:"Forêt",bg:"#0a1a0f",card:"#112a19",ink:"#daefdd",muted:"#93c1a0",line:"#224a31",accent:"#2fae52"}
-  };
-  var ORDER=["atelier","neon","herbier","riso","blueprint","crepuscule","sumie","feu","foret"];
-  var KEY="pcmajo_theme";
-  function cur(){try{var t=localStorage.getItem(KEY);return THEMES[t]?t:null;}catch(e){return null;}}
-  function apply(id){
-    var th=THEMES[id]; if(!th) return; var r=document.documentElement.style;
-    r.setProperty('--bg1',th.bg); r.setProperty('--bg2',th.bg);
-    r.setProperty('--card',th.card); r.setProperty('--card2',th.card);
-    r.setProperty('--ink',th.ink); r.setProperty('--muted',th.muted);
-    r.setProperty('--line',th.line); r.setProperty('--accent',th.accent);
-    document.documentElement.setAttribute('data-theme',id);
-  }
-  function render(){ var host=document.getElementById('themePick'); if(!host)return; var c=cur();
-    var n=host.querySelectorAll('[data-th]'); for(var i=0;i<n.length;i++){ n[i].setAttribute('aria-pressed', n[i].getAttribute('data-th')===c?'true':'false'); } }
-  function set(id){ if(!THEMES[id])return; try{localStorage.setItem(KEY,id);}catch(e){} apply(id); render(); }
-  var c=cur(); if(c) apply(c);
-  window.PCTheme={THEMES:THEMES,ORDER:ORDER,cur:cur,set:set,apply:apply,
-    swatches:function(hostId){ var host=document.getElementById(hostId); if(!host)return;
-      host.innerHTML=ORDER.map(function(id){var th=THEMES[id];
-        return '<button type="button" class="thsw" data-th="'+id+'" title="Thème '+th.nom+'" onclick="PCTheme.set(\''+id+'\')"><span class="sw" style="background:'+th.accent+';border:1px solid '+th.line+'"></span>'+th.nom+'</button>';
-      }).join(''); render(); } };
-})();
-</script>
+<!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
+     inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
+     unique désormais : une palette à corriger, pas sept. -->
+<script src="pcmajo_ui.js"></script>
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>

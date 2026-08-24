@@ -13,8 +13,8 @@
   @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--card2:#1e2b3a;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;--ok:#37b98a}}
   *{box-sizing:border-box}html,body{margin:0;padding:0}
   body{background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:0 0 calc(60px + env(safe-area-inset-bottom))}
-  .topbar{position:sticky;top:0;z-index:7;background:var(--accent);color:#fff;padding:calc(11px + env(safe-area-inset-top)) 14px 11px;display:flex;align-items:center;gap:12px}
-  .topbar a.back{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:1px 10px;font-size:15px}
+  .topbar{position:sticky;top:0;z-index:7;background:var(--accent);color:var(--onaccent,#fff);padding:calc(11px + env(safe-area-inset-top)) 14px 11px;display:flex;align-items:center;gap:12px}
+  .topbar a.back{color:var(--onaccent,#fff);text-decoration:none;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:1px 10px;font-size:15px}
   .topbar b{font-size:16px;font-weight:600}
   .picker{position:sticky;top:0;z-index:6;background:var(--bg);border-bottom:1px solid var(--line);padding:9px 12px;display:flex;gap:10px;flex-wrap:wrap}
   .picker label{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:14px}
@@ -41,7 +41,7 @@
   ul.caps li{display:flex;gap:10px;align-items:flex-start;padding:7px 2px;border-top:1px dashed var(--line);font-size:.9rem}
   ul.caps li:first-child{border-top:none}
   ul.caps input{width:20px;height:20px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--ok)}
-  ul.caps .ref{font-weight:600;color:var(--accent);font-size:.76rem;margin-right:4px}
+  ul.caps .ref{font-weight:600;color:var(--accentink,var(--accent));font-size:.76rem;margin-right:4px}
   ul.caps li.done label{color:var(--muted);text-decoration:line-through}
   .exp{font-style:italic}
   .chapbtns{margin:2px 0 6px;display:flex;gap:8px}
