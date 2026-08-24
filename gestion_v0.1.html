@@ -203,9 +203,14 @@
     <button class="mini ghost" id="addAnnee" title="Ajouter une année scolaire">➕ année</button>
     <label class="small muted">Classe active</label>
     <select id="activeClass"></select>
-    <button class="mini ghost" id="btnSave" title="Enregistrer (télécharger l'état)">💾 Enregistrer</button>
-    <button class="mini ghost" id="btnLoad" title="Importer un état">📂 Importer</button>
-    <input type="file" id="fileIn" accept="application/json" style="display:none">
+    <!-- MENU_UNIQUE_GESTION_V38 : les deux boutons de sauvegarde vont ENSEMBLE. Séparés, la barre
+         les renvoyait à la ligne l'un sans l'autre — « Enregistrer » en bout de ligne et
+         « Importer » seul en dessous. Ils forment une paire : on les rend insécables. -->
+    <span style="display:inline-flex;gap:6px;flex:0 0 auto;white-space:nowrap">
+      <button class="mini ghost" id="btnSave" title="Enregistrer (télécharger l'état)">💾 Enregistrer</button>
+      <button class="mini ghost" id="btnLoad" title="Importer un état">📂 Importer</button>
+      <input type="file" id="fileIn" accept="application/json" style="display:none">
+    </span>
   </div>
   <div class="tabs" id="tabs"><!--RATIONALIZE_V30 : onglets rangés par fréquence-->
     <div class="tab on" data-t="semaine">Semaine</div>
@@ -1937,16 +1942,156 @@ function switchTab(t){
 document.getElementById("tabs").addEventListener("click",e=>{if(e.target.dataset.t)switchTab(e.target.dataset.t);});
 /*RATIONALIZE_V30*/ (function(){var tg=document.getElementById("legacyToggle");if(!tg)return;tg.addEventListener("click",function(){var lt=document.getElementById("legacyTabs");if(!lt)return;var show=(lt.style.display==="none");lt.style.display=show?"":"none";tg.textContent="⋯ Anciens outils "+(show?"▴":"▾");});})();
 document.getElementById("activeClass").addEventListener("change",()=>{publierClasse(document.getElementById("activeClass").value);selCaps.clear();lastPlan=null;const on=document.querySelector(".tab.on").dataset.t;switchTab(on);});
-document.getElementById("btnSave").addEventListener("click",()=>{
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gestion_etat_2026-2027.json";a.click();
+/* ===================== SAUVEGARDE_V38 =====================
+   Trois défauts corrigés ici, signalés par Laurent le 24/08 après un import de listes d'élèves :
+   (1) le nom du fichier était FIGÉ à « gestion_etat_2026-2027.json » — on enregistrait en
+       2025-2026 et on obtenait un fichier daté 2026-2027 ; deux sauvegardes d'années
+       différentes s'écrasaient l'une l'autre dans le dossier Téléchargements ;
+   (2) rien n'expliquait au collègue ce qu'il venait de télécharger, ni que ce fichier contient
+       des NOMS D'ÉLÈVES et ne doit donc jamais circuler ;
+   (3) l'import ne vérifiait pas l'année : charger une sauvegarde de 2026-2027 par-dessus
+       2025-2026 remplaçait tout, sans un mot.
+   ============================================================ */
+function profPrenom(){
+  try{ var a=JSON.parse(sessionStorage.getItem("pcmajo_acces"))||JSON.parse(localStorage.getItem("pcmajo_acces"));
+       if(a&&a.role==="prof"&&a.prenom) return String(a.prenom); }catch(e){}
+  return "";
+}
+function _sansAccent(s){
+  return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"");
+}
+function _isoJour(){
+  var d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function _nomFichierSauvegarde(){
+  var qui=_sansAccent(profPrenom());
+  return "gestion_"+(qui?qui+"_":"")+(state.annee||ANNEE)+"_"+_isoJour()+".json";
+}
+function _compteEleves(){
+  var n=0; (state.classes||[]).forEach(function(c){ n+=((c.eleves||[]).length); }); return n;
+}
+
+/* Boîte de dialogue maison : `confirm()` ne permet pas de mettre les conseils, et le
+   collègue qui télécharge pour la première fois a besoin de les lire une fois. */
+function _dlg(html, boutons){
+  var fond=document.createElement("div");
+  fond.style.cssText="position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.45);display:flex;"
+    +"align-items:center;justify-content:center;padding:16px";
+  var b=document.createElement("div");
+  b.style.cssText="background:var(--card,#fff);color:var(--ink,#15202b);border:1px solid var(--line,#dbe2ea);"
+    +"border-radius:14px;max-width:520px;width:100%;max-height:86vh;overflow:auto;padding:18px 20px;"
+    +"box-shadow:0 12px 40px rgba(0,0,0,.3);font-size:.92rem;line-height:1.5";
+  var pied=document.createElement("div");
+  pied.style.cssText="display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px";
+  boutons.forEach(function(bt){
+    var el=document.createElement("button");
+    el.textContent=bt.texte;
+    el.style.cssText="font:inherit;padding:9px 15px;border-radius:9px;cursor:pointer;border:1px solid var(--line,#dbe2ea);"
+      +(bt.fort?"background:var(--accent,#12324a);color:#fff;border-color:transparent;font-weight:600":"background:var(--card,#fff);color:var(--ink,#15202b)");
+    el.onclick=function(){ document.body.removeChild(fond); if(bt.fait) bt.fait(); };
+    pied.appendChild(el);
+  });
+  b.innerHTML=html; b.appendChild(pied); fond.appendChild(b);
+  fond.addEventListener("click",function(e){ if(e.target===fond) document.body.removeChild(fond); });
+  document.body.appendChild(fond);
+}
+
+function _telecharger(){
+  var paquet=Object.assign({}, state, {_sauvegarde:{
+    prof:profPrenom(), annee:(state.annee||ANNEE), date:_isoJour(),
+    classes:(state.classes||[]).length, eleves:_compteEleves(), outil:"gestion_v0.1"
+  }});
+  var blob=new Blob([JSON.stringify(paquet,null,2)],{type:"application/json"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=_nomFichierSauvegarde(); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+
+document.getElementById("btnSave").addEventListener("click",function(){
+  var nEl=_compteEleves(), nCl=(state.classes||[]).length, an=(state.annee||ANNEE);
+  _dlg(
+     '<h3 style="margin:0 0 4px;font-size:1.05rem">💾 Enregistrer ton travail</h3>'
+    +'<p style="margin:0 0 14px;color:var(--muted,#5c6b7a);font-size:.85rem">Année <b>'+an+'</b>'
+      +' · '+nCl+' classe'+(nCl>1?'s':'')+(nEl?' · <b>'+nEl+' élèves</b>':'')+'</p>'
+
+    +'<p style="margin:0 0 10px">Tu vas télécharger un fichier nommé<br>'
+      +'<code style="font-size:.85rem;color:var(--ink,#15202b);background:rgba(127,127,127,.18);'
+      +'border:1px solid var(--line,#dbe2ea);padding:3px 7px;border-radius:5px;word-break:break-all">'
+      +_nomFichierSauvegarde()+'</code></p>'
+
+    +(nEl ? '<p style="margin:0 0 12px;padding:10px 12px;border-radius:9px;border:1px solid #d9a0a0;'
+      +'background:rgba(176,74,74,.08)"><b>⚠️ Ce fichier contient les noms de tes élèves.</b> '
+      +'Il reste sur ton ordinateur : ne le dépose jamais en ligne, ne l\'envoie pas par messagerie '
+      +'ordinaire, ne le mets pas sur une clé partagée.</p>' : '')
+
+    +'<p style="margin:0 0 6px"><b>Trois conseils</b></p>'
+    +'<ul style="margin:0 0 4px;padding-left:20px">'
+    +'<li><b>Range-le.</b> Il arrive dans ton dossier <i>Téléchargements</i>. Crée-toi un dossier '
+      +'« Sauvegardes PC » et déplace-le : sinon il se noiera dans le reste.</li>'
+    +'<li><b>Recommence souvent.</b> Tes données vivent dans le navigateur <i>de cet appareil</i>. '
+      +'Vider l\'historique, changer de navigateur ou d\'ordinateur, et tout est perdu. '
+      +'Le nom porte la date : garde les deux ou trois derniers.</li>'
+    +'<li><b>Pour revenir en arrière</b>, bouton <b>📂 Importer</b>, à côté. Il remplace ce que tu as '
+      +'à l\'écran par le contenu du fichier — donc enregistre avant, par précaution.</li>'
+    +'</ul>',
+    [{texte:"Annuler"},{texte:"Télécharger",fort:true,fait:_telecharger}]
+  );
 });
-document.getElementById("btnLoad").addEventListener("click",()=>document.getElementById("fileIn").click());
-document.getElementById("fileIn").addEventListener("change",e=>{
-  const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.classes)throw 0;state=o;save();refreshClassSelector();switchTab("classes");}catch(err){alert("Fichier d'état invalide.");}};
+
+document.getElementById("btnLoad").addEventListener("click",function(){document.getElementById("fileIn").click();});
+document.getElementById("fileIn").addEventListener("change",function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    var o;
+    try{ o=JSON.parse(r.result); if(!o||!o.classes) throw 0; }
+    catch(err){ _dlg('<h3 style="margin:0 0 8px;font-size:1.05rem">Fichier illisible</h3>'
+      +'<p style="margin:0">Ce fichier n\'est pas une sauvegarde du gestionnaire. Cherche un fichier '
+      +'<code>.json</code> dont le nom commence par <code>gestion_</code>.</p>',[{texte:"Fermer",fort:true}]);
+      e.target.value=""; return; }
+
+    var meta=o._sauvegarde||{}; delete o._sauvegarde;   /* ne pas polluer l'état */
+    var anFichier=o.annee||meta.annee||null;
+    var nEl=0; (o.classes||[]).forEach(function(c){ nEl+=((c.eleves||[]).length); });
+    var quoi='<b>'+(o.classes||[]).length+' classe'+((o.classes||[]).length>1?'s':'')+'</b>'
+             +(nEl?' et <b>'+nEl+' élèves</b>':'')
+             +(meta.date?' — enregistré le '+meta.date:'')
+             +(meta.prof?' par '+meta.prof:'');
+
+    function charger(basculer){
+      if(basculer && anFichier && ANNEES.indexOf(anFichier)>=0 && anFichier!==ANNEE){
+        save(); ANNEE=anFichier;
+        try{localStorage.setItem(PREF_ANNEE,ANNEE);}catch(x){}
+        applyCalendar(ANNEE); refreshAnneeSelector();
+      }
+      state=o; if(!state.annee) state.annee=ANNEE;
+      save(); refreshClassSelector(); switchTab("classes");
+    }
+
+    /* ★ le défaut à ne plus reproduire : charger 2026-2027 par-dessus 2025-2026 sans rien dire. */
+    if(anFichier && anFichier!==ANNEE){
+      _dlg('<h3 style="margin:0 0 8px;font-size:1.05rem">⚠️ Ce fichier n\'est pas de l\'année affichée</h3>'
+        +'<p style="margin:0 0 10px">Tu travailles sur <b>'+ANNEE+'</b>, mais ce fichier contient l\'année '
+        +'<b>'+anFichier+'</b> ('+quoi+').</p>'
+        +'<p style="margin:0 0 10px">Le charger ici <b>remplacerait</b> ce que tu as à l\'écran.</p>'
+        +'<p style="margin:0;color:var(--muted,#5c6b7a);font-size:.85rem">Le plus sûr : basculer sur '
+        +anFichier+', où ce fichier est chez lui.</p>',
+        [{texte:"Annuler"},
+         {texte:"Charger dans "+ANNEE, fait:function(){charger(false);}},
+         {texte:"Basculer sur "+anFichier, fort:true, fait:function(){charger(true);}}]);
+    } else {
+      _dlg('<h3 style="margin:0 0 8px;font-size:1.05rem">📂 Remplacer par cette sauvegarde ?</h3>'
+        +'<p style="margin:0 0 10px">Elle contient '+quoi+', pour l\'année <b>'+(anFichier||ANNEE)+'</b>.</p>'
+        +'<p style="margin:0;color:var(--muted,#5c6b7a);font-size:.85rem">Ce que tu as actuellement à '
+        +'l\'écran sera remplacé.</p>',
+        [{texte:"Annuler"},{texte:"Remplacer",fort:true,fait:function(){charger(false);}}]);
+    }
+    e.target.value="";   /* pour pouvoir re-choisir le même fichier ensuite */
+  };
   r.readAsText(f);
 });
+/* ===================== fin SAUVEGARDE_V38 ===================== */
 
 
 /* ===================== CONSTRUCTEUR_V29 (frise + arbre + pont boKeys->Suivi) ===================== */
@@ -2048,7 +2193,25 @@ refreshClassSelector();
     la file des timers, et renderComp ne serait toujours pas définie. */
  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",go);}else{go();}
 })();
-/*SOLO_V30*/ (function(){try{var p=new URLSearchParams(location.search);if(p.get("solo")==="1"){var tb=document.getElementById("tabs");if(tb)tb.style.display="none";var hm=document.querySelector(".nc-home");if(hm)hm.style.display="none";var bar=document.createElement("div");bar.id="soloBar";bar.style.cssText="position:sticky;top:0;z-index:50;background:#12324a;color:#fff;padding:9px 13px;font:600 14px system-ui,sans-serif";bar.innerHTML='<a href="prof.html" style="color:#fff;text-decoration:none">\u2039 Accueil</a>';document.body.insertBefore(bar,document.body.firstChild);}}catch(e){}})();
+/* MENU_UNIQUE_GESTION_V38 — la barre d'onglets est RETIREE, toujours.
+   Pourquoi : depuis v37 le menu unique est `prof.html` (structure par frequence, validee en v29).
+   Le gestionnaire n'a plus a porter son propre menu — il en portait un DOUBLE, et Laurent le
+   voyait « revenir regulierement » : `SOLO_V30` ne le masquait que si l'URL contenait `solo=1`,
+   donc il reapparaissait des qu'on ouvrait la page autrement (favori, retour arriere, lien direct).
+   Un menu qui depend du chemin d'acces n'est pas un menu, c'est un alea.
+   Les onglets restent dans le DOM (masques) : `switchTab`, `?tab=` et `.tab.on` continuent de
+   fonctionner a l'identique — on retire l'affichage, pas la mecanique. */
+/*MENU_UNIQUE_GESTION_V38*/ (function(){try{
+  var tb=document.getElementById("tabs"); if(tb) tb.style.display="none";
+  var hm=document.querySelector(".nc-home"); if(hm) hm.style.display="none";
+  if(!document.getElementById("soloBar")){
+    var bar=document.createElement("div"); bar.id="soloBar";
+    bar.style.cssText="position:sticky;top:0;z-index:50;background:#12324a;color:#fff;"
+      +"padding:9px 13px;font:600 14px system-ui,sans-serif";
+    bar.innerHTML='<a href="prof.html" style="color:#fff;text-decoration:none">\u2039 Accueil</a>';
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+}catch(e){}})();
 </script>
 
 <style>/*NOTATION_COMPETENCES_V19_CSS*/
