@@ -91,28 +91,53 @@
      des rôles ouvrables. Pour un prof on réutilise son empreinte comme `pid` — c'est
      exactement ce que fait `resolve()` ; pour une classe on pose un identifiant
      d'élève factice, jamais un vrai code. */
-  function roles(AUTH){
+  function roles(AUTH, CLASSES_ANNEE){
     var out=[], vues={};
+    /* OUTILS_TEST_V38b — Laurent : « mets-moi TOUTES les classes possibles, donc aussi celles des
+       collègues ». Trois sources, réunies sans doublon :
+         1. les classes qui ont de vrais codes d'accès (les siennes, 2025-26) ;
+         2. les classes DÉCLARÉES par chaque prof dans AUTH — celles des collègues, qui n'ont pas
+            encore de codes distribués mais existent bel et bien dans le login ;
+         3. `CLASSES_ANNEE` pour 2026-2027, quand la page a chargé `classes_annee.js`.
+       On garde l'ANNÉE comme regroupement : un même identifiant peut vivre dans les deux
+       (1STI2D, TSTI2D, TNSI…) sans désigner la même classe. */
+    function ajouterEleve(id, libelle, annee, prof){
+      var cle=annee+"|"+id; if(!id || vues[cle]) return; vues[cle]=1;
+      out.push({ kind:"eleve", annee:annee,
+                 label:"🎓 "+(libelle||id)+(prof?" — "+prof:""),
+                 session:{ role:"eleve", code:id, eleve:"TEST-"+id } });
+    }
     for(var h in AUTH){
       if(!Object.prototype.hasOwnProperty.call(AUTH,h)) continue;
       var r=AUTH[h];
       if(r.r==="p"){
-        out.push({ kind:"prof", label:"👤 "+(r.p||"prof")+" — espace enseignant",
+        out.push({ kind:"prof", annee:"", label:"👤 "+(r.p||"prof")+" — espace enseignant",
                    session:{ role:"prof", pid:h, prenom:(r.p||""),
                              classes:(r.classes||[]),
                              cl:(r.classes||[]).map(function(c){return c.libelle;}) } });
-      } else if(r.c && !vues[r.c]){
-        vues[r.c]=1;
-        out.push({ kind:"eleve", label:"🎓 Élève — "+r.c,
-                   session:{ role:"eleve", code:r.c, eleve:"TEST-"+r.c } });
+        (r.classes||[]).forEach(function(c){ ajouterEleve(c.id, c.libelle, "2025-2026", r.p); });
+      } else if(r.c){
+        ajouterEleve(r.c, r.c, "2025-2026", null);
       }
     }
-    /* Les profs d'abord, puis les classes ; et Laurent en tête, c'est son poste de travail. */
+    if(CLASSES_ANNEE){
+      for(var an in CLASSES_ANNEE){
+        if(an==="2025-2026") continue;   /* déjà couverte par AUTH, qui fait autorité */
+        var parProf=CLASSES_ANNEE[an];
+        for(var nom in parProf){
+          (parProf[nom]||[]).forEach(function(c){
+            ajouterEleve(c.id, c.libelle, an, nom.charAt(0)+nom.slice(1).toLowerCase());
+          });
+        }
+      }
+    }
+    /* Les profs d'abord (Laurent en tête, c'est son poste), puis les classes par année. */
     out.sort(function(a,b){
       if(a.kind!==b.kind) return a.kind==="prof"?-1:1;
       var la=/Laurent/.test(a.label), lb=/Laurent/.test(b.label);
-      if(la!==lb) return la?-1:1;
-      return a.label.localeCompare(b.label,"fr");
+      if(a.kind==="prof" && la!==lb) return la?-1:1;
+      if(a.annee!==b.annee) return a.annee<b.annee?-1:1;
+      return a.label.localeCompare(b.label,"fr",{numeric:true});
     });
     return out;
   }

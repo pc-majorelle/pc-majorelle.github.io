@@ -81,6 +81,14 @@
     if(c.indexOf("NSI")!==-1)return null;
     if(c.indexOf("1G")===0)return "ens1";
     if(c.indexOf("TG")===0)return "ensT";
+    /* RENTREE_ELEVE_V38 — les identifiants de 2026-2027 n'étaient reconnus par AUCUNE de ces
+       règles : `2NDE-1`, `1ENS-3`, `TENS-4`, `1PC-G2`, `TSPE-PHY1` retombaient sur `null`,
+       c'est-à-dire un espace élève amputé de « Réviser par niveau », des fiches et des
+       séquences. Défaut révélé en éprouvant le sélecteur de test sur TOUTES les classes —
+       il ne se voyait pas tant qu'on ne testait que les 6 classes à codes de 2025-2026. */
+    if(c.indexOf("2NDE")===0)return "2nde";
+    if(c.indexOf("1ENS")===0)return "ens1";
+    if(c.indexOf("TENS")===0)return "ensT";
     return null;
   }
   var tok=niveauToken(code);

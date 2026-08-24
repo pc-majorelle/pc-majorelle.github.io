@@ -139,11 +139,35 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   var zone=document.getElementById("testZone"); if(!zone) return;
   zone.hidden=false;
 
-  /* 1) Les rôles — construits depuis les empreintes, sans jamais toucher à un code. */
-  var liste=PCTest.roles(AUTH), sel=document.getElementById("tRole");
-  sel.innerHTML=liste.map(function(r,i){ return '<option value="'+i+'">'+r.label+'</option>'; }).join("");
+  /* 1) Les rôles — construits depuis les empreintes, sans jamais toucher à un code.
+        OUTILS_TEST_V38b : `classes_annee.js` n'est chargé QUE si l'outillage est armé — inutile
+        d'imposer 11 Ko à tous les visiteurs pour une commodité de test. On construit la liste
+        une fois qu'il est là (ou tout de suite s'il ne vient pas : les classes 2026-27 manqueront
+        simplement, sans casser le reste). */
+  var sel=document.getElementById("tRole"), liste=[];
+  function poserListe(){
+    liste=PCTest.roles(AUTH, window.CLASSES_ANNEE);
+    var h="", grp=null;
+    liste.forEach(function(r,i){
+      var g = r.kind==="prof" ? "👤 Espaces enseignants" : "🎓 Élèves — "+r.annee;
+      if(g!==grp){ if(grp) h+='</optgroup>'; h+='<optgroup label="'+g+'">'; grp=g; }
+      h+='<option value="'+i+'">'+r.label+'</option>';
+    });
+    if(grp) h+='</optgroup>';
+    sel.innerHTML=h;
+    try{ var m=localStorage.getItem(MEM); if(m!==null && liste[+m]) sel.value=m; }catch(e){}
+    var n=liste.filter(function(r){return r.kind==="eleve";}).length;
+    var lbl=document.querySelector('label[for="tRole"]');
+    if(lbl) lbl.textContent="Entrer directement comme… ("+n+" classes)";
+  }
   var MEM="pcmajo_test_role";
-  try{ var m=localStorage.getItem(MEM); if(m!==null && liste[+m]) sel.value=m; }catch(e){}
+  if(window.CLASSES_ANNEE){ poserListe(); }
+  else {
+    var sc=document.createElement("script"); sc.src="classes_annee.js";
+    sc.onload=poserListe; sc.onerror=poserListe;
+    document.head.appendChild(sc);
+    poserListe();   /* affichage immédiat ; complété dès que le fichier arrive */
+  }
   document.getElementById("tGo").onclick=function(){
     var r=liste[+sel.value]; if(!r) return;
     try{ localStorage.setItem(MEM, sel.value); }catch(e){}
