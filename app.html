@@ -47,6 +47,11 @@
 </style>
 </head>
 <body>
+<!-- MENU_UNIQUE_V37 — 23/08/2026 : prof.html est devenu le menu unique (choix de Laurent).
+     Cette page n'est PAS supprimée : elle redirige, pour que tout ancien lien ou marque-page
+     continue de fonctionner. Son contenu est conservé ci-dessous, intact, sous la redirection. -->
+<script>location.replace("prof.html"+location.search+location.hash);</script>
+
 <div class="appbar">
   <div class="wrap" style="padding:0;display:flex;align-items:flex-start;gap:10px">
     <div style="flex:1;min-width:0">
@@ -67,26 +72,26 @@
   <div class="grp">Au quotidien</div>
   <div class="tiles">
     <a class="tile" href="ma_semaine.html"><span class="ic">📅</span><span><b>Ma semaine</b><small>emploi du temps réel</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=seances"><span class="ic">📓</span><span><b>Cahier de textes</b><small>séances datées</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=seances&solo=1"><span class="ic">📓</span><span><b>Cahier de textes</b><small>séances datées</small></span></a>
     <a class="tile wide" href="suivi.html"><span class="ic">✅</span><span><b>Suivi de progression</b><small>cocher ce qui est fait</small></span></a>
   </div>
 
   <div class="grp">Mes élèves</div>
   <div class="tiles">
-    <a class="tile" href="gestion_v0.1.html?tab=eleves"><span class="ic">👥</span><span><b>Élèves &amp; groupes</b><small>listes, groupes de TP</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=comp"><span class="ic">🎯</span><span><b>Notes &amp; compétences</b><small>grilles de TP, profils</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=eleves&solo=1"><span class="ic">👥</span><span><b>Élèves &amp; groupes</b><small>listes, groupes de TP</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=comp&solo=1"><span class="ic">🎯</span><span><b>Notes &amp; compétences</b><small>grilles de TP, profils</small></span></a>
   </div>
 
   <div class="grp">Préparer l'année</div>
   <div class="tiles">
     <a class="tile prep wide" id="tileConstr" href="constructeur.html"><span class="ic">🧭</span><span><b>Constructeur de progression</b><small>frise (dates) ⇄ arbre (séances)</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=progressions"><span class="ic">📚</span><span><b>Progressions de réf.</b><small>B.O. et collègues</small></span></a>
-    <a class="tile" href="gestion_v0.1.html?tab=calendrier"><span class="ic">🗓️</span><span><b>Calendrier</b><small>vacances zone B, créneaux</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=progressions&solo=1"><span class="ic">📚</span><span><b>Progressions de réf.</b><small>B.O. et collègues</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=calendrier&solo=1"><span class="ic">🗓️</span><span><b>Calendrier</b><small>vacances zone B, créneaux</small></span></a>
   </div>
 
   <div class="grp">Matériel &amp; réglages</div>
   <div class="tiles">
-    <a class="tile" href="gestion_v0.1.html?tab=materiel"><span class="ic">🧪</span><span><b>Matériel</b><small>inventaire du labo</small></span></a>
+    <a class="tile" href="gestion_v0.1.html?tab=materiel&solo=1"><span class="ic">🧪</span><span><b>Matériel</b><small>inventaire du labo</small></span></a>
     <a class="tile" href="classes.html"><span class="ic">⚙️</span><span><b>Réglages / classes</b><small>classes, dédoublements</small></span></a>
   </div>
 

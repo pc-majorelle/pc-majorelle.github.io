@@ -1148,7 +1148,8 @@ function updateSelCount(){
   const n=state.selection.size;
   document.getElementById('selcount').textContent=n+' capacité'+(n>1?'s':'')+' sélectionnée'+(n>1?'s':'')+(state.selChapitre?' · '+state.selChapitre:'');
   document.getElementById('seebtn').disabled=n===0;
-  document.getElementById('seebtn').textContent=state.mode==='exercice'?'Voir les exercices':'Voir les activités';
+  /* ACTIVITES_COTE_PROF_V37 : le mode Activité n'existe plus côté élève. */
+  document.getElementById('seebtn').textContent='Voir les exercices';
 }
 
 /* ---------- MODE PRÉREQUIS : fiche + remontée ---------- */
