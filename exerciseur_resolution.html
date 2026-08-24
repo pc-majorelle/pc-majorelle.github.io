@@ -774,4 +774,14 @@ function restart(){if(session.on){loadExo(cur);session.usedAide=false;session.wr
 function quitSession(){session.on=false;document.getElementById('panel').innerHTML='<div class="empty">← « S\'entraîner » ou choisis un problème.</div>';}
 buildMenu();
 window.__API={REL:REL,buildEq:buildEq,isFinal:isFinal,isIsolated:isIsolated,isIsolatedRight:isIsolatedRight,aideOp:aideOp,metric:metric,computeDiff:computeDiff,applyMul:applyMul,applyAdd:applyAdd,simpEq:simpEq,session:session,startSession:startSession,pickSession:pickSession,doOp:doOp,doAdd:doAdd,doSwap:doSwap,doSubst:doSubst,doSqrt:doSqrt,doDistribute:doDistribute,applySubst:applySubst,applyDistribute:applyDistribute,hasGroup:hasGroup,applySqrt:applySqrt,squareReady:squareReady,applyNeg:applyNeg,applyInverse:applyInverse,doNeg:doNeg,doInv:doInv,pick:pick,identify:identify,nextOp:function(){return aideOp(stack[stack.length-1]);},top:function(){return stack[stack.length-1];},getState:function(){return {identified:identified,fin:isFinal(stack[stack.length-1]),unk:cur&&cur.unk};}};
-</script></body></html>
+</script><style>
+/* THEME_PARTAGE_V37 : cette page nomme son fond --paper la ou le kit commun pose --bg.
+   On raccorde les deux, sinon le fond seul restait a sa couleur d'origine. */
+:root{ --paper: var(--bg, #eef3f6); }
+</style>
+<script src="pcmajo_ui.js"></script>
+<!-- THEME_PARTAGE_V37 : cette page etait atteignable depuis le menu mais gardait ses
+     couleurs d'origine, l'ambiance choisie ailleurs ne la suivait pas. Le kit commun
+     pose les memes variables CSS (--bg --card --ink --muted --line --accent) que la page
+     emploie deja, et ajoute le bouton 🎨. -->
+</body></html>
