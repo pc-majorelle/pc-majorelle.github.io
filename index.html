@@ -32,7 +32,21 @@
   .thsw:active{transform:scale(.96)}
   .thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
   .thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+  /* ===== OUTILS_TEST_V38 (temporaire) ===== */
+  .tzone{margin-top:18px;border:1.5px dashed #b04a4a;border-radius:12px;padding:14px;background:rgba(176,74,74,.06)}
+  .tzone h3{margin:0 0 2px;font-size:14px;color:#b04a4a}
+  .tzone .sub{margin:0 0 12px;font-size:12px}
+  .tzone select,.tzone input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--card);
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:10px;letter-spacing:normal}
+  .tzone .btn{background:#b04a4a;font-size:15px;padding:11px}
+  .tzone .mini{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+  .tzone .mini button{flex:1 1 auto;font:inherit;font-size:12px;padding:6px 8px;border-radius:8px;cursor:pointer;
+    border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+  .tzone .off{display:block;width:100%;margin-top:9px;text-align:center;font-size:12px;color:var(--muted)}
+  /* ===== fin OUTILS_TEST_V38 ===== */
 </style>
+<!-- OUTILS_TEST_V38 : doit être chargé AVANT tout autre script (il décale l'horloge). -->
+<script src="pcmajo_test.js"></script>
 </head>
 <body>
 <header><h1>Plateforme PC — Majorelle</h1><p>Connexion</p></header>
@@ -48,6 +62,30 @@
     <button class="btn" id="go">Se connecter</button>
     <p class="note">Codes personnels non devinables ; le site n'en garde que l'empreinte cryptée. Aucune donnée d'élève en ligne : tout reste sur l'appareil.</p>
     <div class="thzone"><div class="thlabel">🎨 Thème de l'interface</div><div id="themePick"></div></div>
+
+    <!-- ===== OUTILS_TEST_V38 (temporaire — retirer ce bloc entier avant mise en service) =====
+         Masqué tant que l'outillage n'est pas armé par ?test=1. Le sélecteur est rempli par
+         JS depuis AUTH : aucun code d'accès n'apparaît dans cette page. -->
+    <div class="tzone" id="testZone" hidden>
+      <h3>🧪 Outils de test</h3>
+      <p class="sub">Temporaire. Rien de ceci n'est visible sans <code>?test=1</code>.</p>
+
+      <label for="tRole">Entrer directement comme…</label>
+      <select id="tRole"></select>
+      <button class="btn" id="tGo">Entrer sans code →</button>
+
+      <label for="tDate" style="margin-top:14px">Date du jour simulée</label>
+      <div class="mini">
+        <button type="button" data-jour="0">aujourd'hui</button>
+        <button type="button" data-jour="1">+1 j</button>
+        <button type="button" data-jour="7">+1 sem.</button>
+        <button type="button" data-rentree="1">rentrée</button>
+      </div>
+      <input type="date" id="tDate">
+      <button class="btn" id="tDateGo">Simuler cette date</button>
+      <span class="off" id="tOff"></span>
+    </div>
+    <!-- ===== fin OUTILS_TEST_V38 ===== -->
   </div>
 </main>
 <script>
@@ -93,6 +131,52 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   }
 })();
 </script>
+<!-- ===== OUTILS_TEST_V38 (temporaire) — dépend de AUTH, donc placé APRÈS le script de connexion ===== -->
+<script>
+(function(){
+  "use strict";
+  if(!window.PCTest || !PCTest.arme) return;          // dormant tant que ?test=1 n'a pas armé
+  var zone=document.getElementById("testZone"); if(!zone) return;
+  zone.hidden=false;
+
+  /* 1) Les rôles — construits depuis les empreintes, sans jamais toucher à un code. */
+  var liste=PCTest.roles(AUTH), sel=document.getElementById("tRole");
+  sel.innerHTML=liste.map(function(r,i){ return '<option value="'+i+'">'+r.label+'</option>'; }).join("");
+  var MEM="pcmajo_test_role";
+  try{ var m=localStorage.getItem(MEM); if(m!==null && liste[+m]) sel.value=m; }catch(e){}
+  document.getElementById("tGo").onclick=function(){
+    var r=liste[+sel.value]; if(!r) return;
+    try{ localStorage.setItem(MEM, sel.value); }catch(e){}
+    PCTest.entrer(r.session);
+  };
+
+  /* 2) La date — le champ montre la date SIMULÉE si elle l'est, sinon la vraie. */
+  var champ=document.getElementById("tDate");
+  function isoDe(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")
+                          +"-"+String(d.getDate()).padStart(2,"0"); }
+  champ.value = PCTest.dateSimulee || isoDe(new Date());
+  document.getElementById("tDateGo").onclick=function(){ PCTest.poser(champ.value||null); };
+
+  /* Raccourcis : le « + N j » part de la date affichée, pas de la date réelle — c'est ce
+     qu'on veut pour avancer pas à pas dans un scénario (J+1, J+7, J+21 du Leitner). */
+  zone.querySelectorAll(".mini button").forEach(function(b){
+    b.onclick=function(){
+      if(b.dataset.rentree){ champ.value = (new Date().getFullYear()>=2026?"2026":"2025")+"-09-01"; return; }
+      var n=+b.dataset.jour||0;
+      if(n===0){ champ.value=isoDe(new Date()); return; }
+      var p=(champ.value||isoDe(new Date())).split("-");
+      var d=new Date(+p[0],+p[1]-1,+p[2]+n);
+      champ.value=isoDe(d);
+    };
+  });
+
+  var off=document.getElementById("tOff");
+  off.innerHTML=(PCTest.dateSimulee?"Date simulée active. ":"")
+    +'<a href="?test=0">désarmer les outils de test et tout nettoyer</a>';
+})();
+</script>
+<!-- ===== fin OUTILS_TEST_V38 ===== -->
+
 <script>
 /* ===== THEME KIT — PC Majorelle (partagé, inline, autoporté) — thèmes issus des prérequis élève ===== */
 (function(){
