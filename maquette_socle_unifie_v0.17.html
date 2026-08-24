@@ -1272,7 +1272,15 @@ document.getElementById('clearsel').onclick=()=>{resetSelection();renderTree();r
        qui demandent une palette par niveau et par discipline qu'elle n'a pas) :
        une ambiance inconnue retombe simplement sur la premiere. */
     var choix=null; try{ choix=localStorage.getItem("pcmajo_theme"); }catch(e){}
-    applyAmbiance(ATHEMES[choix] ? choix : ORDER[0]);
+    /* THEME_REPLI_V38 : le repli sur ORDER[0] (Atelier, CLAIR) était le vrai défaut. Un élève qui
+       avait choisi « Feu » ou « Forêt » ailleurs — deux ambiances SOMBRES — arrivait ici sur un
+       fond blanc : le saut clair↔sombre est ce qui se voit le plus, et il se faisait en silence.
+       À défaut de pouvoir servir ces deux ambiances (elles demanderaient les sous-palettes par
+       niveau et par discipline que cette page est seule à porter — décision de fond, pas la
+       mienne), on retombe au moins sur une ambiance de MÊME CLARTÉ, et le sélecteur affiche
+       honnêtement celle qui est réellement appliquée. */
+    var REPLI={feu:"neon", foret:"neon"};
+    applyAmbiance(ATHEMES[choix] ? choix : (ATHEMES[REPLI[choix]] ? REPLI[choix] : ORDER[0]));
   })(); initVol();
 state.levelPath=[NIVEAUX_TREE[3]];  // départ : Lycée > 2de
 state.niveau='2nde';

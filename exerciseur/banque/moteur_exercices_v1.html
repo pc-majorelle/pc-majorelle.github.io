@@ -4,6 +4,13 @@
     --accent:#1f7a6b;--accent2:#19655a;--soft:#dcefe9;--ok:#1f7a4d;--okbg:#e0f2e8;--warn:#9a3412;--warnbg:#fbe8df;
     --gold:#b8842b;--goldbg:#f7edd8;--bo:#2b5c9a;--bobg:#e6eefa;--calc:#243240;
     --fac:#1f7a4d;--facbg:#e0f2e8;--moy:#b8842b;--moybg:#f7edd8;--dif:#9a3412;--difbg:#fbe8df;}
+/* THEME_CONTRASTE_V38 — le moteur d'exercices ignorait complètement le thème du site :
+   il a sa propre nomenclature (--paper, --slate, --mist) et une palette figée. L'élève
+   passait de la maquette au moteur et le décor changeait sous lui. On ne renomme rien —
+   on branche ses noms sur ceux du kit commun, avec la valeur d'origine en repli, de sorte
+   que la page reste exactement elle-même quand aucun thème n'est choisi. */
+:root{--paper:var(--bg,#eef3f6);--slate:var(--muted,#43576a);--mist:var(--muted,#8497a8);}
+
   *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.55}
   .top{background:var(--ink);color:#fff;padding:1rem 1.3rem}.top .eyebrow{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#8fd3c6;font-weight:700}
   .top h1{font-size:1.25rem;font-weight:650;margin-top:.15rem}.top p{font-size:.82rem;color:#b7c4cf;margin-top:.2rem}
@@ -88,7 +95,9 @@
 .lienslot{font-size:13px;margin:4px 0;color:#cfe0f2}
 .lienslot input{background:#0d1622;border:1px solid #2a3a4f;border-radius:6px;color:#e8eef6;padding:3px 6px;width:min(60%,240px)}
 
-</style></head><body>
+</style><!-- THEME_CONTRASTE_V38 -->
+<script src="../../pcmajo_ui.js"></script>
+</head><body>
   <div class="top"><div class="eyebrow">Physique-Chimie · moteur d'exercices (sans IA)</div><h1>Moteur d'exercices — Physique-Chimie</h1>
     <p>Le moteur tire une variante, t'interroge et vérifie la réponse. Aucune IA ne tourne : le calcul est déterministe, à partir de la <b>formule</b> du patron. Si tu bloques, il propose l'exercice d'un prérequis plus simple. Calculatrice intégrée.</p>
     <div class="stats">Source unique : la banque · <b>671</b> patrons (Seconde 128 · Première STI2D 125 · Terminale STI2D 133 · Première spé PC 132 · Terminale spé PC 153) · <b>156</b> validés prof, le reste en revue (R-E6)</div>
