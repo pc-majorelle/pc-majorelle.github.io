@@ -829,11 +829,36 @@ function renderCalendrier(){
     <table><thead><tr><th>Vacances</th><th>Dernier jour de cours</th><th>Reprise</th></tr></thead><tbody>
     ${CAL.vacances.map(v=>`<tr><td>${esc(v.nom)}</td><td>${v.dernier_jour_cours?frDate(v.dernier_jour_cours):"—"}</td><td>${v.reprise?esc(v.reprise.length>=10?frDate(v.reprise.slice(0,10)):v.reprise):"—"}</td></tr>`).join("")}
     </tbody></table></div>`;
-  h+=`<div class="card"><h3>Jours ôtés en semaine de classe (fériés &amp; ponts)</h3>
-    <table><thead><tr><th>Date</th><th>Nom</th><th>Effet</th></tr></thead><tbody>
-    ${Object.keys(OFF).sort().map(d=>`<tr><td>${frDate(d)}</td><td>${esc(OFF[d].nom)}</td><td><span class="pill">${OFF[d].type} — séance supprimée</span></td></tr>`).join("")}
-    </tbody></table>
-    <p class="hint">Les autres jours fériés tombent le week-end ou pendant des vacances : sans effet sur les séances.</p></div>`;
+  /* CALENDRIER_PAR_CLASSE_V37 : la liste montrait TOUS les jours ôtés en semaine de classe,
+     y compris ceux qui tombent un jour où la classe active n'a pas cours — on lisait donc
+     « séance supprimée » pour une séance qui n'existait pas. On ne garde que les jours qui
+     touchent réellement la classe, et on dit combien d'autres ont été laissés de côté. */
+  const cCal = activeClass();
+  const joursClasse = new Set((cCal && cCal.creneaux ? cCal.creneaux : [])
+    .filter(cr => cr.jour && JOURS.hasOwnProperty(cr.jour))
+    .map(cr => JOURS[cr.jour]));
+  const tousOff = Object.keys(OFF).sort();
+  const concernes = joursClasse.size
+    ? tousOff.filter(d => joursClasse.has(new Date(d + "T00:00:00").getDay()))
+    : tousOff;
+  const ecartes = tousOff.length - concernes.length;
+
+  h += `<div class="card"><div class="row" style="justify-content:space-between">
+    <h3 style="margin:0">Jours ôtés — ${cCal ? esc(cCal.libelle) : "toutes classes"}</h3>
+    <span class="pill acc">${concernes.length} séance${concernes.length > 1 ? "s" : ""} perdue${concernes.length > 1 ? "s" : ""}</span></div>`;
+  if (concernes.length) {
+    h += `<table><thead><tr><th>Date</th><th>Nom</th><th>Effet</th></tr></thead><tbody>
+    ${concernes.map(d => {
+      const wd = new Date(d + "T00:00:00").getDay();
+      const cr = (cCal && cCal.creneaux ? cCal.creneaux : []).find(x => JOURS[x.jour] === wd);
+      return `<tr><td>${frDate(d)}</td><td>${esc(OFF[d].nom)}</td>
+        <td><span class="pill">${OFF[d].type} — ${cr && cr.debut ? esc(cr.debut) + " " : ""}séance supprimée</span></td></tr>`;
+    }).join("")}
+    </tbody></table>`;
+  } else {
+    h += `<p class="muted">Aucun jour férié ni pont ne tombe sur un jour de cours de cette classe.</p>`;
+  }
+  h += `<p class="hint">${ecartes ? ecartes + " autre" + (ecartes > 1 ? "s jours ôtés ne tombent" : " jour ôté ne tombe") + " pas sur un créneau de cette classe. " : ""}Les jours fériés de week-end ou de vacances n'apparaissent jamais ici.</p></div>`;
   el.innerHTML=h;
 }
 
@@ -946,7 +971,11 @@ function renderSuivi(){ fillReel();
     <h3 style="margin:0">Capacités par thème</h3>
     <div><button class="mini" onclick="window.print()">🖨️ Imprimer le cahier de textes</button></div></div>`;
   themesOrdered(p.themes).forEach(t=>{
-    h+=`<details class="tree" open><summary><b>${esc(t.label)}</b></summary>`;
+    /* SUIVI_COMPACT_V37 : les themes etaient ouverts en dur, si bien que l'onglet
+       s'ouvrait sur plusieurs milliers de pixels — et d'autant plus que l'annee
+       comptait de capacites. Ils s'ouvrent desormais replies, et chacun retient
+       son etat (meme mecanisme que le menu). */
+    h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary><b>${esc(t.label)}</b></summary>`;
     t.chapters.forEach(ch=>ch.caps.forEach(id=>{
       const v=eff(id);
       h+=`<div class="cap"><span style="flex:1">${isReel(id)?confDot(rs[id]):''}<span class="code">${id.split('.').slice(-2).join('.')}</span> ${esc(NODES[id]?.t||id)}</span>
@@ -970,6 +999,26 @@ function renderSuivi(){ fillReel();
     h+=`</tbody></table>`;}
   h+=`</div>`;
   el.innerHTML=h;
+  memoDetails(el);   /* SUIVI_COMPACT_V37 */
+}
+
+/* SUIVI_COMPACT_V37 — retient l'etat ouvert/ferme des blocs porteurs d'un data-mem.
+   Meme principe que le menu : cle stable, ecriture a chaque bascule, et repli
+   silencieux sur l'etat du HTML si le stockage est indisponible ou illisible. */
+function memoDetails(racine){
+  var CLE="pcmajo_suivi_deplie";
+  var blocs=(racine||document).querySelectorAll("details[data-mem]");
+  if(!blocs.length) return;
+  var etat={}; try{ etat=JSON.parse(localStorage.getItem(CLE))||{}; }catch(e){ etat={}; }
+  blocs.forEach(function(d){
+    var k=d.getAttribute("data-mem");
+    if(Object.prototype.hasOwnProperty.call(etat,k)) d.open=!!etat[k];
+    d.addEventListener("toggle",function(){
+      var n={}; try{ n=JSON.parse(localStorage.getItem(CLE))||{}; }catch(e){ n={}; }
+      n[k]=d.open;
+      try{ localStorage.setItem(CLE,JSON.stringify(n)); }catch(e){}
+    });
+  });
 }
 function setSuivi(id,v){const c=activeClass();suiviOf(c.id)[id]=v;save();renderSuivi();}
 
