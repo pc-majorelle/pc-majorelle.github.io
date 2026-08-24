@@ -166,23 +166,12 @@
     <div class="items">
       <div class="note">Peu fréquent → rangé ici, et en plein écran quand on l'ouvre.</div>
 
-      <details class="sub" data-mem="constructeur">
-        <summary>
-          <span class="ico" style="font-size:1.2rem">🧭</span>
-          <span class="lab"><b>Constructeur de progression</b><small>bâtir la progression → boKeys datés</small></span>
-          <span class="caret">›</span>
-        </summary>
-        <div class="items">
-          <div class="deeper" id="constrList">
-            <!-- rempli par JS : une ligne Frise/Arbre par classe éligible -->
-            <div class="clsrow"><div class="two">
-              <a href="constructeur.html?mode=frise">📊 Frise (dates)</a>
-              <a href="constructeur.html?mode=arbre">🌳 Arbre (séances)</a>
-            </div></div>
-          </div>
-          <div class="note" id="constrNote">Choisis le niveau dans l'outil, ou connecte-toi pour voir tes classes ici.</div>
-        </div>
-      </details>
+      <!-- CONSTRUCTEUR_BOUTON_V38 : un seul bouton, comme dans la maquette validée en v29.
+           v37 avait déplié ici une ligne Frise/Arbre PAR CLASSE (6 classes = 12 liens), alors que
+           le constructeur porte déjà, en tête de page, ses sélecteurs Classe · Proposition · Année.
+           Le menu ne rejoue plus ce choix : il ouvre l'outil sur la classe active. -->
+      <a class="item" id="constrLink" href="constructeur.html">
+        <span class="ico">🧭</span><span class="lab"><b>Constructeur de progression</b><small id="constrSmall">bâtir la progression → boKeys datés</small></span><span class="go">›</span></a>
 
       <a class="item" href="gestion_v0.1.html?tab=progressions&solo=1">
         <span class="ico">📚</span><span class="lab"><b>Progressions de référence</b><small>découpages B.O. / collègues</small></span><span class="go">›</span></a>
@@ -245,12 +234,15 @@
     /* ENSSCI_CONSTR_V37 : le constructeur gère ens1/ensT depuis v34 — ils avaient été oubliés ici,
        ce qui privait TG5 et TG6 de tout accès à l'outil depuis ce menu. NSI reste hors périmètre. */
     if(/^\dNSI/.test(id)||/^TNSI/.test(id)) return null;
-    if(/^TG/.test(id)) return "ensT";
-    if(/^1G/.test(id)) return "ens1";
+    /* JETON_ENSSCI_V38 (correctif) : v37 renvoyait ici "ensT"/"ens1", que le constructeur ne
+       connaît pas — son sélecteur de niveau attend "Tens"/"1ens". Le lien ens. sci. du menu
+       ouvrait donc l'outil sur la Tale STI2D, en silence. Vérifié dans le <select id="lvlSel">. */
+    if(/^TG/.test(id)||/^TENS/.test(id)) return "Tens";
+    if(/^1G/.test(id)||/^1ENS/.test(id)) return "1ens";
     return null;
   }
   var TOKLAB={"2nde":"Seconde","1spe":"1re spé PC","Tspe":"Tale spé PC","1sti":"1re STI2D","Tsti":"Tale STI2D",
-              "ens1":"1re ens. sci.","ensT":"Tale ens. sci."};
+              "1ens":"1re ens. sci.","Tens":"Tale ens. sci."};
 
   function anneeCourante(){
     var cur; try{cur=localStorage.getItem("gestion_majorelle_annee");}catch(e){}
@@ -258,29 +250,25 @@
     return cur;
   }
 
+  /* CONSTRUCTEUR_BOUTON_V38 — un seul lien. On ne liste plus les classes ici : on transmet
+     simplement la classe active (clé partagée HERITAGE_PARTAGE_V37), et l'outil fait le reste.
+     Repli sûr : si aucune classe active n'est connue, le lien reste `constructeur.html` nu,
+     où le prof choisit son niveau comme il l'a toujours fait. */
+  function classeActive(an){
+    var id=null;
+    try{ id=localStorage.getItem("pcmajo_classe_active__"+an); }catch(e){}
+    var c=classes.filter(function(x){return x && x.id===id;})[0];
+    if(!c) c=classes.filter(function(x){return !!friseToken(x);})[0];
+    return c||null;
+  }
   function buildConstr(){
-    var host=document.getElementById("constrList"), note=document.getElementById("constrNote");
-    if(!host) return;
-    var eligibles=classes.filter(function(c){return !!friseToken(c);});
-    var an=anneeCourante();
-    if(!eligibles.length){
-      // pas connecté / que des ens.sci : garder les 2 liens génériques (déjà dans le HTML)
-      if(note) note.textContent = classes.length
-        ? "Aucune de tes classes n'a de programme B.O. dans le constructeur (ens. scientifique / NSI). Ouvre l'outil et choisis un niveau."
-        : "Choisis le niveau dans l'outil, ou connecte-toi pour voir tes classes ici.";
-      return;
-    }
-    host.innerHTML=eligibles.map(function(c){
-      var tok=friseToken(c);
-      var q="?niveau="+encodeURIComponent(tok)+"&classe="+encodeURIComponent(c.id)+"&annee="+encodeURIComponent(an);
-      return '<div class="clsrow">'
-        +'<div class="clab">'+(c.libelle||c.id)+'<span class="ntag">'+(TOKLAB[tok]||tok)+'</span></div>'
-        +'<div class="two">'
-        +'<a href="constructeur.html'+q+'&mode=frise">📊 Frise</a>'
-        +'<a href="constructeur.html'+q+'&mode=arbre">🌳 Arbre</a>'
-        +'</div></div>';
-    }).join("");
-    if(note) note.textContent="La frise exporte des « boKeys datés » ; reviens ensuite dans Gestion → Constructeur → « Importer depuis la frise » pour cocher le Suivi de la classe.";
+    var lien=document.getElementById("constrLink"), small=document.getElementById("constrSmall");
+    if(!lien) return;
+    var an=anneeCourante(), c=classeActive(an), tok=c?friseToken(c):null;
+    if(!tok){ lien.href="constructeur.html"; return; }
+    lien.href="constructeur.html?niveau="+encodeURIComponent(tok)
+            +"&classe="+encodeURIComponent(c.id)+"&annee="+encodeURIComponent(an);
+    if(small) small.textContent=(c.libelle||c.id)+" · "+(TOKLAB[tok]||tok)+" — frise, arbre et séances dans l'outil";
   }
   window.__buildConstr=buildConstr;
   buildConstr();
