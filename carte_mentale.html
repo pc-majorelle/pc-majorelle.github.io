@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Carte du programme — PC Majorelle</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#3E6E97">
+<style>
+/* CARTE_MENTALE_V37 — carte du programme, autoportée.
+   Rien n'est dessiné à la main : l'arbre est ENGENDRÉ depuis socle_data.js,
+   donc il vaut pour les 7 niveaux et reste juste quand le référentiel bouge. */
+:root{ --bg:#f6f3ec; --card:#fff; --ink:#2b2b2b; --muted:#6b6b63; --line:#d8d3c4; --accent:#3E6E97; }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);
+  font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+
+/* --- barre --- */
+#bar{position:fixed;top:0;left:0;right:0;height:52px;z-index:20;display:flex;align-items:center;
+  gap:10px;padding:0 12px;background:var(--card);border-bottom:1px solid var(--line)}
+#bar .ti{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar .sp{flex:1}
+#bar select,#bar button{font:inherit;font-size:13px;color:var(--ink);background:var(--card);
+  border:1.5px solid var(--line);border-radius:9px;padding:6px 10px;cursor:pointer}
+#bar button:hover{border-color:var(--accent)}
+#bar button:focus-visible,#bar select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cnt{font-size:12px;color:var(--muted);white-space:nowrap}
+@media(max-width:720px){ .cnt,#bar .lbl{display:none} #bar{gap:6px;padding:0 8px} }
+
+/* --- scène --- */
+#scene{position:fixed;inset:52px 0 0 0;touch-action:none;cursor:grab;background:var(--bg)}
+#scene.drag{cursor:grabbing}
+svg{width:100%;height:100%;display:block}
+.lien{fill:none;stroke-width:2.5;opacity:.55}
+.noeud{cursor:pointer}
+.boite{stroke-width:1.5}
+.txt{font-family:inherit;pointer-events:none;dominant-baseline:middle}
+.n-racine .txt{font-weight:700;font-size:17px;fill:#fff}
+.n-theme  .txt{font-weight:700;font-size:14px;fill:#fff}
+.n-chap   .txt{font-weight:600;font-size:13px}
+.n-cap    .txt{font-size:12px}
+.plus{font-size:11px;font-weight:700;pointer-events:none}
+.noeud.cible .boite{stroke-width:3.5}
+.badge{font-size:10px;font-weight:700}
+
+/* --- présentation --- */
+#pres{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--card);
+  border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  display:none;gap:12px;align-items:center}
+#pres.on{display:flex}
+#pres .txt2{flex:1;min-width:0}
+#pres .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700}
+#pres .v{font-size:15px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pres .pos{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+#pres button{font:inherit;border:1.5px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:9px;width:40px;height:40px;font-size:17px;cursor:pointer}
+#pres button:hover{border-color:var(--accent)}
+body.pres #bar{opacity:.35}
+#aide{position:fixed;right:12px;bottom:12px;z-index:15;font-size:11.5px;color:var(--muted);
+  background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;max-width:230px}
+body.pres #aide{display:none}
+@media(max-width:720px){ #aide{display:none} }
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <a href="eleve.html" style="text-decoration:none;color:inherit;font-size:19px" title="Retour">‹</a>
+  <span class="ti" id="titre">Carte du programme</span>
+  <span class="lbl"><select id="selNiveau" title="Niveau"></select></span>
+  <span class="sp"></span>
+  <span class="cnt" id="compte"></span>
+  <button id="btnTout" title="Tout déplier ou tout replier">⊞ Déplier</button>
+  <button id="btnAjuster" title="Recadrer sur l'ensemble">⤢ Ajuster</button>
+  <button id="btnPres" title="Parcourir la carte branche par branche">▶ Présenter</button>
+</div>
+
+<div id="scene">
+  <svg id="svg"><g id="monde"></g></svg>
+</div>
+
+<div id="aide">Glisser pour déplacer · molette pour zoomer · clic sur un nœud pour ouvrir ou fermer sa branche</div>
+
+<div id="pres">
+  <button id="pPrev" title="Précédent (←)">‹</button>
+  <div class="txt2"><div class="k" id="pK">Thème</div><div class="v" id="pV">—</div></div>
+  <span class="pos" id="pPos">1 / 1</span>
+  <button id="pNext" title="Suivant (→)">›</button>
+  <button id="pStop" title="Quitter la présentation (Échap)">✕</button>
+</div>
+
+<script src="socle_data.js"></script>
+<script src="pcmajo_ui.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------- données ---------- */
+var SOCLE = (window.SOCLE_DATA || window.SOCLE || {});
+var NIVEAUX = SOCLE.niveaux || {};
+var ORDRE = ["2nde","1spe","Tspe","1sti","Tsti","1ens","Tens"];
+
+function param(n){ try{ return new URLSearchParams(location.search).get(n); }catch(e){ return null; } }
+var niveau = param("niveau");
+if(!NIVEAUX[niveau]) niveau = ORDRE.find(function(k){ return NIVEAUX[k]; }) || Object.keys(NIVEAUX)[0];
+
+/* palette de branche : une teinte par thème, lisible sur clair comme sur sombre */
+var TEINTES = ["#2f6b8f","#8c5a2b","#3d7a52","#8c2f6b","#7a6a1c","#4a5f8c","#8c4a3a"];
+
+/* ---------- construction de l'arbre ---------- */
+var UID = 0;
+function noeud(type, texte, extra){
+  var n = { id:++UID, type:type, t:texte||"", enfants:[], ouvert:false };
+  if(extra) for(var k in extra) n[k]=extra[k];
+  return n;
+}
+function construire(cleNiveau){
+  var N = NIVEAUX[cleNiveau] || {};
+  var racine = noeud("racine", N.label || cleNiveau);
+  racine.ouvert = true;
+  (N.themes||[]).forEach(function(th, i){
+    var nt = noeud("theme", th.label || th.code, {teinte:TEINTES[i % TEINTES.length]});
+    nt.ouvert = true;
+    (th.chapters||[]).forEach(function(ch){
+      var nc = noeud("chap", ch.label || ch.code, {teinte:nt.teinte});
+      (ch.caps||[]).forEach(function(cp){
+        nc.enfants.push(noeud("cap", cp.bo || cp.ref, {
+          teinte: nt.teinte, ref: cp.ref, exp: !!cp.exp, math: !!cp.math
+        }));
+      });
+      nt.enfants.push(nc);
+    });
+    racine.enfants.push(nt);
+  });
+  return racine;
+}
+var ARBRE = construire(niveau);
+
+function compter(n, f){ var c=f(n)?1:0; n.enfants.forEach(function(e){ c+=compter(e,f); }); return c; }
+function parcourir(n, f, prof){ f(n, prof||0); n.enfants.forEach(function(e){ parcourir(e,f,(prof||0)+1); }); }
+
+/* ---------- mesure du texte, sans dépendance ---------- */
+var LARG = {racine:230, theme:210, chap:190, cap:250};
+var CARL = {racine:8.8, theme:7.3, chap:6.9, cap:6.2};   /* largeur moyenne d'un caractère */
+function couper(txt, type){
+  var maxi = Math.floor((LARG[type]-46) / CARL[type]);   /* CARTE_FIX : 11 px de marge a gauche + la pastille +/- a droite */
+  var mots = String(txt).split(/\s+/), lignes=[], cur="";
+  mots.forEach(function(m){
+    if(!cur.length) cur = m;
+    else if((cur+" "+m).length <= maxi) cur += " " + m;
+    else { lignes.push(cur); cur = m; }
+  });
+  if(cur.length) lignes.push(cur);
+  if(lignes.length > 5){ lignes = lignes.slice(0,5); lignes[4] = lignes[4].slice(0,maxi-1)+"…"; }
+  return lignes;
+}
+var LH = 15;
+function hauteur(n){
+  if(!n._lig) n._lig = couper(n.t, n.type);
+  return Math.max(30, n._lig.length*LH + 14);
+}
+
+/* ---------- disposition : arbre horizontal, à la façon d'une carte mentale ---------- */
+var ECART_X = 60, ECART_Y = 10;
+function visibles(n){ return n.ouvert ? n.enfants : []; }
+function disposer(n, x, y){
+  n.x = x; n.y = y; n.h = hauteur(n); n.w = LARG[n.type];
+  var kids = visibles(n);
+  if(!kids.length){ n.hTot = n.h; return n.hTot; }
+  var yy = y, tot = 0;
+  kids.forEach(function(k){
+    var ht = disposer(k, x + n.w + ECART_X, yy);
+    yy += ht + ECART_Y; tot += ht + ECART_Y;
+  });
+  tot = Math.max(n.h, tot - ECART_Y);
+  /* on recentre le parent sur l'étendue de ses enfants */
+  var p = kids[0], d = kids[kids.length-1];
+  n.y = (p.y + (d.y + d.hTot)) / 2 - n.h/2;
+  n.hTot = tot;
+  return tot;
+}
+
+/* ---------- rendu ---------- */
+var SVG = document.getElementById("svg"), MONDE = document.getElementById("monde");
+var NS = "http://www.w3.org/2000/svg";
+function el(nom, attrs){
+  var e = document.createElementNS(NS, nom);
+  for(var k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function clair(hex, k){    /* éclaircit une couleur pour le fond d'une boîte */
+  var n = parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255;
+  r = Math.round(r+(255-r)*k); g = Math.round(g+(255-g)*k); b = Math.round(b+(255-b)*k);
+  return "#"+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+var sombre = false;
+function majSombre(){
+  var bg = getComputedStyle(document.body).backgroundColor.match(/\d+/g);
+  sombre = bg && (0.299*bg[0] + 0.587*bg[1] + 0.114*bg[2]) < 128;
+}
+
+function dessiner(){
+  /* CARTE_FIX : les noeuds d'une branche repliee n'etaient pas places par disposer()
+     mais etaient quand meme dessines -> tous empiles en 0,0 (le pate noir en haut a gauche).
+     On efface les positions, puis on ne dessine que ce qui vient d'etre place. */
+  parcourir(ARBRE, function(n){ n.x = undefined; n.y = undefined; });
+  disposer(ARBRE, 0, 0);
+  MONDE.innerHTML = "";
+  majSombre();
+  var gLiens = el("g"), gNoeuds = el("g");
+  MONDE.appendChild(gLiens); MONDE.appendChild(gNoeuds);
+
+  parcourir(ARBRE, function(n){
+    if(n.x===undefined || n.y===undefined) return;   /* CARTE_FIX */
+    visibles(n).forEach(function(k){
+      if(k.x===undefined || k.y===undefined) return;   /* CARTE_FIX */
+      var x1 = n.x + n.w, y1 = n.y + n.h/2, x2 = k.x, y2 = k.y + k.h/2, m = (x1+x2)/2;
+      gLiens.appendChild(el("path", {
+        d:"M"+x1+","+y1+" C"+m+","+y1+" "+m+","+y2+" "+x2+","+y2,
+        class:"lien", stroke:(k.teinte||"#888")
+      }));
+    });
+
+    var g = el("g", {class:"noeud n-"+n.type, transform:"translate("+n.x+","+n.y+")"});
+    g.setAttribute("data-id", n.id);
+    var teinte = n.teinte || "#3E6E97";
+    var plein = (n.type==="racine" || n.type==="theme");
+    var fond = plein ? teinte : (sombre ? "rgba(255,255,255,.07)" : clair(teinte, .90));
+    g.appendChild(el("rect", {x:0, y:0, width:n.w, height:n.h, rx:9, class:"boite",
+      fill:fond, stroke:teinte, "stroke-opacity":plein?1:.55}));
+
+    var t = el("text", {class:"txt", x:11, y:0, fill: plein ? "#fff" : (sombre ? "#e8e8e8" : "#2b2b2b")});
+    if(!n._lig) n._lig = couper(n.t, n.type);   /* CARTE_FIX : un nœud jamais mesuré (branche repliée) n'avait pas ses lignes */
+    var y0 = n.h/2 - (n._lig.length-1)*LH/2;
+    n._lig.forEach(function(l, i){
+      var ts = el("tspan", {x:11, y:y0 + i*LH});
+      ts.textContent = l; t.appendChild(ts);
+    });
+    g.appendChild(t);
+
+    if(n.type==="cap" && (n.exp || n.math)){
+      var b = el("text", {class:"badge", x:n.w-9, y:12, "text-anchor":"end",
+                          fill: sombre ? "#9ab" : teinte});
+      b.textContent = (n.exp?"exp":"") + (n.exp&&n.math?" · ":"") + (n.math?"maths":"");
+      g.appendChild(b);
+    }
+    if(n.enfants.length){
+      var np = n.enfants.length;
+      var p = el("g", {transform:"translate("+(n.w-2)+","+(n.h/2)+")"});
+      p.appendChild(el("circle", {r:9, fill: sombre?"#222":"#fff", stroke:teinte, "stroke-width":1.5}));
+      var pt = el("text", {class:"plus", x:0, y:0, "text-anchor":"middle",
+                           "dominant-baseline":"central", fill:teinte});
+      pt.textContent = n.ouvert ? "–" : (np>9 ? "+" : String(np));
+      p.appendChild(pt); g.appendChild(p);
+    }
+    gNoeuds.appendChild(g);
+  });
+
+  document.getElementById("compte").textContent =
+    compter(ARBRE, function(n){return n.type==="theme";}) + " thèmes · " +
+    compter(ARBRE, function(n){return n.type==="chap";}) + " chapitres · " +
+    compter(ARBRE, function(n){return n.type==="cap";}) + " capacités";
+}
+
+/* ---------- déplacement et zoom ---------- */
+var vx=0, vy=0, vz=1;
+function appliquer(){ MONDE.setAttribute("transform","translate("+vx+","+vy+") scale("+vz+")"); }
+function boite(){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  parcourir(ARBRE, function(n){
+    if(n.x===undefined) return;
+    x0=Math.min(x0,n.x); y0=Math.min(y0,n.y);
+    x1=Math.max(x1,n.x+n.w); y1=Math.max(y1,n.y+n.h);
+  });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+function cadrer(b, marge, duree){
+  var r = SVG.getBoundingClientRect();
+  marge = marge||40;
+  var z = Math.min((r.width-2*marge)/Math.max(1,b.x1-b.x0), (r.height-2*marge)/Math.max(1,b.y1-b.y0));
+  z = Math.max(.12, Math.min(1.6, z));
+  animer(r.width/2 - (b.x0+b.x1)/2*z, r.height/2 - (b.y0+b.y1)/2*z, z, duree);
+}
+var anim=null;
+function animer(nx, ny, nz, duree){
+  if(anim) cancelAnimationFrame(anim);
+  if(!duree){ vx=nx; vy=ny; vz=nz; appliquer(); return; }
+  var x0=vx,y0=vy,z0=vz,t0=null;
+  function pas(t){
+    if(!t0) t0=t;
+    var p = Math.min(1,(t-t0)/duree), e = p<.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+    vx=x0+(nx-x0)*e; vy=y0+(ny-y0)*e; vz=z0+(nz-z0)*e; appliquer();
+    if(p<1) anim=requestAnimationFrame(pas);
+  }
+  anim=requestAnimationFrame(pas);
+}
+function ajuster(duree){ cadrer(boite(), 46, duree); }
+
+var SC = document.getElementById("scene"), presse=false, lx=0, ly=0, bouge=false;
+SC.addEventListener("pointerdown", function(e){
+  presse=true; bouge=false; lx=e.clientX; ly=e.clientY;
+  SC.classList.add("drag"); SC.setPointerCapture(e.pointerId);
+});
+SC.addEventListener("pointermove", function(e){
+  if(!presse) return;
+  var dx=e.clientX-lx, dy=e.clientY-ly;
+  if(Math.abs(dx)+Math.abs(dy) > 3) bouge=true;
+  vx+=dx; vy+=dy; lx=e.clientX; ly=e.clientY; appliquer();
+});
+SC.addEventListener("pointerup", function(e){ presse=false; SC.classList.remove("drag"); });
+SC.addEventListener("pointercancel", function(){ presse=false; SC.classList.remove("drag"); });
+SC.addEventListener("wheel", function(e){
+  e.preventDefault();
+  var r=SVG.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  var f = e.deltaY<0 ? 1.12 : 1/1.12, nz = Math.max(.10, Math.min(2.4, vz*f));
+  vx = mx - (mx-vx)*(nz/vz); vy = my - (my-vy)*(nz/vz); vz = nz; appliquer();
+}, {passive:false});
+
+/* clic sur un nœud : ouvrir ou fermer sa branche */
+SC.addEventListener("click", function(e){
+  if(bouge) return;
+  var g = e.target.closest ? e.target.closest(".noeud") : null;
+  if(!g) return;
+  var id = +g.getAttribute("data-id"), cible=null;
+  parcourir(ARBRE, function(n){ if(n.id===id) cible=n; });
+  if(!cible || !cible.enfants.length) return;
+  cible.ouvert = !cible.ouvert;
+  dessiner();
+});
+
+/* ---------- présentation : le parcours, branche après branche ---------- */
+var etapes=[], pos=0, enPres=false;
+function bâtirEtapes(){
+  etapes=[];
+  parcourir(ARBRE, function(n){
+    if(n.type==="racine" || n.type==="theme" || n.type==="chap") etapes.push(n);
+  });
+}
+function cadreDe(n){
+  /* on cadre le nœud ET ses enfants directs : c'est ce qui fait la lecture */
+  var x0=n.x, y0=n.y, x1=n.x+n.w, y1=n.y+n.h;
+  (n.enfants||[]).forEach(function(k){
+    if(k.x===undefined) return;
+    x0=Math.min(x0,k.x); y0=Math.min(y0,k.y);
+    x1=Math.max(x1,k.x+k.w); y1=Math.max(y1,k.y+k.h);
+  });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+var LIB = {racine:"Niveau", theme:"Thème", chap:"Chapitre", cap:"Capacité"};
+function montrer(i){
+  pos = Math.max(0, Math.min(etapes.length-1, i));
+  var n = etapes[pos];
+  /* la branche visée s'ouvre, les autres thèmes se referment : on ne lit qu'une chose à la fois */
+  ARBRE.enfants.forEach(function(th){ th.ouvert = (th===n || (n.type==="chap" && th.enfants.indexOf(n)>=0)); });
+  if(n.type==="chap") n.ouvert = true;
+  if(n.type==="theme") n.enfants.forEach(function(c){ c.ouvert=false; });
+  dessiner();
+  document.querySelectorAll(".noeud").forEach(function(g){ g.classList.remove("cible"); });
+  var g = document.querySelector('.noeud[data-id="'+n.id+'"]'); if(g) g.classList.add("cible");
+  cadrer(cadreDe(n), 60, 420);
+  document.getElementById("pK").textContent = LIB[n.type] || "";
+  document.getElementById("pV").textContent = n.t;
+  document.getElementById("pPos").textContent = (pos+1)+" / "+etapes.length;
+}
+function ouvrirPres(){
+  bâtirEtapes(); enPres=true;
+  document.body.classList.add("pres");
+  document.getElementById("pres").classList.add("on");
+  document.getElementById("btnPres").textContent = "▣ En cours";
+  montrer(0);
+}
+function fermerPres(){
+  enPres=false;
+  document.body.classList.remove("pres");
+  document.getElementById("pres").classList.remove("on");
+  document.getElementById("btnPres").textContent = "▶ Présenter";
+  document.querySelectorAll(".noeud").forEach(function(g){ g.classList.remove("cible"); });
+  ajuster(380);
+}
+document.getElementById("btnPres").onclick = function(){ enPres ? fermerPres() : ouvrirPres(); };
+document.getElementById("pNext").onclick = function(){ montrer(pos+1); };
+document.getElementById("pPrev").onclick = function(){ montrer(pos-1); };
+document.getElementById("pStop").onclick = fermerPres;
+document.addEventListener("keydown", function(e){
+  if(e.key==="Escape" && enPres) return fermerPres();
+  if(!enPres) return;
+  if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown"){ e.preventDefault(); montrer(pos+1); }
+  if(e.key==="ArrowLeft"||e.key==="PageUp"){ e.preventDefault(); montrer(pos-1); }
+});
+
+/* ---------- barre ---------- */
+var tout=false;
+document.getElementById("btnTout").onclick = function(){
+  tout = !tout;
+  parcourir(ARBRE, function(n){ if(n.enfants.length) n.ouvert = tout; });
+  ARBRE.ouvert = true;
+  this.textContent = tout ? "⊟ Replier" : "⊞ Déplier";
+  dessiner(); ajuster(380);
+};
+document.getElementById("btnAjuster").onclick = function(){ ajuster(380); };
+
+var sel = document.getElementById("selNiveau");
+sel.innerHTML = ORDRE.filter(function(k){ return NIVEAUX[k]; })
+  .map(function(k){ return '<option value="'+k+'"'+(k===niveau?" selected":"")+'>'+
+        (NIVEAUX[k].label||k)+"</option>"; }).join("");
+sel.onchange = function(){
+  niveau = sel.value; UID = 0; ARBRE = construire(niveau);
+  tout=false; document.getElementById("btnTout").textContent="⊞ Déplier";
+  if(enPres) fermerPres();
+  document.getElementById("titre").textContent = NIVEAUX[niveau].label || niveau;
+  try{ history.replaceState(null,"","?niveau="+encodeURIComponent(niveau)); }catch(e){}
+  dessiner(); ajuster(0);
+};
+
+/* ---------- démarrage ---------- */
+if(!NIVEAUX || !Object.keys(NIVEAUX).length){
+  document.getElementById("scene").innerHTML =
+    '<div style="padding:40px;max-width:34rem;margin:auto;color:var(--muted)">' +
+    "<h2 style=\"color:var(--ink)\">Référentiel introuvable</h2>" +
+    "<p>Cette page se construit à partir de <code>socle_data.js</code>, qui n'a pas été chargé. " +
+    "Vérifiez qu'il se trouve bien à côté de ce fichier.</p></div>";
+} else {
+  document.getElementById("titre").textContent = NIVEAUX[niveau].label || niveau;
+  dessiner();
+  ajuster(0);
+  window.addEventListener("resize", function(){ if(!enPres) ajuster(0); });
+}
+})();
+</script>
+</body>
+</html>
