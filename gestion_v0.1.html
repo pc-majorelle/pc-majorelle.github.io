@@ -751,8 +751,18 @@ function violations(cls){
 }
 
 /* ===================== RENDU : onglets ===================== */
+/* HERITAGE_PARTAGE_V37 : cette page ne lit pas le store commun, et sa classe active
+   n'etait meme pas conservee d'un chargement a l'autre (simple valeur de <select>).
+   Elle passe par la meme cle neutre que les autres pages, par annee. */
+function _cleClassePartagee(){
+  var an="2025-2026"; try{ an=localStorage.getItem("gestion_majorelle_annee")||an; }catch(e){}
+  return "pcmajo_classe_active__"+an;
+}
+function classePartagee(){ try{ return localStorage.getItem(_cleClassePartagee()); }catch(e){ return null; } }
+function publierClasse(id){ try{ localStorage.setItem(_cleClassePartagee(), id); }catch(e){} }
+
 function refreshClassSelector(){
-  const sel=document.getElementById("activeClass"); const cur=sel.value;
+  const sel=document.getElementById("activeClass"); const cur=sel.value || classePartagee();
   sel.innerHTML=state.classes.map(c=>`<option value="${c.id}">${esc(c.libelle)}</option>`).join("");
   if(state.classes.some(c=>c.id===cur)) sel.value=cur;
 }
@@ -1871,7 +1881,7 @@ function switchTab(t){
 }
 document.getElementById("tabs").addEventListener("click",e=>{if(e.target.dataset.t)switchTab(e.target.dataset.t);});
 /*RATIONALIZE_V30*/ (function(){var tg=document.getElementById("legacyToggle");if(!tg)return;tg.addEventListener("click",function(){var lt=document.getElementById("legacyTabs");if(!lt)return;var show=(lt.style.display==="none");lt.style.display=show?"":"none";tg.textContent="⋯ Anciens outils "+(show?"▴":"▾");});})();
-document.getElementById("activeClass").addEventListener("change",()=>{selCaps.clear();lastPlan=null;const on=document.querySelector(".tab.on").dataset.t;switchTab(on);});
+document.getElementById("activeClass").addEventListener("change",()=>{publierClasse(document.getElementById("activeClass").value);selCaps.clear();lastPlan=null;const on=document.querySelector(".tab.on").dataset.t;switchTab(on);});
 document.getElementById("btnSave").addEventListener("click",()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="gestion_etat_2026-2027.json";a.click();

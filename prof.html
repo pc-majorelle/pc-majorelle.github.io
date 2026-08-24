@@ -108,7 +108,7 @@
   </div>
 
   <!-- ① AU QUOTIDIEN -->
-  <details class="theme" open>
+  <details class="theme" open data-mem="quotidien">
     <summary>
       <span class="thidx" style="background:var(--q)">①</span>
       <span class="thtitle"><b>Au quotidien</b><span>ce que tu ouvres chaque jour</span></span>
@@ -127,7 +127,7 @@
   </details>
 
   <!-- ② MES ÉLÈVES -->
-  <details class="theme">
+  <details class="theme" data-mem="eleves">
     <summary>
       <span class="thidx" style="background:var(--s);color:#fff">②</span>
       <span class="thtitle"><b>Mes élèves</b><span>groupes, notes, compétences</span></span>
@@ -144,7 +144,7 @@
   </details>
 
   <!-- ③ MATÉRIEL -->
-  <details class="theme">
+  <details class="theme" data-mem="materiel">
     <summary>
       <span class="thidx" style="background:var(--r)">③</span>
       <span class="thtitle"><b>Matériel</b><span>préparer les TP</span></span>
@@ -157,7 +157,7 @@
   </details>
 
   <!-- ④ PRÉPARER L'ANNÉE (rare, profond) -->
-  <details class="theme">
+  <details class="theme" data-mem="annee">
     <summary>
       <span class="thidx" style="background:var(--rr);color:#fff">④</span>
       <span class="thtitle"><b>Préparer l'année</b><span>en début d'année, ou ponctuellement</span></span>
@@ -166,7 +166,7 @@
     <div class="items">
       <div class="note">Peu fréquent → rangé ici, et en plein écran quand on l'ouvre.</div>
 
-      <details class="sub">
+      <details class="sub" data-mem="constructeur">
         <summary>
           <span class="ico" style="font-size:1.2rem">🧭</span>
           <span class="lab"><b>Constructeur de progression</b><small>bâtir la progression → boKeys datés</small></span>
@@ -192,7 +192,7 @@
   </details>
 
   <!-- ⑤ RÉGLAGES -->
-  <details class="theme">
+  <details class="theme" data-mem="reglages">
     <summary>
       <span class="thidx" style="background:#5b6b7e;color:#fff">⑤</span>
       <span class="thtitle"><b>Réglages</b><span>on y touche presque jamais</span></span>
@@ -202,8 +202,8 @@
       <div class="note">L'année scolaire et la classe active se choisissent en haut de cette page.</div>
       <button class="item" type="button" id="btnTheme2">
         <span class="ico">🎨</span><span class="lab"><b>Thème d'interface</b><small>ambiances</small></span><span class="go">›</span></button>
-      <a class="item" href="eleve.html">
-        <span class="ico">👀</span><span class="lab"><b>Aperçu côté élève</b><small>voir ce que voient les élèves</small></span><span class="go">›</span></a>
+      <a class="item" id="apercuEleve" href="eleve.html">
+        <span class="ico">👀</span><span class="lab"><b>Aperçu côté élève</b><small id="apercuSub">voir ce que voient les élèves</small></span><span class="go">›</span></a>
       <div class="note">🔑 Comptes &amp; codes d'accès (profs / élèves, QR) : gérés <b>sur le PC</b> — fichiers locaux, jamais en ligne.</div>
     </div>
   </details>
@@ -300,6 +300,7 @@
     try{localStorage.setItem(PREF_ANNEE,sel.value);}catch(e){}
     if(window.Store && Store.reload) Store.reload();   // nouvelle année -> store de l'année
     if(window.__majClasses) window.__majClasses();     // -> classes de l'année
+    if(window.__majApercu) window.__majApercu();       // -> apercu de la bonne classe
     if(window.__buildConstr) window.__buildConstr();   // ré-génère les liens Constructeur avec la bonne année
   });
 })();
@@ -330,12 +331,29 @@
   }
   window.__majClasses = majClasses;
 
+  /* HERITAGE_PARTAGE_V37 : l'apercu eleve ouvrait eleve.html sans dire quelle classe.
+     Sans code de classe, la page ne peut pas deviner le niveau : elle tombait sur ses
+     tuiles minimales, et la "Revision du jour" (propre a la Tale STI2D) restait invisible.
+     Il suit desormais la classe active, comme les liens du Constructeur. */
+  function majApercu(){
+    var a=document.getElementById("apercuEleve"), sub=document.getElementById("apercuSub");
+    if(!a) return;
+    var id=Store.classeActive();
+    var c=id?Store.classeById(id):null;
+    a.href = id ? ("eleve.html?classe="+encodeURIComponent(id)) : "eleve.html";
+    if(sub) sub.textContent = c ? ("ce que voit la classe "+(c.libelle||c.id))
+                               : "voir ce que voient les eleves";
+  }
+  window.__majApercu = majApercu;
+
   selC.addEventListener("change", function(){
     Store.setClasseActive(selC.value);
     if(window.__buildConstr) window.__buildConstr();
+    majApercu();
   });
 
   majClasses();
+  majApercu();
 })();
 </script>
 
@@ -391,5 +409,36 @@
   var b2=document.getElementById('btnTheme2'); if(b2)b2.addEventListener('click',toggle);
   document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b&&e.target!==b2)p.classList.remove('open');});
 })();</script>
+
+<script>
+/* ===== MEMOIRE_DEPLIEMENT_V37 =====================================
+   L'etat ouvert/ferme de chaque bloc est retenu d'une visite a l'autre.
+   Sans cela, un aller-retour vers une fonction ramenait toujours au
+   depliement d'origine (seul "Au quotidien" ouvert), meme si Laurent
+   l'avait ferme. Cle par bloc : data-mem.
+   ================================================================= */
+(function(){
+  var CLE = "pcmajo_menu_deplie";
+  var blocs = document.querySelectorAll("details[data-mem]");
+  if(!blocs.length) return;
+
+  var etat = {};
+  try{ etat = JSON.parse(localStorage.getItem(CLE)) || {}; }catch(e){ etat = {}; }
+
+  /* Restauration. Un bloc jamais vu garde l'etat ecrit dans le HTML. */
+  blocs.forEach(function(d){
+    var k = d.getAttribute("data-mem");
+    if(Object.prototype.hasOwnProperty.call(etat, k)) d.open = !!etat[k];
+  });
+
+  /* Enregistrement a chaque ouverture ou fermeture. */
+  function noter(){
+    var n = {};
+    blocs.forEach(function(d){ n[d.getAttribute("data-mem")] = d.open; });
+    try{ localStorage.setItem(CLE, JSON.stringify(n)); }catch(e){}
+  }
+  blocs.forEach(function(d){ d.addEventListener("toggle", noter); });
+})();
+</script>
 </body>
 </html>

@@ -40,12 +40,26 @@ window.Store = (function(){
   function classesProf(){ return classesForAnnee(annee()); }
   function classeById(id){ return classesProf().find(function(c){return c.id===id;}) || null; }
 
-  /* classe active (persistée, PAR ANNÉE car la clé du store inclut l'année) */
+  /* classe active — HERITAGE_PARTAGE_V37.
+     Elle vivait dans le store (pcmajo_store_v1), que gestion_v0.1.html ne lit pas :
+     choisir une classe dans le menu ne la transmettait donc pas au gestionnaire.
+     Elle est desormais publiee dans une cle neutre, par annee, que toute page peut
+     lire sans dependre d'un magasin. Le store reste la reserve de secours. */
+  var CLE_CLASSE = "pcmajo_classe_active";
+  function cleClasse(){ return CLE_CLASSE + "__" + annee(); }
+  function classePartagee(){
+    try{ return localStorage.getItem(cleClasse()) || null; }catch(e){ return null; }
+  }
   function classeActive(){
+    var p = classePartagee();
+    if(p && classeById(p)) return p;
     if(state.classeActive && classeById(state.classeActive)) return state.classeActive;
     var cs=classesProf(); return cs.length ? cs[0].id : null;
   }
-  function setClasseActive(id){ state.classeActive=id; persist(); }
+  function setClasseActive(id){
+    state.classeActive=id; persist();
+    try{ localStorage.setItem(cleClasse(), id); }catch(e){}
+  }
 
   /* données propres à une classe (créées à la demande) */
   function parClasse(id){

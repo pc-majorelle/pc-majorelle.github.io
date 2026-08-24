@@ -387,6 +387,12 @@ const THEMES = {
 };
 function applyAmbiance(name){
   const th=ATHEMES[name]||ATHEMES[ORDER[0]]; state.ambiance=name;
+  /* HERITAGE_PARTAGE_V37 : publier le choix pour les autres pages, et faire suivre
+     le selecteur — il restait sur "Atelier" alors que la page avait change de couleurs. */
+  if(ATHEMES[name]){
+    try{ localStorage.setItem("pcmajo_theme", name); }catch(e){}
+    var _s=document.getElementById('ambiance'); if(_s && _s.value!==name) _s.value=name;
+  }
   ti=ORDER.indexOf(name); if(ti<0)ti=0;
   const r=document.documentElement.style, dark=!!th.sombre;
   r.setProperty('--bg',th.fond); r.setProperty('--ink',th.texte); r.setProperty('--muted',th.texteDoux);
@@ -1260,7 +1266,14 @@ document.getElementById('ambiance').onchange=(e)=>{applyAmbiance(e.target.value)
 document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 document.getElementById('seebtn').onclick=showResults;
 document.getElementById('clearsel').onclick=()=>{resetSelection();renderTree();resetPanel();};
-(function(){var sel=document.getElementById('ambiance');sel.innerHTML=ORDER.map(k=>'<option value="'+k+'">'+ATHEMES[k].nom+'</option>').join('');sel.value=ORDER[0];})();applyAmbiance(ORDER[0]); initVol();
+(function(){var sel=document.getElementById('ambiance');sel.innerHTML=ORDER.map(k=>'<option value="'+k+'">'+ATHEMES[k].nom+'</option>').join('');sel.value=ORDER[0];})();(function(){
+    /* HERITAGE_PARTAGE_V37 : reprendre l'ambiance choisie ailleurs sur le site.
+       Cette page connait 7 ambiances sur les 9 du kit commun (ni "feu" ni "foret",
+       qui demandent une palette par niveau et par discipline qu'elle n'a pas) :
+       une ambiance inconnue retombe simplement sur la premiere. */
+    var choix=null; try{ choix=localStorage.getItem("pcmajo_theme"); }catch(e){}
+    applyAmbiance(ATHEMES[choix] ? choix : ORDER[0]);
+  })(); initVol();
 state.levelPath=[NIVEAUX_TREE[3]];  // départ : Lycée > 2de
 state.niveau='2nde';
 /*PORTAIL_ACCES_V15 — accès par lien : niveau + tout ce qui précède, jamais supérieurs/parallèles*/
