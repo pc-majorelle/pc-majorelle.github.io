@@ -2230,6 +2230,24 @@ function _constrTxtIndex(){
   var m={}; try{ Object.keys(NODES).forEach(function(id){ var t=NODES[id]&&NODES[id].t; if(t){ var k=_constrNorm(t); if(k && !(k in m)) m[k]=id; } }); }catch(e){}
   window.__constrTxt2id=m; return m;
 }
+function _constrEnsIndex(){   /* SOCLE_ENSSCI_V40 */
+  // ens. scientifique : le constructeur exporte des refs ENS-P-*/ENS-T-*, gestion porte des ids
+  // ENSSCI-GEN-* et le texte B.O. verbatim. Les deux transcriptions ne se joignent NI par ref NI
+  // par texte (0/86 et 0/69 mesures). socle_data.js porte la correspondance etablie (champ "gid",
+  // preuve dans _ORCHESTRATION/MAPPING_enssci_v40.json). Construit une fois.
+  if(window.__constrEns2id) return window.__constrEns2id;
+  var m={};
+  try{
+    var S=window.SOCLE&&window.SOCLE.niveaux;
+    if(S){ ["1ens","Tens"].forEach(function(lv){
+      var b=S[lv]; if(!b||!b.themes) return;
+      b.themes.forEach(function(th){ (th.chapters||[]).forEach(function(ch){ (ch.caps||[]).forEach(function(x){
+        if(x && x.ref && x.gid && !(x.ref in m)) m[x.ref]=x.gid;
+      }); }); });
+    }); }
+  }catch(e){}
+  window.__constrEns2id=m; return m;
+}
 function constrApply(js){
   var c=activeClass(); if(!c){alert("Choisis d’abord une classe.");return;}
   var data; try{ data=JSON.parse(js); }catch(e){ alert("Fichier boKeys illisible."); return; }
@@ -2240,12 +2258,14 @@ function constrApply(js){
   var sv=suiviOf(c.id);
   if(!state.constrDates) state.constrDates={};
   var cd=state.constrDates[c.id]=state.constrDates[c.id]||{};
-  var ok=0, miss=0, missList=[], viaTxt=0;
+  var ok=0, miss=0, missList=[], viaTxt=0, viaEns=0;
+  var ens2id=_constrEnsIndex();                                 /* SOCLE_ENSSCI_V40 */
   rows.forEach(function(r){
     if(!r||!r.ref) return;
     var id=null;
     if(caps[r.ref]) id=r.ref;                                   // join direct par id (STI2D)
-    else { var cand=t2id[_constrNorm(r.bo)]; if(cand && caps[cand]){ id=cand; viaTxt++; } } // join par texte B.O.
+    else { var ge=ens2id[r.ref]; if(ge && caps[ge]){ id=ge; viaEns++; } }   /* SOCLE_ENSSCI_V40 : ens. sci. */
+    if(!id){ var cand=t2id[_constrNorm(r.bo)]; if(cand && caps[cand]){ id=cand; viaTxt++; } } // join par texte B.O.
     if(id){ cd[id]=r.date_iso||""; ok++; }   /* SYNCHRO_DATE_V39 : la date PROPOSE, elle ne tranche plus.
                                                 Avant, cette ligne rangeait la date A L'ENDROIT MEME ou elle
                                                 l'ignorait : tout l'import passait a "done", juin compris.
@@ -2254,7 +2274,7 @@ function constrApply(js){
   });
   save();
   var info=document.getElementById("constrInfo");
-  if(info) info.textContent="✔ "+ok+" capacités datées — le Suivi propose comme faites celles dont la date est passée"+(viaTxt?(" (dont "+viaTxt+" via texte B.O.)"):"")
+  if(info) info.textContent="✔ "+ok+" capacités datées — le Suivi propose comme faites celles dont la date est passée"+(viaTxt||viaEns?(" (dont "+(viaTxt?viaTxt+" via texte B.O.":"")+(viaTxt&&viaEns?", ":"")+(viaEns?viaEns+" via le socle ens. sci.":"")+")"):"")
      +(miss?(" · "+miss+" non appariées ("+missList.join(", ")+(miss>8?"…":"")+")"):" · appariement complet")
      +" — niveau "+(data.niveau||"?")+". (Onglet « Suivi » pour voir.)";
 }
@@ -2592,6 +2612,7 @@ function ncImportFile(e){
      inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
      unique désormais : une palette à corriger, pas sept. -->
 <script src="pcmajo_ui.js"></script>
+<script src="socle_data.js"></script><!--SOCLE_ENSSCI_V40 : referentiel B.O. embarque, 7 niveaux ; apporte la correspondance ens.sci. ENS-*/ENSSCI-GEN-*-->
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
