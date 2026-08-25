@@ -119,11 +119,11 @@
     html+=tile("maquette_socle_unifie_v0.17.html?niveau="+tok+"&acces="+tok,"📚","Réviser par niveau",
                "Fiches de prérequis et exercices de ton niveau.",false);
     /* S'entraîner : toujours active */
-    html+=tile("exerciseur_resolution.html","✏️","S'entraîner (exercices)",
+    html+=tile("exerciseur_resolution.html","✏️","Aide à la résolution d'équations",   /*TUILE_RESOLUTION_V40 : l'ancien libellé « S'entraîner (exercices) » annonçait des exercices de PC ; cet outil est un entraînement TRANSVERSAL à la méthode, hors chapitre.*/
                "Résolution pas-à-pas, étape par étape.",false);
   }else{
     /* hors périmètre PC ou code inconnu : note douce + exercices seule tuile active */
-    html+=tile("exerciseur_resolution.html","✏️","S'entraîner (exercices)",
+    html+=tile("exerciseur_resolution.html","✏️","Aide à la résolution d'équations",   /*TUILE_RESOLUTION_V40 : l'ancien libellé « S'entraîner (exercices) » annonçait des exercices de PC ; cet outil est un entraînement TRANSVERSAL à la méthode, hors chapitre.*/
                "Résolution pas-à-pas, étape par étape.",false);
     var sn=document.getElementById("softnote");
     sn.textContent="Le contenu PC pour ta classe arrive bientôt.";
