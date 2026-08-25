@@ -195,6 +195,7 @@
 .confb{display:inline-block;font-size:.7rem;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle}
 .conf-ok{color:#1a7f4b;border:1px solid #6fcf97;background:rgba(111,207,151,.14)}
 .conf-interp{color:#9a6b12;border:1px solid #e0b862;background:rgba(224,184,98,.16)}
+/* SYNCHRO_DATE_V39 */ .conf-prop{color:var(--muted);border:1px dashed var(--line);background:transparent}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1}
@@ -969,7 +970,20 @@ function renderSuivi(){ fillReel();
   if(!c){el.innerHTML="<div class='card muted'>Aucune classe.</div>";return;}
   const p=progOf(c); const sv=suiviOf(c.id); const pv=prevOf(c.id); const S=seancesOf(c);
   const useReel=(state.annee==="2025-2026"); const rs=(useReel && typeof REEL_SUIVI!=='undefined' && REEL_SUIVI[c.programme])||{};
-  const eff=function(id){return sv[id]||(rs[id]?'done':'todo');}; const isReel=function(id){return !sv[id] && !!rs[id];};
+  /* SYNCHRO_DATE_V39 — TROISIEME COUCHE, la plus basse : la date PROPOSE, elle ne tranche pas.
+     Decision de Laurent du 2026-08-25 (« proposition b »). Ordre de priorite, du fort au faible :
+       1. `sv`  ce que le prof a marque a la main       -> prime toujours
+       2. `rs`  le reel importe (REEL_SUIVI)
+       3. `cd`  la date de la progression du constructeur (`state.constrDates`), ecrite depuis v29
+                par constrApply() et JAMAIS RELUE jusqu'ici — c'est le lecteur qui manquait.
+     Une capacite dont la seance est passee est proposee « faite » ; le prof confirme, corrige,
+     ou ne fait rien. Le badge dit d'ou vient la coche. */
+  const cd=(state.constrDates&&state.constrDates[c.id])||{};
+  const todayIso=iso(new Date());
+  const propose=function(id){const d=cd[id];return !!(d && String(d).slice(0,10)<=todayIso);};
+  const eff=function(id){return sv[id]||(rs[id]?'done':null)||(propose(id)?'done':'todo');};
+  const isReel=function(id){return !sv[id] && !!rs[id];};
+  const isPropose=function(id){return !sv[id] && !rs[id] && propose(id);};
   const ord={};S.forEach((s,i)=>ord[s.id]=i);
   const allCaps=capsOfProg(p);
   const cnt={todo:0,wip:0,done:0}; allCaps.forEach(id=>{cnt[eff(id)]++;});
@@ -978,6 +992,11 @@ function renderSuivi(){ fillReel();
   const today=iso(new Date());
   let retard=0,avance=0;
   allCaps.forEach(id=>{const sc=pv[id];if(sc&&(sc in ord)){const sd=sc.slice(0,10);if(sd<today&&eff(id)!=="done")retard++;if(sd>=today&&eff(id)==="done")avance++;}});
+  /* SYNCHRO_DATE_V39 : nProp = propositions non confirmees ; nFutur = coches heritees de l'ancien
+     import, qui cochait l'annee entiere (leur date est encore devant nous). */
+  let nProp=0,nFutur=0;
+  allCaps.forEach(id=>{ if(isPropose(id))nProp++;
+    if(sv[id]==='done'&&cd[id]&&String(cd[id]).slice(0,10)>today)nFutur++; });
 
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Suivi de progression — ${esc(c.libelle)}</h3>
@@ -989,6 +1008,7 @@ function renderSuivi(){ fillReel();
       <div class="stat"><b class="tag-done">${cnt.done}</b><span>faites</span></div>
     </div>
     <p class="hint">Vs prévisionnel (aujourd'hui ${frDate(today)}) : ${retard?`<span class="tag-wip">⏳ ${retard} en retard</span>`:"à jour"} ${avance?` · <span class="tag-done">↗ ${avance} en avance</span>`:""}</p>
+    ${(nProp||nFutur)?`<p class="hint noprint">${nProp?`<span class="confb conf-prop">◔</span> <b>${nProp}</b> proposée${nProp>1?'s':''} par la progression, non confirmée${nProp>1?'s':''} <button class="mini" onclick="confirmerJusquAujourdhui()">✔ Confirmer</button>`:""}${(nProp&&nFutur)?" · ":""}${nFutur?`<b>${nFutur}</b> cochée${nFutur>1?'s':''} à tort par un ancien import (séance encore à venir) <button class="mini" onclick="reprendreDeLaProgression()">↺ Reprendre de la progression</button>`:""}</p>`:""}
   </div>`;
 
   h+=`<div class="card"><div class="row noprint" style="justify-content:space-between">
@@ -1002,7 +1022,7 @@ function renderSuivi(){ fillReel();
     h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary><b>${esc(t.label)}</b></summary>`;
     t.chapters.forEach(ch=>ch.caps.forEach(id=>{
       const v=eff(id);
-      h+=`<div class="cap"><span style="flex:1">${isReel(id)?confDot(rs[id]):''}<span class="code">${id.split('.').slice(-2).join('.')}</span> ${esc(NODES[id]?.t||id)}</span>
+      h+=`<div class="cap"><span style="flex:1">${isReel(id)?confDot(rs[id]):(isPropose(id)?propDot(cd[id]):'')}<span class="code">${id.split('.').slice(-2).join('.')}</span> ${esc(NODES[id]?.t||id)}</span>
         <span class="s3">
           <button data-v="todo" class="${v==='todo'?'on':''}" onclick="setSuivi('${id}','todo')">à faire</button>
           <button data-v="wip" class="${v==='wip'?'on':''}" onclick="setSuivi('${id}','wip')">en cours</button>
@@ -1044,6 +1064,35 @@ function memoDetails(racine){
     });
   });
 }
+/* ===================== SYNCHRO_DATE_V39 — la date propose, le prof confirme ===================== */
+function propDot(d){ var j=String(d||'').slice(0,10);
+  return '<span class="confb conf-prop" title="Propos\u00e9 par la progression'+(j?' (s\u00e9ance du '+esc(frDate(j))+')':'')+' \u2014 \u00e0 confirmer">\u25d4</span> '; }
+
+/* Transforme en « fait » confirmé toutes les propositions dont la date est passée.
+   N'écrase jamais une marque posée à la main : on ne touche que les ids sans entrée dans `sv`. */
+function _rsOf(c){ /* meme regle que renderSuivi : le reel ne vaut que pour 2025-2026 */
+  return ((state.annee==="2025-2026") && typeof REEL_SUIVI!=='undefined' && REEL_SUIVI[c.programme])||{}; }
+function confirmerJusquAujourdhui(){
+  var c=activeClass(); if(!c) return;
+  var sv=suiviOf(c.id), rs=_rsOf(c), cd=(state.constrDates&&state.constrDates[c.id])||{}, t=iso(new Date()), n=0;
+  /* On ne confirme QUE ce que le bandeau annonce : les propositions de la date, c'est-a-dire
+     ni marquees a la main, ni deja couvertes par le reel importe — sinon le bouton dirait 12
+     et en ferait 59, et les capacites du reel perdraient leur provenance. */
+  Object.keys(cd).forEach(function(id){
+    if(!sv[id] && !rs[id] && cd[id] && String(cd[id]).slice(0,10)<=t){ sv[id]="done"; n++; } });
+  if(n){ save(); renderSuivi(); }
+}
+
+/* Défait UNIQUEMENT les coches que l'ancien import posait sur des séances à VENIR.
+   Ne touche ni au passé, ni à « en cours », ni à « à faire », ni à une capacité sans date. */
+function reprendreDeLaProgression(){
+  var c=activeClass(); if(!c) return;
+  var sv=suiviOf(c.id), cd=(state.constrDates&&state.constrDates[c.id])||{}, t=iso(new Date()), n=0;
+  Object.keys(cd).forEach(function(id){
+    if(sv[id]==="done" && cd[id] && String(cd[id]).slice(0,10)>t){ delete sv[id]; n++; } });
+  if(n){ save(); renderSuivi(); }
+}
+
 function setSuivi(id,v){const c=activeClass();suiviOf(c.id)[id]=v;save();renderSuivi();}
 
 /* ---------- E. PLANNINGS COHÉRENTS ---------- */
@@ -2197,12 +2246,15 @@ function constrApply(js){
     var id=null;
     if(caps[r.ref]) id=r.ref;                                   // join direct par id (STI2D)
     else { var cand=t2id[_constrNorm(r.bo)]; if(cand && caps[cand]){ id=cand; viaTxt++; } } // join par texte B.O.
-    if(id){ sv[id]="done"; cd[id]=r.date_iso||""; ok++; }
+    if(id){ cd[id]=r.date_iso||""; ok++; }   /* SYNCHRO_DATE_V39 : la date PROPOSE, elle ne tranche plus.
+                                                Avant, cette ligne rangeait la date A L'ENDROIT MEME ou elle
+                                                l'ignorait : tout l'import passait a "done", juin compris.
+                                                Le classement se fait desormais dans renderSuivi(). */
     else { miss++; if(missList.length<8) missList.push(r.ref); }
   });
   save();
   var info=document.getElementById("constrInfo");
-  if(info) info.textContent="✔ "+ok+" capacités cochées dans le Suivi"+(viaTxt?(" (dont "+viaTxt+" via texte B.O.)"):"")
+  if(info) info.textContent="✔ "+ok+" capacités datées — le Suivi propose comme faites celles dont la date est passée"+(viaTxt?(" (dont "+viaTxt+" via texte B.O.)"):"")
      +(miss?(" · "+miss+" non appariées ("+missList.join(", ")+(miss>8?"…":"")+")"):" · appariement complet")
      +" — niveau "+(data.niveau||"?")+". (Onglet « Suivi » pour voir.)";
 }
