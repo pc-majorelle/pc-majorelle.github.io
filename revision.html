@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Révision du soir — PC Majorelle</title>
+<script src="pcmajo_test.js"></script>
+<style>
+  :root{
+    --bg1:#f6f7fb; --bg2:#eef1f8; --card:#fff; --ink:#1d2233; --mut:#6b7488;
+    --line:#e2e6f0; --acc:#3b5bdb; --ok:#2f9e44; --warn:#e8590c; --bad:#c92a2a;
+    --b0:#c92a2a; --b1:#e8590c; --b3:#2f9e44; --bn:#868e96;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+       background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh}
+  .wrap{max-width:720px;margin:0 auto;padding:0 14px 90px}
+  header{position:sticky;top:0;z-index:20;background:var(--acc);color:#fff;
+         padding:10px 14px calc(10px);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .hrow{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .htit{font-weight:600;font-size:17px;margin-right:auto}
+  .hsub{font-size:13px;opacity:.85;width:100%}
+  .chip{background:rgba(255,255,255,.16);border-radius:9px;padding:4px 9px;font-size:14px;white-space:nowrap}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0;
+        box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .center{text-align:center}
+  .big{font-size:42px;font-weight:700;line-height:1.1}
+  h2{font-size:19px;margin:.2em 0 .5em}
+  h3{font-size:16px;margin:1.1em 0 .4em;color:var(--mut);font-weight:600;
+     text-transform:uppercase;letter-spacing:.04em}
+  p{margin:.5em 0}
+  .mut{color:var(--mut);font-size:14px}
+  button{font:inherit;cursor:pointer}
+  .btn{display:inline-block;border:0;border-radius:12px;padding:12px 18px;font-weight:600;
+       background:var(--acc);color:#fff}
+  .btn.ghost{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+  .btn.wide{display:block;width:100%;margin-top:10px}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .opts{display:grid;gap:8px;margin-top:12px}
+  .opt{text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);
+       border-radius:12px;padding:12px 14px;width:100%}
+  .opt:hover{border-color:var(--acc)}
+  .opt.good{border-color:var(--ok);background:rgba(47,158,68,.09)}
+  .opt.bad{border-color:var(--bad);background:rgba(201,42,42,.08)}
+  .num{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .num input{flex:1 1 160px;min-width:140px;font:inherit;padding:12px;border:1px solid var(--line);
+             border-radius:12px;background:var(--card);color:var(--ink)}
+  .unit{font-weight:600;color:var(--mut);white-space:nowrap}
+  .cc{display:inline-block;border-radius:8px;padding:2px 8px;font-size:13px;color:#fff;margin:2px 3px 2px 0}
+  .cc.n{background:var(--bn)} .cc.r{background:var(--b0)} .cc.o{background:var(--b1)} .cc.v{background:var(--b3)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .stat{flex:1 1 100px;background:var(--bg1);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:22px}
+  .stat span{font-size:12px;color:var(--mut)}
+  .weeks{display:flex;gap:5px;justify-content:center;margin:12px 0 4px}
+  .wk{width:26px;height:34px;border-radius:7px;background:var(--bg1);border:1px solid var(--line);
+      display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mut)}
+  .wk.ok{background:var(--b3);border-color:var(--b3);color:#fff}
+  .wk.part{background:var(--b1);border-color:var(--b1);color:#fff}
+  .wk.neutre{background:repeating-linear-gradient(45deg,var(--bg1),var(--bg1) 4px,var(--line) 4px,var(--line) 8px)}
+  .wk.cur{outline:2px solid var(--acc);outline-offset:1px}
+  .fb{margin-top:12px;padding:12px;border-radius:12px;background:var(--bg1);font-size:15px}
+  .fb.good{background:rgba(47,158,68,.10)} .fb.bad{background:rgba(232,89,12,.10)}
+  .hint{color:var(--mut);font-size:13px;display:block;margin-top:6px}
+  .tabs{display:flex;gap:8px;margin:14px 0 0}
+  .tab{flex:1;border:1px solid var(--line);background:var(--card);color:var(--mut);
+       border-radius:12px 12px 0 0;padding:10px;font-weight:600}
+  .tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .lib{border:1px dashed var(--line);border-radius:12px;padding:10px;margin-top:10px;font-size:14px;color:var(--mut)}
+  .prog{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin:10px 0 2px}
+  .prog i{display:block;height:100%;background:var(--acc);transition:width .25s}
+  .themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);
+    color:var(--ink);font-size:21px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+  .themepop{position:fixed;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:60;
+    background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:none}
+  .foot{margin-top:18px;font-size:12px;color:var(--mut);text-align:center}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <span class="htit" id="htit">Révision du soir</span>
+    <span class="chip" id="chipSerie">🔥 —</span>
+    <span class="chip" id="chipNiv">—</span>
+    <span class="hsub" id="hsub"></span>
+  </div>
+</header>
+
+<div class="wrap"><div id="app"><div class="card"><p class="mut">Chargement…</p></div></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<button class="themebtn" id="themebtn" title="Ambiance">🎨</button>
+<div class="themepop" id="themepop"></div>
+
+<script>
+/* =====================================================================
+   RÉVISION DU SOIR — rituel automatique  (MAÎTRE v42)
+   Cartes engendrées à la volée depuis les patrons du moteur d'exercices.
+   D-S6 : deux viviers.  validé -> cadence les boîtes ; non validé -> entraînement
+          libre, n'avance JAMAIS une boîte.
+   D-S7 : générique sur les 5 jetons de niveau, aucun câblage sur un niveau.
+   ⚠️ AUCUN historique simulé : un carnet vide reste vide (correctif du 4e défaut).
+   ===================================================================== */
+"use strict";
+
+/* ---------- 0. jetons de niveau ---------- */
+var TOKENS = ["2nde","1spe","Tspe","1sti","Tsti"];
+var TOKLIB = {"2nde":"Seconde","1spe":"Première spé PC","Tspe":"Terminale spé PC",
+              "1sti":"Première STI2D","Tsti":"Terminale STI2D",
+              "Tens":"Terminale ens. sci.","1ens":"Première ens. sci."};
+
+function paramOf(k){
+  var m = new RegExp("[?&]"+k+"=([^&#]*)").exec(location.search);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+/* Même table qu'eleve.html — Y COMPRIS la correction RENTREE_ELEVE_V38 :
+   les identifiants de 2026-2027 (« 2NDE-1 », « 1ENS-3 », « TENS-4 », « TSPE-PHY1 »)
+   ne ressemblent pas à ceux de 2025-2026 (« 2G3 », « TPCg1 »). Sans ces lignes,
+   toutes les classes de la rentrée retomberaient sur null — exactement le défaut
+   que v38 avait dû corriger dans eleve.html, et qu'il ne faut pas réintroduire ici. */
+function niveauFromCode(code){
+  if(!code) return null;
+  var c = String(code).toUpperCase();
+  if(/^2G/.test(c) || /^2NDE/.test(c))         return "2nde";
+  if(/^1PC/.test(c))                           return "1spe";
+  if(/^(TPC|TSPE)/.test(c))                    return "Tspe";
+  if(/^1STI/.test(c))                          return "1sti";
+  if(/^(TSTI|TSISPH|TSI)/.test(c))             return "Tsti";
+  if(/NSI/.test(c))                            return null;   /* hors périmètre PC */
+  if(/^1ENS/.test(c))                          return "1ens";
+  if(/^TENS/.test(c))                          return "Tens";
+  if(/^1G/.test(c))                            return "1ens";
+  if(/^TG/.test(c))                            return "Tens";
+  return null;
+}
+function detecteNiveau(){
+  var t = paramOf("niveau") || paramOf("tok");
+  if(t && TOKLIB[t]) return t;
+  var a = paramOf("acces") || paramOf("classe");
+  var n = niveauFromCode(a);
+  if(n) return n;
+  try{
+    var st = JSON.parse(localStorage.getItem("pcmajo_acces")||"null");
+    if(st){ n = niveauFromCode(st.classe||st.code||st.acces); if(n) return n; }
+  }catch(e){}
+  try{ var mem = localStorage.getItem("pcmajo_revision_niveau"); if(mem && TOKLIB[mem]) return mem; }catch(e){}
+  return null;
+}
+
+/* ---------- 1. évaluateur d'expressions (pas d'eval) ---------- */
+/* Vocabulaire RELEVÉ EXHAUSTIVEMENT sur les 671 patrons (et non sur un extrait —
+   un premier relevé tronqué avait manqué sin et cos, le banc l'a attrapé) :
+   opérateurs + - * / ( ) ; fonctions sqrt(25) log(12) exp(11) ln(5) cos(3) sin(2).
+   log = log DÉCIMAL (pH = −log(c), L = 10·log(I/I0)) ; ln = népérien ; exp = e^x.
+   Angles en radians (la seule variable trigonométrique de la banque est en rad). */
+var FN = { sqrt: Math.sqrt, exp: Math.exp,
+           log: function(x){ return Math.log(x)/Math.LN10; },
+           ln: Math.log, abs: Math.abs,
+           sin: Math.sin, cos: Math.cos, tan: Math.tan };
+var CST_IMPLICITES = { pi: Math.PI, PI: Math.PI, e: Math.E };
+function tokenise(src){
+  var out=[], i=0, s=String(src);
+  while(i<s.length){
+    var ch=s[i];
+    if(/\s/.test(ch)){ i++; continue; }
+    if(/[0-9.]/.test(ch)){ var j=i; while(j<s.length && /[0-9.eE]/.test(s[j])){
+        if((s[j]==="e"||s[j]==="E") && !/[0-9]/.test(s[j+1]||"") && !/[-+]/.test(s[j+1]||"")) break;
+        if((s[j]==="e"||s[j]==="E") && /[-+]/.test(s[j+1]||"")) j++;
+        j++; }
+      out.push({t:"num", v:parseFloat(s.slice(i,j))}); i=j; continue; }
+    if(/[A-Za-z_]/.test(ch)){ var k=i; while(k<s.length && /[A-Za-z_0-9]/.test(s[k])) k++;
+      out.push({t:"id", v:s.slice(i,k)}); i=k; continue; }
+    if("+-*/()".indexOf(ch)>=0){ out.push({t:"op", v:ch}); i++; continue; }
+    if(ch===","){ out.push({t:"op", v:","}); i++; continue; }
+    throw new Error("caractère inattendu « "+ch+" » dans la formule");
+  }
+  return out;
+}
+function evalFormule(src, env){
+  var tk = tokenise(src), pos = 0;
+  function peek(){ return tk[pos]; }
+  function eat(v){ var t=tk[pos];
+    if(!t || (v!==undefined && t.v!==v)) throw new Error("formule mal formée près de "+(t?t.v:"la fin"));
+    pos++; return t; }
+  function primary(){
+    var t = peek();
+    if(!t) throw new Error("formule tronquée");
+    if(t.t==="op" && t.v==="-"){ eat("-"); return -primary(); }
+    if(t.t==="op" && t.v==="+"){ eat("+"); return primary(); }
+    if(t.t==="num"){ eat(); return t.v; }
+    if(t.t==="op" && t.v==="("){ eat("("); var v=expr(); eat(")"); return v; }
+    if(t.t==="id"){
+      eat();
+      if(peek() && peek().v==="("){
+        eat("(");
+        var args=[expr()];
+        while(peek() && peek().v===","){ eat(","); args.push(expr()); }
+        eat(")");
+        var f=FN[t.v];
+        if(!f) throw new Error("fonction inconnue « "+t.v+" »");
+        return f.apply(null,args);
+      }
+      if(!(t.v in env)) throw new Error("symbole inconnu « "+t.v+" »");
+      return env[t.v];
+    }
+    throw new Error("formule mal formée près de « "+t.v+" »");
+  }
+  function term(){ var v=primary();
+    while(peek() && peek().t==="op" && (peek().v==="*"||peek().v==="/")){
+      var o=eat().v, r=primary(); v = (o==="*") ? v*r : v/r; }
+    return v; }
+  function expr(){ var v=term();
+    while(peek() && peek().t==="op" && (peek().v==="+"||peek().v==="-")){
+      var o=eat().v, r=term(); v = (o==="+") ? v+r : v-r; }
+    return v; }
+  var val = expr();
+  if(pos !== tk.length) throw new Error("formule non consommée en entier");
+  return val;
+}
+
+/* ---------- 2. nombres : tirage, arrondi significatif, écriture française ---------- */
+function arrondiCS(x, cs){
+  if(!isFinite(x) || x===0) return 0;
+  cs = cs || 2;
+  var d = Math.ceil(Math.log(Math.abs(x))/Math.LN10);
+  var p = cs - d;
+  var f = Math.pow(10, p);
+  return Math.round(x*f)/f;
+}
+function tirage(v, rnd){
+  var x = v.mi + (v.ma - v.mi) * rnd();
+  return arrondiCS(x, v.cs || 2);
+}
+var EXP = {"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function sup(n){ return String(n).split("").map(function(c){ return EXP[c]||c; }).join(""); }
+/* Écriture à cs CHIFFRES SIGNIFICATIFS, zéros significatifs COMPRIS.
+   C'est de la physique : « 6,0×10⁵ » n'est pas « 6×10⁵ », et une valeur de 12 244,9
+   arrondie à 2 c.s. s'écrit « 1,2×10⁴ » — jamais « 12000 », qui se lirait exact.
+   (Les deux fautes ont été vues à l'écran, pas dans le code.) */
+function fr(x, cs){
+  if(x===null || x===undefined || !isFinite(x)) return "—";
+  cs = Math.max(1, cs || 3);
+  if(x === 0) return "0";
+  var a = Math.abs(x);
+  var d = Math.floor(Math.log(a)/Math.LN10);
+  if(d >= cs || a < 1e-3){                       /* la décimale mentirait sur les c.s. */
+    var m = x / Math.pow(10, d);
+    var sm = m.toFixed(cs-1);
+    if(Math.abs(parseFloat(sm)) >= 10){ d++; m = x/Math.pow(10,d); sm = m.toFixed(cs-1); }
+    return sm.replace(".",",") + "×10" + sup(d);
+  }
+  return x.toFixed(Math.max(0, cs-1-d)).replace(".",",");
+}
+function parseRep(txt){
+  if(txt===null || txt===undefined) return NaN;
+  var s = String(txt).trim().toLowerCase()
+      .replace(/\s| /g,"")
+      .replace(/,/g,".")
+      .replace(/×10\^?/g,"e").replace(/x10\^?/g,"e").replace(/·10\^?/g,"e")
+      .replace(/⁻/g,"-").replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,function(c){ return "0123456789".charAt("⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c)); });
+  if(!/^[-+0-9.e]+$/.test(s)) return NaN;
+  var v = parseFloat(s);
+  return isFinite(v) ? v : NaN;
+}
+
+/* ---------- 3. générateur d'instance ---------- */
+/* Le hasard est SEMÉ : même graine -> même énoncé. On peut donc rejouer un banc. */
+function graine(s){ var h=2166136261>>>0;
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+  return h>>>0; }
+function rngDe(seed){ var x=seed>>>0 || 1;
+  return function(){ x^=x<<13; x>>>=0; x^=x>>17; x^=x<<5; x>>>=0; return x/4294967296; }; }
+
+function instancie(c, seed){
+  var rnd = rngDe(graine(c.id+"|"+seed));
+  if(c.ty === "qcm"){
+    var ordre = c.op.map(function(t,i){ return {t:t,i:i}; });
+    for(var k=ordre.length-1;k>0;k--){ var j=Math.floor(rnd()*(k+1)); var tmp=ordre[k]; ordre[k]=ordre[j]; ordre[j]=tmp; }
+    return { carte:c, enonce:c.en, options:ordre.map(function(o){return o.t;}),
+             bonne:ordre.map(function(o){return o.i;}).indexOf(c.br), rep:null, unite:"",
+             seed:String(seed) };
+  }
+  var env = {}, k2;
+  for(k2 in CST_IMPLICITES) env[k2] = CST_IMPLICITES[k2];
+  for(k2 in (c.co||{})) env[k2] = c.co[k2];   /* la constante du patron prime toujours */
+  var vals = {};
+  (c.va||[]).forEach(function(v){ var x = tirage(v, rnd); env[v.s] = x; vals[v.s] = {x:x, cs:v.cs, u:v.u}; });
+  var rep;
+  try{ rep = evalFormule(c.fo, env); }catch(e){ rep = NaN; }
+  /* Un trou d'énoncé peut désigner une VARIABLE tirée ou une CONSTANTE du patron —
+     3 patrons de la banque écrivent {vson}, {g}, {I0}, qui sont des constantes.
+     (Le banc les a trouvés : sans ce second cas, l'élève lisait « {g} » à l'écran.) */
+  var txt = c.en.replace(/\{([A-Za-z_][A-Za-z_0-9]*)\}/g, function(m, s){
+    if(s in vals) return fr(vals[s].x, vals[s].cs);
+    if(c.co && (s in c.co)) return fr(c.co[s], 3);
+    return m; });
+  return { carte:c, enonce:txt, rep:rep, unite:c.un||"", tol:c.tol||0.05, csr:c.csr||2,
+           vals:vals, seed:String(seed) };
+}
+/* ---------- 3bis. D-S8 — on juge VALEUR, CHIFFRES SIGNIFICATIFS et UNITÉ ----------
+   Arbitrage Laurent (26/08) : « oui unité exigée, on valide valeur, chiffres significatifs
+   et unité, la valeur peut être validée en premier. »  D'où deux temps à l'écran :
+   la valeur d'abord (avec ses c.s.), l'unité ensuite. L'item n'est juste que si les trois le sont.
+   Mesure de la banque : 521 numériques — 488 portent une unité (481 « exigée »),
+   33 sont SANS DIMENSION (pH, rendements, fractions) : pour ceux-là la bonne réponse
+   à l'étape unité est « sans unité », ce qui est un vrai point de physique. */
+
+/* nombre de chiffres significatifs RÉELLEMENT écrits par l'élève.
+   null = indécidable (entier à zéros terminaux : « 12000 » peut valoir 2 ou 5 c.s.) → on accepte. */
+function csDe(txt){
+  var s = String(txt||"").trim().toLowerCase().replace(/\s| /g,"").replace(/,/g,".");
+  s = s.replace(/(×|x|·)10\^?/,"e").replace(/⁻/g,"-")
+       .replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,function(c){ return "0123456789".charAt("⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(c)); });
+  var mant = s.split("e")[0].replace(/^[-+]/,"");
+  if(!mant) return null;
+  if(mant.indexOf(".") >= 0){
+    var d = mant.replace(".","").replace(/^0+/,"");
+    return d.length ? d.length : 1;                    /* 0,050 -> « 50 » -> 2 c.s. */
+  }
+  var e = mant.replace(/^0+/,"");
+  if(e.length > 1 && /0$/.test(e)) return null;         /* zéros terminaux : indécidable */
+  return e.length || 1;
+}
+/* Les mêmes unités s'écrivent de plusieurs façons dans la banque (m/s ≡ m·s⁻¹,
+   ohm ≡ Ω, m/s2 ≡ m/s²…). On compare des formes canoniques, pas des chaînes. */
+function canonUnite(u){
+  var s = String(u||"").trim().toLowerCase().replace(/\s| /g,"");
+  if(!s || s === "sansunité" || s === "sansunite" || s === "-") return "";
+  s = s.replace(/ohms?/g, "Ω").replace(/ω/g, "Ω");
+  /* exposants en clair, en gardant « · » et « / » comme séparateurs */
+  s = s.replace(/⁻¹/g,"^-1").replace(/⁻²/g,"^-2").replace(/⁻³/g,"^-3")
+       .replace(/¹/g,"^1").replace(/²/g,"^2").replace(/³/g,"^3");
+  var haut = [], bas = [];
+  s.split("/").forEach(function(part, idx){
+    part.split(/[·.]/).forEach(function(f){
+      if(!f) return;
+      var m = /^([^\^]+)(?:\^(-?\d+))?$/.exec(f);
+      if(!m) { (idx ? bas : haut).push(f); return; }
+      var sym = m[1], p = m[2] ? parseInt(m[2],10) : 1;
+      /* la banque écrit aussi bien « m/s² » que « m/s2 » : un chiffre collé au symbole
+         est un exposant, sinon les deux formes seraient proposées comme deux réponses. */
+      if(!m[2]){ var d = /^(.*[a-zA-ZΩ°%µ])(\d+)$/.exec(sym);
+                 if(d){ sym = d[1]; p = parseInt(d[2],10); } }
+      if(idx) p = -p;                       /* après une barre de fraction */
+      (p < 0 ? bas : haut).push(sym + (Math.abs(p) > 1 ? "^" + Math.abs(p) : ""));
+    });
+  });
+  haut.sort(); bas.sort();
+  return haut.join("·") + (bas.length ? "/" + bas.join("·") : "");
+}
+function memeUnite(a, b){ return canonUnite(a) === canonUnite(b); }
+
+function juge(inst, saisie){
+  if(inst.carte.ty === "qcm") return { ok: saisie === inst.bonne };
+  var v = parseRep(saisie);
+  if(!isFinite(v) || !isFinite(inst.rep)) return { ok:false, vide:!isFinite(v), cs:null };
+  var d = Math.abs(inst.rep);
+  var ecart = Math.abs(v - inst.rep) / (d > 0 ? d : 1);
+  var cs = inst.csr || 2;
+  /* on accepte aussi la valeur correctement arrondie : sans cela, un élève qui répond
+     juste « à 2 c.s. » serait compté faux sur les 15 patrons à 1 % de tolérance. */
+  var bonArrondi = (arrondiCS(v, cs) === arrondiCS(inst.rep, cs));
+  var vOk = (ecart <= (inst.tol || 0.05)) || bonArrondi;
+  var n = csDe(saisie);
+  var csOk = (n === null) || (n === cs);
+  return { ok: vOk && csOk, valeurOk: vOk, csOk: csOk, csDonne: n, csAttendu: cs, ecart: ecart };
+}
+/* 4 unités proposées : la bonne + 3 prises dans la banque du niveau, jamais équivalentes. */
+function choixUnites(c, seed){
+  var rnd = rngDe(graine("u|"+c.id+"|"+seed));
+  var bonne = (c.un || "").trim();
+  var vus = {}, proche = [], loin = [];
+  vus[canonUnite(bonne)] = 1;
+  D.cartes.forEach(function(o){
+    if(o.ty !== "numeric") return;
+    var u = (o.un || "").trim(), k = canonUnite(u);
+    if(vus[k]) return; vus[k] = 1;
+    (o.th === c.th ? proche : loin).push(u || "sans unité");   /* même thème d'abord */
+  });
+  /* Des distracteurs pris au hasard dans toute la banque rendent le choix trivial
+     (« Ω » face à une énergie). On puise d'abord dans le MÊME THÈME. */
+  var melange = function(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1));
+                             var t=a[i]; a[i]=a[j]; a[j]=t; } return a; };
+  var pool = melange(proche).concat(melange(loin));
+  if(canonUnite(bonne) !== "" && !vus[""]) pool.push("sans unité");
+  var lot = [bonne || "sans unité"].concat(pool.slice(0,3));
+  for(var k2=lot.length-1;k2>0;k2--){ var j2=Math.floor(rnd()*(k2+1)); var t2=lot[k2]; lot[k2]=lot[j2]; lot[j2]=t2; }
+  return { options: lot, bonne: lot.map(canonUnite).indexOf(canonUnite(bonne)) };
+}
+
+/* ---------- 4. le carnet — AUCUN historique simulé ---------- */
+var BOX_DAYS = [0,1,3,7,16];          /* calendrier du code, inchangé (v41).
+                                         J+1/J+3/J+7-10/J+21 = exercices de révision, hors rituel. */
+var OBJ_DEFAUT = 2;                   /* séances/semaine tant que le plan D-S4 n'est pas publié */
+var SEUIL_RAPIDE = 1500;              /* ms — en deçà, la réponse n'est pas lue */
+var TAILLE_SESSION = 6;
+var NOUVEAUX_MAX = 4;   /* carnet vide -> la 1re séance ne doit pas tenir en 30 secondes */
+
+var TOK = null, D = null, LS = null, st = null;
+
+function jour(){ return Math.floor(Date.now()/86400000); }
+function lundiDe(d){ var t = new Date(d.getTime()); var j = (t.getDay()+6)%7;
+  t.setHours(0,0,0,0); t.setDate(t.getDate()-j); return t; }
+function cleSemaine(d){ var l = lundiDe(d||new Date());
+  return l.getFullYear()+"-"+String(l.getMonth()+1).padStart(2,"0")+"-"+String(l.getDate()).padStart(2,"0"); }
+
+function neuf(){ return { v:2, tok:TOK, boites:{}, semaines:{}, sessions:0, reactives:0,
+                          dernier:null, refus:0 }; }
+function charge(){
+  try{ st = JSON.parse(localStorage.getItem(LS)); }catch(e){ st = null; }
+  if(!st || st.v !== 2) st = neuf();          /* ⚠️ pas de seed aléatoire : le carnet naît VIDE */
+  if(!st.boites) st.boites = {};
+  if(!st.semaines) st.semaines = {};
+}
+function grave(){ try{ localStorage.setItem(LS, JSON.stringify(st)); }catch(e){} }
+
+function boite(cap){ var b = st.boites[cap]; return b ? b.b : -1; }
+function due(cap){ var b = st.boites[cap];
+  if(!b) return true;                                   /* jamais vue = à voir */
+  return (jour() - b.j) >= BOX_DAYS[b.b]; }
+function joursAvant(cap){ var b = st.boites[cap]; if(!b) return 0;
+  return Math.max(0, BOX_DAYS[b.b] - (jour() - b.j)); }
+function avance(cap, bon){
+  var b = st.boites[cap] || (st.boites[cap] = {b:0, j:jour(), n:0});
+  b.b = bon ? Math.min(BOX_DAYS.length-1, b.b+1) : 0;
+  b.j = jour(); b.n = (b.n||0)+1;
+}
+function libBoite(b){ return b<0 ? "nouveau" : (b===0 ? "à revoir" : (b<=2 ? "fragile" : "acquis")); }
+function couBoite(b){ return b<0 ? "n" : (b===0 ? "r" : (b<=2 ? "o" : "v")); }
+
+/* ---------- 5. le plan de la classe (crochet D-S4) ---------- */
+/* Le fichier de plan n'existe pas encore : le crochet est posé, la donnée viendra.
+   Tant qu'il est absent, l'objectif hebdomadaire est un DÉFAUT DÉCLARÉ, pas une déduction. */
+/* Le plan publié par gestion (PLAN_V42) porte TOUTES les classes du prof :
+   { annee, version, classes: { "2G3": { niveau, calendrier:{joursCours,vacances}, chapitres… } } }.
+   L'élève n'en retient qu'une : la sienne, reconnue par son code de classe, sinon
+   la première du bon jeton de niveau. Si rien ne correspond, on n'invente pas : null. */
+var _planClasse = null, _planCherche = false;
+function classeDeLEleve(){
+  var a = paramOf("acces") || paramOf("classe");
+  if(!a){ try{ var s = JSON.parse(localStorage.getItem("pcmajo_acces")||"null");
+               if(s) a = s.classe || s.code || s.acces; }catch(e){} }
+  return a ? String(a).toUpperCase().split(/[^A-Z0-9]/)[0] : null;
+}
+function plan(){
+  if(_planCherche) return _planClasse;
+  _planCherche = true;
+  var P = (typeof window.PCMAJO_PLAN === "object" && window.PCMAJO_PLAN) || null;
+  if(!P || !P.classes) return (_planClasse = null);
+  var id = classeDeLEleve();
+  if(id && P.classes[id]) return (_planClasse = P.classes[id]);
+  var k, ks = Object.keys(P.classes);
+  for(k=0; k<ks.length; k++) if(P.classes[ks[k]].niveau === TOK) return (_planClasse = P.classes[ks[k]]);
+  return (_planClasse = null);
+}
+function planVersion(){ var P = window.PCMAJO_PLAN; return (P && P.version) || null; }
+function joursDeCours(){
+  var p = plan();
+  if(p && p.calendrier && p.calendrier.joursCours && p.calendrier.joursCours.length)
+    return p.calendrier.joursCours.slice();
+  return null;
+}
+function objectifSemaine(){
+  var jc = joursDeCours();
+  return jc ? jc.length : OBJ_DEFAUT;
+}
+function semaineNeutre(cle){
+  var p = plan();
+  if(!p || !p.calendrier || !p.calendrier.vacances) return false;
+  return p.calendrier.vacances.indexOf(cle) >= 0;
+}
+/* crédit dégradé : le soir du cours = plein, le lendemain encore, ensuite moitié moins */
+function credit(){
+  var jc = joursDeCours();
+  if(!jc) return 1;
+  var d = new Date(), n = d.getDay();
+  if(jc.indexOf(n) >= 0) return 1;
+  if(jc.indexOf((n+6)%7) >= 0) return 0.6;
+  return 0.3;
+}
+
+function semaine(cle){ return st.semaines[cle] || (st.semaines[cle] = {c:0, s:0}); }
+function serieHebdo(){
+  var cles = Object.keys(st.semaines).sort();
+  if(!cles.length) return 0;
+  var cur = cleSemaine(), n = 0, obj = objectifSemaine();
+  var d = lundiDe(new Date());
+  for(var i=0;i<40;i++){
+    var k = cleSemaine(d);
+    if(k !== cur){                                        /* la semaine en cours ne casse rien */
+      if(semaineNeutre(k)){ d.setDate(d.getDate()-7); continue; }   /* neutre : ni + ni − */
+      var w = st.semaines[k];
+      if(!w || w.c < obj) break;
+    }
+    var w2 = st.semaines[k];
+    if(w2 && w2.c >= obj) n++;
+    d.setDate(d.getDate()-7);
+  }
+  return n;
+}
+function bande(){
+  var out = [], d = lundiDe(new Date()), cur = cleSemaine(), obj = objectifSemaine();
+  for(var i=0;i<6;i++){
+    var k = cleSemaine(d), w = st.semaines[k];
+    out.unshift({ cle:k, cur:(k===cur), neutre:semaineNeutre(k),
+                  c:(w?w.c:0), obj:obj });
+    d.setDate(d.getDate()-7);
+  }
+  return out;
+}
+
+/* ---------- 6. choix des cartes de la session ---------- */
+function parCap(valideSeulement){
+  var m = {};
+  D.cartes.forEach(function(c){
+    if(valideSeulement && !c.v) return;
+    var k = c.cap[0];
+    (m[k] || (m[k]=[])).push(c);
+  });
+  return m;
+}
+function sessionRituel(){
+  var m = parCap(true), caps = Object.keys(m);
+  var vues  = caps.filter(function(k){ return st.boites[k]; });
+  var dues  = vues.filter(due).sort(function(a,b){ return boite(a)-boite(b); });
+  var neufs = caps.filter(function(k){ return !st.boites[k]; });
+  var choix = dues.slice(0, TAILLE_SESSION);
+  var place = TAILLE_SESSION - choix.length;
+  if(place > 0) choix = choix.concat(neufs.slice(0, Math.min(place, NOUVEAUX_MAX)));
+  var seed = cleSemaine() + "-" + jour();
+  return choix.map(function(k){
+    var lot = m[k], c = lot[graine(k+seed) % lot.length];
+    return instancie(c, seed);
+  });
+}
+function sessionLibre(theme){
+  var lot = D.cartes.filter(function(c){ return !theme || c.th === theme; });
+  var seed = "libre-" + Date.now();
+  var out = [], vus = {};
+  for(var i=0;i<lot.length && out.length<TAILLE_SESSION;i++){
+    var c = lot[Math.floor((graine(seed+i) % lot.length))];
+    if(vus[c.id]) continue; vus[c.id]=1;
+    out.push(instancie(c, seed+i));
+  }
+  return out;
+}
+
+/* ---------- 7. fiabilité — on juge la SESSION, jamais l'élève ---------- */
+/* Sanction unique : la session ne compte pas et n'avance AUCUNE boîte.
+   Jamais de score écroulé, jamais d'accusation à l'écran. */
+function fiabilite(traces){
+  var n = traces.length;
+  if(!n) return { fiable:true };
+  var rapides = traces.filter(function(t){ return t.ms < SEUIL_RAPIDE; }).length;
+  var memePos = 0, pos = traces.filter(function(t){ return t.pos !== null && t.pos !== undefined; });
+  if(pos.length >= 4){
+    var c = {};
+    pos.forEach(function(t){ c[t.pos] = (c[t.pos]||0)+1; });
+    memePos = Math.max.apply(null, Object.keys(c).map(function(k){ return c[k]; })) / pos.length;
+  }
+  var tropRapide = rapides / n > 0.5;
+  var tropMemePos = memePos > 0.85;
+  return { fiable: !(tropRapide || tropMemePos), rapides:rapides, memePos:memePos,
+           motif: tropRapide ? "rythme" : (tropMemePos ? "motif" : null) };
+}
+
+/* ---------- 8. rendu ---------- */
+var app = document.getElementById("app");
+var vue = { mode:"rituel", i:0, items:[], traces:[], theme:null };
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function chipCap(cap, lib){
+  var b = boite(cap), j = joursAvant(cap);
+  return '<span class="cc '+couBoite(b)+'" title="'+esc(libBoite(b))+(b>=0?' · à revoir dans '+j+' j':'')+'">'
+       + esc(lib||cap) + '</span>';
+}
+function majEntete(){
+  document.getElementById("chipNiv").textContent = D ? D.niveau : "—";
+  document.getElementById("chipSerie").textContent = "🔥 " + serieHebdo() + " sem.";
+  var jc = joursDeCours();
+  document.getElementById("hsub").textContent = jc
+    ? ("Objectif : le soir de chaque cours (" + jc.length + " par semaine)")
+    : ("Objectif provisoire : " + OBJ_DEFAUT + " séances par semaine — le calendrier de ta classe n'est pas encore publié");
+}
+function vBande(){
+  var b = bande();
+  return '<div class="weeks">' + b.map(function(w){
+    var cl = w.neutre ? "neutre" : (w.c >= w.obj ? "ok" : (w.c>0 ? "part" : ""));
+    return '<div class="wk '+cl+(w.cur?' cur':'')+'" title="'+w.cle+' — '+w.c+'/'+w.obj+'">'
+         + (w.neutre ? "" : (w.c||"")) + '</div>';
+  }).join("") + '</div><p class="mut center" style="margin:0">les 6 dernières semaines'
+    + (joursDeCours()? "" : " · semaines sans cours non encore connues") + '</p>';
+}
+function accueil(){
+  var m = parCap(true), caps = Object.keys(m);
+  var vus    = caps.filter(function(k){ return st.boites[k]; });
+  var aRevoir= vus.filter(due).length;                  /* déjà vus ET dus — les VRAIS « à revoir » */
+  var neufs  = caps.length - vus.length;                /* jamais vus : à découvrir, pas à revoir */
+  var acquis = caps.filter(function(k){ return boite(k) >= 3; }).length;
+  var ceSoir = sessionRituel().length;                  /* ce que la séance contiendra VRAIMENT */
+  var libres = D.cartes.length;
+  majEntete();
+  var titre = aRevoir ? (aRevoir + " à revoir" + (ceSoir>aRevoir ? " et "+(ceSoir-aRevoir)+" à découvrir" : ""))
+                      : (ceSoir ? "points à découvrir ce soir" : "rien à revoir ce soir");
+  var h = '';
+  h += '<div class="card center"><div class="big">'+ceSoir+'</div>'
+     + '<h2>'+esc(titre)+'</h2>'
+     + '<p class="mut" style="margin-top:-4px">une séance courte, le soir du cours</p>'
+     + vBande()
+     + '<div class="stats">'
+     + '<div class="stat"><b>'+acquis+'</b><span>points acquis</span></div>'
+     + '<div class="stat"><b>'+neufs+'</b><span>jamais vus</span></div>'
+     + '<div class="stat"><b>'+st.sessions+'</b><span>séances faites</span></div></div>';
+  if(caps.length === 0){
+    h += '<p class="mut" style="margin-top:14px">Aucun exercice validé par ton professeur '
+       + 'sur ce niveau pour l\'instant : le rituel ne peut rien cadencer. '
+       + 'L\'entraînement libre, lui, est ouvert.</p>';
+  }else{
+    h += '<button class="btn wide" id="go">'+(ceSoir? 'Commencer' : 'Réviser quand même')+'</button>';
+  }
+  h += '</div>';
+  h += '<div class="card"><h3>Entraînement libre</h3>'
+     + '<p class="mut">'+libres+' exercices, tous thèmes. <b>Il ne compte pas</b> pour ton calendrier '
+     + 'de révision : entraîne-toi autant que tu veux, rien ne bouge.</p>'
+     + '<select id="thsel" style="width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);'
+     + 'background:var(--card);color:var(--ink);font:inherit"><option value="">Tous les thèmes</option>'
+     + themes().map(function(t){ return '<option value="'+esc(t)+'">'+esc(t)+'</option>'; }).join("")
+     + '</select><button class="btn ghost wide" id="golibre">S\'entraîner</button></div>';
+  if(caps.length){
+    h += '<div class="card"><h3>Ton carnet</h3><div>'
+       + caps.slice().sort(function(a,b){ return boite(a)-boite(b); })
+             .map(function(k){ return chipCap(k, libelleCap(k)); }).join("")
+       + '</div><p class="hint">Gris = jamais vu · rouge = à revoir · orange = fragile · vert = acquis.</p></div>';
+  }
+  app.innerHTML = h;
+  var g = document.getElementById("go");
+  if(g) g.onclick = function(){ demarre("rituel"); };
+  document.getElementById("golibre").onclick = function(){
+    vue.theme = document.getElementById("thsel").value || null; demarre("libre"); };
+}
+function themes(){ var s = {}; D.cartes.forEach(function(c){ s[c.th]=1; }); return Object.keys(s).sort(); }
+function libelleCap(cap){
+  var c = null;
+  for(var i=0;i<D.cartes.length;i++) if(D.cartes[i].cap[0]===cap){ c=D.cartes[i]; break; }
+  return c ? (c.no && c.no.length ? c.no[0] : c.ti) : cap;
+}
+
+function demarre(mode){
+  vue.mode = mode; vue.i = 0; vue.traces = [];
+  vue.items = (mode === "rituel") ? sessionRituel() : sessionLibre(vue.theme);
+  if(!vue.items.length){ accueil(); return; }
+  question();
+}
+function question(){
+  var inst = vue.items[vue.i], c = inst.carte;
+  var t0 = Date.now();
+  var libre = (vue.mode === "libre");
+  var h = '<div class="prog"><i style="width:'+Math.round(100*vue.i/vue.items.length)+'%"></i></div>'
+        + '<p class="mut">'+(vue.i+1)+' / '+vue.items.length+' · '+esc(c.th)
+        + (libre ? ' · <b>entraînement libre</b>' : '')+'</p>'
+        + '<div class="card"><h2>'+esc(c.ti)+'</h2><p>'+esc(inst.enonce)+'</p>';
+  if(c.ty === "qcm"){
+    h += '<div class="opts">' + inst.options.map(function(o,i){
+      return '<button class="opt" data-i="'+i+'">'+esc(o)+'</button>'; }).join("") + '</div>';
+  }else{
+    /* D-S8 : la valeur d'abord — l'unité n'est PAS soufflée à côté du champ. */
+    h += '<div class="num"><input id="rep" inputmode="text" autocomplete="off" placeholder="ta réponse">'
+       + '<span class="unit">?</span></div>'
+       + '<p class="hint" style="margin-top:2px">'+c.csr+' chiffres significatifs attendus'
+       + ' · l\'unité sera demandée juste après</p>'
+       + '<button class="btn wide" id="valide">Valider la valeur</button>';
+    if(c.ind && c.ind.length) h += '<button class="btn ghost wide" id="indice">Un indice</button>';
+  }
+  h += '</div><div id="fb"></div>';
+  app.innerHTML = h;
+  if(c.ty === "qcm"){
+    Array.prototype.forEach.call(app.querySelectorAll(".opt"), function(b){
+      b.onclick = function(){ repond(inst, parseInt(b.dataset.i,10), Date.now()-t0, parseInt(b.dataset.i,10)); };
+    });
+  }else{
+    var inp = document.getElementById("rep");
+    inp.focus();
+    var envoie = function(){ etapeUnite(inst, inp.value, Date.now()-t0); };
+    document.getElementById("valide").onclick = envoie;
+    inp.onkeydown = function(e){ if(e.key === "Enter") envoie(); };
+    var bi = document.getElementById("indice");
+    if(bi) bi.onclick = function(){
+      document.getElementById("fb").innerHTML = '<div class="fb">'+esc(c.ind[0])+'</div>';
+      bi.disabled = true; };
+  }
+}
+/* ---- second temps : l'unité (D-S8). La valeur est déjà jugée, on ne la rejuge pas. ---- */
+function etapeUnite(inst, saisie, ms){
+  var c = inst.carte, v = juge(inst, saisie);
+  document.getElementById("valide").disabled = true;
+  document.getElementById("rep").disabled = true;
+  var bi = document.getElementById("indice"); if(bi) bi.disabled = true;
+
+  var h = '<div class="fb '+(v.valeurOk ? "good" : "bad")+'">'
+        + (v.valeurOk ? "Valeur juste." : (v.vide ? "Valeur non lue." : "Valeur inexacte."));
+  if(v.valeurOk && !v.csOk)
+    h += ' Mais <b>'+v.csDonne+'</b> chiffres significatifs au lieu de <b>'+v.csAttendu+'</b>.';
+  else if(v.valeurOk && v.csOk && v.csDonne !== null) h += ' Bon nombre de chiffres significatifs.';
+  h += '</div>';
+
+  var u = choixUnites(c, inst.seed || "u");
+  inst._u = u;
+  h += '<div class="card"><h3>Et l\'unité ?</h3><div class="opts">'
+     + u.options.map(function(o,i){ return '<button class="opt uni" data-i="'+i+'">'+esc(o)+'</button>'; }).join("")
+     + '</div></div>';
+  var fb = document.getElementById("fb");
+  fb.innerHTML = h;
+  var t1 = Date.now();
+  Array.prototype.forEach.call(fb.querySelectorAll(".uni"), function(b){
+    b.onclick = function(){ repond(inst, saisie, ms + (Date.now()-t1), null, v, parseInt(b.dataset.i,10)); };
+  });
+}
+
+function repond(inst, saisie, ms, pos, vDejaJuge, uChoisi){
+  var c = inst.carte;
+  var v = vDejaJuge || juge(inst, saisie);
+  var uOk = true, u = inst._u;
+  if(c.ty === "numeric"){ uOk = (uChoisi === u.bonne); }
+  var juste = (c.ty === "qcm") ? v.ok : (v.ok && uOk);   /* valeur + c.s. + unité (D-S8) */
+  vue.traces.push({ id:c.id, cap:c.cap[0], ok:juste, ms:ms, pos:pos });
+
+  var fb = document.getElementById("fb");
+  var att = (c.ty === "qcm") ? inst.options[inst.bonne]
+                             : (fr(inst.rep, inst.csr) + (inst.unite ? " " + inst.unite : " (sans unité)"));
+  var h = '<div class="fb '+(juste?"good":"bad")+'">'
+        + (juste ? "👏 C'est ça." : (v.vide ? "Réponse non lue." : "Pas tout à fait."))
+        + ' Réponse attendue : <b>'+esc(att)+'</b>';
+  if(c.ty === "numeric" && !uOk) h += '<span class="hint">L\'unité n\'était pas la bonne.</span>';
+  if(!juste && c.ind && c.ind.length) h += '<span class="hint">'+esc(c.ind[c.ind.length-1])+'</span>';
+  if(c.ty === "qcm" && c.ex) h += '<span class="hint">'+esc(c.ex)+'</span>';
+  if(vue.mode === "libre") h += '<span class="hint">Entraînement libre — ton calendrier de révision n\'a pas bougé.</span>';
+  h += '</div><button class="btn wide" id="suite">'
+     + (vue.i+1 < vue.items.length ? "Suivant" : "Terminer") + '</button>';
+
+  if(c.ty === "qcm"){
+    fb.innerHTML = h;
+    Array.prototype.forEach.call(app.querySelectorAll(".opt"), function(b,i){
+      b.disabled = true;
+      if(i === inst.bonne) b.classList.add("good");
+      else if(i === pos) b.classList.add("bad"); });
+  }else{
+    Array.prototype.forEach.call(fb.querySelectorAll(".uni"), function(b,i){
+      b.disabled = true;
+      if(i === u.bonne) b.classList.add("good");
+      else if(i === uChoisi) b.classList.add("bad"); });
+    fb.insertAdjacentHTML("beforeend", h);
+  }
+  document.getElementById("suite").onclick = function(){
+    vue.i++;
+    if(vue.i < vue.items.length) question(); else bilan();
+  };
+}
+function bilan(){
+  var f = fiabilite(vue.traces);
+  var bons = vue.traces.filter(function(t){ return t.ok; }).length;
+  var n = vue.traces.length;
+  var compte = (vue.mode === "rituel") && f.fiable;
+
+  if(compte){
+    vue.traces.forEach(function(t){ avance(t.cap, t.ok); });
+    var k = cleSemaine(), w = semaine(k);
+    w.c += credit(); w.s++;
+    st.sessions++; st.reactives += n; st.dernier = jour();
+    grave();
+  }else if(vue.mode === "rituel"){
+    st.refus = (st.refus||0)+1; grave();
+  }
+
+  var h = '<div class="card center"><div class="big">'+bons+' / '+n+'</div>';
+  if(vue.mode === "libre"){
+    h += '<h2>Entraînement terminé</h2>'
+       + '<p class="mut">Rien n\'a bougé dans ton calendrier de révision : c\'était de l\'entraînement.</p>';
+  }else if(!f.fiable){
+    h += '<h2>Séance d\'entraînement</h2>'
+       + '<p class="mut">Cette séance ne compte pas pour ton calendrier — les réponses sont allées '
+       + 'trop vite pour avoir été lues. Reprends-la tranquillement quand tu veux, '
+       + 'rien n\'est perdu et rien n\'a bougé.</p>';
+  }else{
+    h += '<h2>Séance enregistrée</h2>' + vBande()
+       + '<p class="mut">Série : <b>'+serieHebdo()+' semaine(s)</b> — objectif '
+       + semaine(cleSemaine()).c.toFixed(1).replace(".",",")+' / '+objectifSemaine()+' cette semaine.</p>';
+  }
+  h += '<div style="margin-top:10px">'
+     + vue.traces.map(function(t){ return chipCap(t.cap, libelleCap(t.cap)); }).join("")
+     + '</div><button class="btn wide" id="home">Retour</button></div>';
+  app.innerHTML = h;
+  document.getElementById("home").onclick = accueil;
+  majEntete();
+}
+
+/* ---------- 9. démarrage ---------- */
+function choixNiveau(){
+  app.innerHTML = '<div class="card"><h2>Quel niveau ?</h2>'
+    + '<p class="mut">Ton niveau n\'a pas été reconnu. Choisis-le une fois, il sera retenu.</p>'
+    + TOKENS.map(function(t){ return '<button class="btn ghost wide" data-t="'+t+'">'+esc(TOKLIB[t])+'</button>'; }).join("")
+    + '<p class="hint">L\'enseignement scientifique (1ʳᵉ et Tale) n\'a pas encore d\'exercices dans la banque.</p></div>';
+  Array.prototype.forEach.call(app.querySelectorAll("[data-t]"), function(b){
+    b.onclick = function(){ try{ localStorage.setItem("pcmajo_revision_niveau", b.dataset.t); }catch(e){}
+                            lance(b.dataset.t); };
+  });
+}
+function lance(tok){
+  TOK = tok; LS = "pcmajo_revision_" + tok + "_v2";
+  /* Le plan de la classe (D-S4) d'abord, s'il a été publié à côté. Son absence n'est
+     pas une erreur : le rituel garde alors son objectif provisoire et le DIT. */
+  var p = document.createElement("script");
+  p.src = "progression_dates.js";
+  p.onload = p.onerror = function(){ chargeBanque(tok); };
+  document.head.appendChild(p);
+}
+function chargeBanque(tok){
+  var s = document.createElement("script");
+  s.src = "revision_data_" + tok + ".js";
+  s.onload = function(){
+    D = window.RVDATA;
+    if(!D || D.tok !== tok){ app.innerHTML = '<div class="card"><p>Banque introuvable pour ce niveau.</p></div>'; return; }
+    charge(); accueil();
+    document.getElementById("foot").textContent =
+      D.n + " exercices engendrés à la volée · " + D.nv + " validés par le professeur cadencent le rituel · "
+      + D.caps + " capacités du programme · source : " + D.src
+      + (planVersion() ? " · plan de classe " + planVersion() : " · aucun plan de classe publié");
+  };
+  s.onerror = function(){
+    app.innerHTML = '<div class="card"><h2>Banque absente</h2><p class="mut">Le fichier '
+      + '<code>revision_data_'+esc(tok)+'.js</code> n\'est pas à côté de cette page.</p></div>'; };
+  document.head.appendChild(s);
+}
+(function(){
+  var t = detecteNiveau();
+  if(t && TOKENS.indexOf(t) >= 0) lance(t);
+  else if(t && (t === "Tens" || t === "1ens")){
+    document.getElementById("chipNiv").textContent = TOKLIB[t];
+    app.innerHTML = '<div class="card"><h2>Pas encore d\'exercices</h2>'
+      + '<p class="mut">La banque ne contient aujourd\'hui aucun exercice d\'enseignement scientifique. '
+      + 'Le rituel s\'ouvrira sur ce niveau dès qu\'il y en aura.</p></div>';
+  }
+  else choixNiveau();
+})();
+</script>
+<script src="pcmajo_ui.js"></script>
+</body>
+</html>

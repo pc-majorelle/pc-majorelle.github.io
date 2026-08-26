@@ -105,10 +105,19 @@
   var html="";
 
   if(tok){
-    /* Révision du jour : spécifique Tale STI2D uniquement */
-    if(tok==="stiT"){
-      html+=tile("revision_sti2d_tale.html","🎯","Révision du jour",
-                 "Rituel 2 min : diagnostic, révisions espacées, carte des concepts.",false,"Tale STI2D");
+    /*TUILE_REVISION_V42*/
+    /* Révision du soir — TOUS LES NIVEAUX (v42). Remplace le rituel réservé à la Tale
+       STI2D : celui-ci portait 12 questions codées en dur sur un seul chapitre, la
+       nouvelle page engendre ses exercices depuis les 671 patrons du moteur.
+       `revision_sti2d_tale.html` reste sur le disque (rien n'est supprimé) mais n'est
+       plus la porte d'entrée. On passe le CODE DE CLASSE, pas le jeton : la page en
+       déduit le niveau et y retrouve aussi sa classe dans le plan publié (D-S4).
+       Pas de tuile en enseignement scientifique : la banque ne contient AUCUN patron
+       pour ens1/ensT (mesuré : 0 sur 671). Une tuile qui ouvre sur « pas encore
+       d'exercices » est une promesse vide — on ne la montre pas. */
+    if(tok!=="ens1"&&tok!=="ensT"){
+      html+=tile("revision.html?acces="+encodeURIComponent(code||""),"🎯","Révision du soir",
+                 "Quelques minutes, le soir du cours : des exercices tirés au sort rien que pour toi.",false);
     }
     /* Tes séquences : Seconde uniquement (18 séquences rédigées) */
     if(tok==="2nde"){
