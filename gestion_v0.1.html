@@ -2824,5 +2824,94 @@ function ncImportFile(e){
   setTimeout(poserBouton, 800);                /* si l'en-tête est re-rendu après coup */
 })();
 </script>
+<script>/*REDATE_V43*/
+/* ============================================================================
+   REDATE_V43 — MAITRE v43 (2026-08-26).
+   Une progression est un GABARIT : ses dates se lisent dans l'annee AFFICHEE,
+   pas dans celle ou elle a ete ecrite.
+
+   DEFAUT MESURE — le champ `periode` d'un chapitre est ecrit de DEUX facons
+   dans le meme fichier :
+     - PROGDATA (2nde, 1re spe, Tale spe)       : RELATIF, « 5 sept. » + duree_sem
+     - PROGDATA_STI_ENS (Tale STI2D, ens. sci.) : ABSOLU, « 2025-09-04 », duree_sem null
+     - PROG_REEL_PAR_PROF (les 4 collegues)     : ABSOLU, via date_iso
+   `wkBuildIndex` recale la premiere forme sur l'annee affichee (wkPeriodeISO) et
+   prend la seconde VERBATIM. Consequence mesuree sur le plan publie le 26/08 pour
+   2026-2027 : 12 chapitres dates en 2025 (TSTI2D 5, TENS-4/5/6 3 chacun), alors que
+   la Tale spe et la Seconde, elles, tombaient juste.
+
+   CE QU'ON FAIT : ni les donnees ni wkBuildIndex ne sont modifies ; on recale sa
+   SORTIE avec EXACTEMENT la regle de wkPeriodeISO (mois >= 9 -> annee de rentree,
+   sinon annee suivante). Deux calculs divergents sont la maladie du projet : il n'y
+   en a donc qu'un, et il etait deja ecrit dans la page.
+
+   IDEMPOTENT : recaler deux fois donne le meme resultat ; recaler une date deja dans
+   la bonne annee ne fait rien (et n'est pas comptee comme recalage).
+   ========================================================================= */
+(function(){
+  "use strict";
+  if (window.__REDATE_V43__) return;                 /* jamais deux fois */
+
+  if (typeof wkBuildIndex !== "function"){
+    /* Lecon v42 : un catch muet transforme une ERREUR en ABSENCE. On le DIT. */
+    window.__REDATE_V43__ = { greffe:false, motif:"wkBuildIndex absent" };
+    try{ console.error("REDATE_V43 : wkBuildIndex introuvable — greffe inactive."); }catch(e){}
+    return;
+  }
+
+  var compteur = { vus:0, recales:0 };
+  window.__REDATE_V43__ = { greffe:true, compteur:compteur };
+
+  function anneeRentree(){
+    var a = (typeof ANNEE !== "undefined" && ANNEE) ? String(ANNEE) : "";
+    var y = parseInt(a.slice(0,4), 10);
+    return isNaN(y) ? null : y;
+  }
+
+  /* la regle de wkPeriodeISO, et rien d'autre */
+  function recale(d, y0){
+    if (typeof d !== "string") return d;
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+    if (!m || y0 === null) return d;
+    var cible = (+m[2] >= 9) ? y0 : (y0 + 1);
+    compteur.vus++;
+    if (cible === +m[1]) return d;
+    compteur.recales++;
+    return cible + "-" + m[2] + "-" + m[3];
+  }
+
+  var origine = wkBuildIndex;
+  window.wkBuildIndex = function(cls, aid){
+    var idx = origine.apply(this, arguments);
+    try{
+      var y0 = anneeRentree();
+      if (y0 === null || !idx) return idx;
+      /* les objets de `windows` sont fabriques a chaque appel : les modifier ne
+         touche pas la progression stockee. `w.ch` est une reference : on n'y touche pas. */
+      (idx.windows || []).forEach(function(w){
+        w.start = recale(w.start, y0);
+        w.end   = recale(w.end,   y0);
+      });
+      var bd = idx.byDate || {}, neuf = {}, k;
+      for (k in bd){
+        if (!Object.prototype.hasOwnProperty.call(bd, k)) continue;
+        var nk = recale(k, y0);
+        neuf[nk] = (neuf[nk] || []).concat(bd[k]);
+      }
+      idx.byDate = neuf;
+      /* l'ordre chronologique doit survivre au recalage */
+      (idx.windows || []).sort(function(a,b){ return a.start < b.start ? -1 : (a.start > b.start ? 1 : 0); });
+    }catch(e){
+      window.__REDATE_V43__.erreur = String((e && e.message) || e);
+      try{ console.error("REDATE_V43", e); }catch(_){}
+      throw e;                    /* on ne masque pas : planClasse a un champ `erreur` pour ca */
+    }
+    return idx;
+  };
+
+  /* le cache de l'onglet Semaine a pu etre rempli avant cette greffe */
+  try{ if (typeof _WKPROG === "object" && _WKPROG){ for (var k2 in _WKPROG) delete _WKPROG[k2]; } }catch(e){}
+})();
+</script>
 </body>
 </html>
