@@ -126,8 +126,18 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   var saved=null; try{ saved=JSON.parse(localStorage.getItem(LS)); }catch(e){}
   if(saved && saved.role){
     var who=saved.role==="prof"?"enseignant":("classe "+saved.code);
-    document.getElementById("resume").innerHTML='<div class="resume">Déjà connecté : <b>'+who+'</b></div><button class="btn" id="cont">Continuer →</button><hr style="border:none;border-top:1px solid var(--line);margin:16px 0">';
+    /* SORTIE_PROFIL_V46 — ce bloc n'offrait que « Continuer → ». Sur un poste partagé, le
+       deuxième élève héritait du profil du premier sans aucune sortie visible ; et une session
+       fabriquée par les outils de test survivait à `?test=0`. Le formulaire de code était bien
+       là, dessous, mais rien ne le disait. */
+    document.getElementById("resume").innerHTML='<div class="resume">Déjà connecté : <b>'+who+'</b></div><button class="btn" id="cont">Continuer →</button><p class="note" style="text-align:center;margin:8px 0 0"><a href="#" id="notme">Ce n\'est pas moi — changer de profil</a></p><hr style="border:none;border-top:1px solid var(--line);margin:16px 0">';
     document.getElementById("cont").onclick=function(){ goTo(saved); };
+    document.getElementById("notme").onclick=function(e){
+      e.preventDefault();
+      try{ localStorage.removeItem(LS); }catch(x){}
+      try{ sessionStorage.removeItem(LS); }catch(x){}
+      location.href = location.pathname;     /* on repart propre, sans paramètre */
+    };
   }
 })();
 </script>

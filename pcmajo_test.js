@@ -42,7 +42,21 @@
   var p = null;
   try{ p = new URLSearchParams(location.search); }catch(e){}
   if(p && p.has("test")){
-    if(p.get("test")==="0"){ set(K_ON,null); set(K_DATE,null); }
+    if(p.get("test")==="0"){
+      set(K_ON,null); set(K_DATE,null);
+      /* NETTOYAGE_TEST_V46 — `?test=0` promettait de « nettoyer tout derriere lui » et laissait
+         la trace la plus visible : la SESSION FABRIQUEE par `entrer()`. On repartait du site avec
+         une identite d'eleve inventee (« Deja connecte : classe 1G1 »), sans moyen d'en sortir.
+         On efface donc la session — MAIS SEULEMENT si elle porte la marque `test`. Une vraie
+         session « se souvenir de moi » n'est jamais touchee. */
+      set("pcmajo_test_role", null);
+      try{
+        var sess = JSON.parse(localStorage.getItem(LS) || "null");
+        if(sess && sess.test === true) localStorage.removeItem(LS);
+        var ses2 = JSON.parse(sessionStorage.getItem(LS) || "null");
+        if(ses2 && ses2.test === true) sessionStorage.removeItem(LS);
+      }catch(e){}
+    }
     else set(K_ON,"1");
   }
   var ARME = get(K_ON)==="1";
@@ -143,6 +157,9 @@
   }
 
   function entrer(session){
+    session.test = true;            /* NETTOYAGE_TEST_V46 : une session fabriquee se declare
+                                       comme telle, pour que `?test=0` puisse la retirer sans
+                                       toucher a une vraie session memorisee. */
     try{ sessionStorage.setItem(LS, JSON.stringify(session)); }catch(e){}
     set(LS, JSON.stringify(session));
     location.href = session.role==="prof"
