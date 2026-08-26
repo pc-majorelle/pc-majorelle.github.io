@@ -633,4 +633,98 @@ charge(); maj(); accueil();
   window.accueil();
 })();
 </script>
+<script>
+/* ------------------------------------------------------------------------ SIGNALEMENT_V48
+   Les 484 questions neuves partent sans relecture (decision de Laurent) : « elles se feront a
+   l'usage ». Encore faut-il pouvoir attraper celle qui cloche. Bouton « signaler » sur chaque
+   carte, UNIQUEMENT en mode test (?test=1) : l'eleve ne voit rien, Laurent note d'un clic, et
+   l'accueil lui rend un rapport en texte brut a copier.                                      */
+(function(){
+  "use strict";
+  if(window.SIGNALEMENT_V48) return;
+  var LSK = "pcmajo_signalements_v48";
+
+  function actif(){ try{ return !!(window.PCTest && window.PCTest.arme); }catch(e){ return false; } }
+  function lire(){ try{ return JSON.parse(localStorage.getItem(LSK)) || []; }catch(e){ return []; } }
+  function ecrire(l){ try{ localStorage.setItem(LSK, JSON.stringify(l)); }catch(e){} }
+  function esc2(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function aujourdhui(){
+    var d = new Date(), m = d.getMonth()+1, j = d.getDate();
+    return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(j<10?"0":"")+j;
+  }
+
+  /* ---------- le bouton sur la carte ---------- */
+  var carteV44 = window.carte;
+  window.carte = function(){
+    carteV44.apply(this, arguments);
+    if(!actif()) return;
+    try{
+      var cur = (typeof file !== "undefined" && file) ? file[i] : null;
+      if(!cur) return;                                   /* on est au bilan, pas sur une carte */
+      var hote = document.querySelector(".card"); if(!hote) return;
+      var b = document.createElement("button");
+      b.id = "sig48";
+      b.textContent = "\u2691 signaler cette question";
+      b.style.cssText = "display:block;margin:14px auto 0;background:none;border:1px dashed var(--line);"
+        + "color:var(--muted);font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer";
+      b.onclick = function(){
+        var l = lire();
+        l.push({ ref: cur.c.ref, ti: cur.c.ti, ty: cur.q.ty, q: cur.q.q,
+                 classe: (st && st.classe) || "", chap: (st && st.chap) || "", date: aujourdhui() });
+        ecrire(l);
+        b.textContent = "\u2691 signalee (" + l.length + " en tout)";
+        b.style.color = "var(--warn)"; b.style.borderStyle = "solid"; b.disabled = true;
+      };
+      hote.appendChild(b);
+    }catch(e){}
+  };
+
+  /* ---------- le panneau, sur l'accueil ---------- */
+  function rapport(l){
+    var out = ["Questions signalees — test du soir (" + l.length + ")", ""];
+    l.forEach(function(s, k){
+      out.push((k+1) + ". " + s.ref + "  [" + s.ty + "]  " + (s.ti||""));
+      out.push("   " + s.q);
+      out.push("   classe " + (s.classe||"?") + " · chapitre " + (s.chap||"?") + " · le " + s.date);
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  var accueilV47 = window.accueil;
+  window.accueil = function(){
+    accueilV47.apply(this, arguments);
+    if(!actif()) return;
+    try{
+      var l = lire(); if(!l.length) return;
+      var d = document.createElement("div");
+      d.className = "card";
+      d.innerHTML = '<h2>\u2691 ' + l.length + ' question' + (l.length>1?'s':'') + ' signal\u00e9e'
+        + (l.length>1?'s':'') + '</h2>'
+        + '<p class="sub">Ces notes sont les tiennes : elles restent m\u00eame apr\u00e8s <code>?test=0</code>, '
+        + 'et l\u2019\u00e9l\u00e8ve ne voit jamais ce bouton. Copie le rapport pour qu\u2019elles soient corrig\u00e9es.</p>'
+        + '<button class="btn" id="sig48voir">Voir le rapport \u00e0 copier</button>'
+        + '<div id="sig48zone" style="display:none;margin-top:10px">'
+        + '<textarea id="sig48txt" readonly style="width:100%;height:190px;font-size:12px;'
+        + 'font-family:ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);'
+        + 'border-radius:9px;padding:9px;background:var(--bg);color:var(--ink)"></textarea>'
+        + '<button class="btn" id="sig48vider" style="margin-top:8px;background:none;'
+        + 'border:1px solid var(--line);color:var(--muted)">Vider la liste</button></div>';
+      app.appendChild(d);
+      document.getElementById("sig48voir").onclick = function(){
+        var z = document.getElementById("sig48zone");
+        z.style.display = "block";
+        var t = document.getElementById("sig48txt");
+        t.value = rapport(lire()); t.focus(); t.select();
+        this.style.display = "none";
+      };
+      document.getElementById("sig48vider").onclick = function(){
+        ecrire([]); window.accueil();
+      };
+    }catch(e){}
+  };
+
+  window.SIGNALEMENT_V48 = true;
+  window.accueil();
+})();
+</script>
 </body></html>
