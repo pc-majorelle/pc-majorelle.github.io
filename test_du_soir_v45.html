@@ -427,6 +427,43 @@ charge(); maj(); accueil();
     return file;
   };
 
+  /* ---------------- RITUEL_CLASSE_V46 : la classe peut venir du lien ----------------
+     La page n'ouvrait que sur `jouables[0]` (la Tale spe PC) : un eleve de Seconde arrivant
+     par la tuile d'eleve.html serait tombe sur le programme de Terminale. On accepte donc
+     `?acces=` / `?classe=`, avec la table de resolution DEJA ecrite dans `revision.html`
+     (v42) — code exact d'abord, sinon la premiere classe jouable du meme niveau.
+     Le lien fait autorite quand il porte un code ; ouverte sans parametre, la page garde le
+     choix que l'eleve a fait au selecteur (D-S2 : il choisit sa classe une fois). */
+  function paramOf(k){
+    var m = new RegExp("[?&]"+k+"=([^&#]*)").exec(location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function niveauFromCode(code){        /* meme table qu'eleve.html et revision.html */
+    if(!code) return null;
+    var c = String(code).toUpperCase();
+    if(/^2G/.test(c) || /^2NDE/.test(c))  return "2nde";
+    if(/^1PC/.test(c))                    return "1spe";
+    if(/^(TPC|TSPE)/.test(c))             return "Tspe";
+    if(/^1STI/.test(c))                   return "1sti";
+    if(/^(TSTI|TSISPH|TSI)/.test(c))      return "Tsti";
+    if(/NSI/.test(c))                     return null;
+    if(/^1ENS/.test(c))                   return "1ens";
+    if(/^TENS/.test(c))                   return "Tens";
+    if(/^1G/.test(c))                     return "1ens";
+    if(/^TG/.test(c))                     return "Tens";
+    return null;
+  }
+  function classeDuLien(){
+    var a = paramOf("acces") || paramOf("classe");
+    if(!a) return null;
+    var jouables = classesJouables(), i;
+    for(i=0;i<jouables.length;i++) if(jouables[i].cid === a) return a;          /* code exact */
+    var niv = niveauFromCode(a);                                                /* sinon par niveau */
+    if(!niv) return null;
+    for(i=0;i<jouables.length;i++) if(jouables[i].niveau === niv) return jouables[i].cid;
+    return null;
+  }
+
   /* ---------------- surcharge 3 : l'accueil ----------------
      Le pilote ne demande plus « quel chapitre ? » — il ANNONCE celui du jour et dit d'ou il
      sort. L'eleve choisit sa classe une fois ; la date fait le reste. */
@@ -435,7 +472,7 @@ charge(); maj(); accueil();
     var jouables = classesJouables();
     if(!jouables.length) return accueilV44();
 
-    var cid = st.classe;
+    var cid = classeDuLien() || st.classe;      /* RITUEL_CLASSE_V46 : le lien d'abord */
     if(!cid || !PLAN.classes[cid]) cid = jouables[0].cid;
     st.classe = cid;
     var cl = PLAN.classes[cid];

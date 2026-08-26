@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
+<!-- TUILE_RITUEL_V46 : la table du plan (classe -> chapitre date -> refs). 12,7 ko, deja
+     en ligne. Elle sert ICI a une seule chose : ne montrer la tuile du rituel qu'aux
+     classes que le plan sert vraiment. Son absence ne casse rien (repli assume). -->
+<script src="plan_reco_v45.js"></script>
 <script src="pcmajo_test.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -115,7 +119,35 @@
        Pas de tuile en enseignement scientifique : la banque ne contient AUCUN patron
        pour ens1/ensT (mesuré : 0 sur 671). Une tuile qui ouvre sur « pas encore
        d'exercices » est une promesse vide — on ne la montre pas. */
-    if(tok!=="ens1"&&tok!=="ensT"){
+    /*TUILE_RITUEL_V46*/
+    /* La tuile menait a `revision.html` — l'exerciseur de v42, qui FAIT CALCULER. C'est le
+       chemin que Laurent a pris en ouvrant le portail eleve, et c'est pourquoi il a cru a une
+       regression : le rituel du soir, lui, ne fait pas calculer, il fait RECONNAITRE (D-S9).
+       Desormais : si la classe de l'eleve est jouable dans le plan publie, la tuile ouvre le
+       rituel ; SINON on ne touche a rien — les trois niveaux de Premiere, qu'aucune classe du
+       plan ne sert (270 capacites, cf. §4.3 du relais v46), gardent exactement la tuile qu'ils
+       avaient. On n'enleve rien, et on ne promet rien de vide. */
+    var cidPlan = (function(){
+      var P = window.PCMAJO_RECO_PLAN;
+      if(!P || !P.classes) return null;
+      var jouables = [], id, cl, n;
+      for(id in P.classes){
+        cl = P.classes[id]; n = 0;
+        (cl.chapitres||[]).forEach(function(ch){ n += (ch.refs||[]).length; });
+        if(n>0) jouables.push({cid:id, niveau:cl.niveau});
+      }
+      var c = String(code||"").toUpperCase(), i;
+      for(i=0;i<jouables.length;i++) if(jouables[i].cid===c) return jouables[i].cid;
+      var NIV={ "2nde":"2nde", "spe1":"1spe", "speT":"Tspe", "sti1":"1sti",
+                "stiT":"Tsti", "ens1":"1ens", "ensT":"Tens" }[tok];
+      if(!NIV) return null;
+      for(i=0;i<jouables.length;i++) if(jouables[i].niveau===NIV) return jouables[i].cid;
+      return null;
+    })();
+    if(cidPlan){
+      html+=tile("test_du_soir_v45.html?acces="+encodeURIComponent(code||""),"🎯","Révision du soir",
+                 "Deux minutes, le soir du cours : on remet sous tes yeux ce qu'on a vu aujourd'hui.",false);
+    }else if(tok!=="ens1"&&tok!=="ensT"){
       html+=tile("revision.html?acces="+encodeURIComponent(code||""),"🎯","Révision du soir",
                  "Quelques minutes, le soir du cours : des exercices tirés au sort rien que pour toi.",false);
     }
