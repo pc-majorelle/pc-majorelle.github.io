@@ -1,5 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
+<!-- OUTILS_TEST_V46 : outillage de TEST (dormant sans ?test=1), charge AVANT tout autre
+     script car il decale l'horloge. La page etait la seule du rituel a ne pas le charger :
+     la date simulee n'y avait donc AUCUN effet. Se retire avec le reste (3 gestes,
+     en tete de pcmajo_test.js). -->
+<script src="pcmajo_test.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#3E6E97">
 <title>Test du soir — PC Majorelle</title>
