@@ -727,4 +727,142 @@ charge(); maj(); accueil();
   window.accueil();
 })();
 </script>
+<script>
+/* --------------------------------------------------------------------- ORDRE_ATTENTION_V48
+   Mesure v48 : la 1re carte de revision arrivait en position 9 sur 6 soirees sur 8, et la
+   soiree se terminait sur une revision 6 fois sur 8. On ne change AUCUNE carte : on change
+   l'ordre. Le jour ouvre · au plus 2 fragiles remontent en 3 et 6 · le jour ferme.          */
+(function(){
+  "use strict";
+  if(window.ORDRE_ATTENTION_V48) return;
+  if(typeof window.tirage !== "function") return;
+
+  var CIBLES = [2, 5];              /* positions 0-based ou l'on glisse une fragile */
+  var MAX_PROMUES = 2;
+
+  /* Le rang d'urgence. boite 0 = « a revoir », 1-2 = « fragile » : ce sont les seules promues.
+     -1 (jamais vue) et >= 3 (acquise) n'ont rien d'urgent — les promouvoir volerait sa place
+     au chapitre du jour sans rien reviser d'utile. */
+  function rang(x){
+    var b = (typeof window.boite === "function") ? window.boite(x.c.ref) : -1;
+    return (b === 0) ? 0 : (b === 1 ? 1 : (b === 2 ? 2 : 9));
+  }
+  function estJour(x){ return x && x.kind === "jour"; }
+
+  function memesCartes(a, b){
+    if(a.length !== b.length) return false;
+    var ka = a.map(function(x){ return x.c.ref + "|" + (x.q && x.q.q); }).sort();
+    var kb = b.map(function(x){ return x.c.ref + "|" + (x.q && x.q.q); }).sort();
+    for(var i=0;i<ka.length;i++){ if(ka[i] !== kb[i]) return false; }
+    return true;
+  }
+
+  function ordonner(f){
+    if(!f || f.length < 4) return f;
+    var jour = f.filter(estJour);
+    var autres = f.filter(function(x){ return !estJour(x); });
+    if(!jour.length || !autres.length) return f;
+
+    /* les urgentes d'abord, boite croissante ; l'ordre d'origine departage (stable) */
+    var promues = autres.filter(function(x){ return rang(x) <= 2; })
+                        .sort(function(a,b){ return rang(a) - rang(b); })
+                        .slice(0, MAX_PROMUES);
+    var reste = autres.filter(function(x){ return promues.indexOf(x) < 0; });
+
+    var out = [], pi = 0, ji = 0, ri = 0, pos = 0;
+    while(out.length < f.length){
+      if(pi < promues.length && CIBLES.indexOf(pos) >= 0 && ji >= 2){ out.push(promues[pi++]); }
+      else if(ji < jour.length){ out.push(jour[ji++]); }
+      else if(pi < promues.length){ out.push(promues[pi++]); }
+      else if(ri < reste.length){ out.push(reste[ri++]); }
+      else break;
+      pos++;
+    }
+
+    /* la soiree finit sur une carte du jour */
+    if(out.length && !estJour(out[out.length-1])){
+      for(var k = out.length - 2; k >= 0; k--){
+        if(estJour(out[k])){
+          var t = out[k]; out[k] = out[out.length-1]; out[out.length-1] = t;
+          break;
+        }
+      }
+    }
+
+    /* NE RASSURE PAS : si la file n'est pas rigoureusement la meme, on rend l'originale. */
+    if(!memesCartes(out, f)) return f;
+    return out;
+  }
+
+  var tirageV47 = window.tirage;
+  window.tirage = function(niv, sp, capsPretes){
+    try{ return ordonner(tirageV47(niv, sp, capsPretes)); }
+    catch(e){ return tirageV47(niv, sp, capsPretes); }
+  };
+  window.ORDRE_ATTENTION_V48 = true;
+  window.__ordonner_v48 = ordonner;   /* pour le banc, jamais appele par la page */
+})();
+</script>
+<script>
+/* ------------------------------------------------------------------- SELECTEUR_CLASSE_V48
+   Le lien fait autorite sur la classe (D-S2, RITUEL_CLASSE_V46) : quand il la porte, le menu
+   deroulant n'a plus rien a demander. On le masque et on laisse une porte de sortie.        */
+(function(){
+  "use strict";
+  if(window.SELECTEUR_CLASSE_V48) return;
+  if(typeof window.accueil !== "function") return;
+
+  function paramClasse(){
+    try{
+      var p = new URLSearchParams(location.search);
+      return p.get("acces") || p.get("classe") || null;
+    }catch(e){ return null; }
+  }
+
+  var MONTRE = false;   /* l'eleve a demande a rouvrir le choix : on n'y revient plus */
+
+  function poser(){
+    var sel = document.getElementById("cls");
+    if(!sel) return;
+    if(MONTRE || !paramClasse()) return;               /* pas de lien : on ne touche a rien */
+    if(document.getElementById("clsFixe")) return;     /* deja pose */
+
+    var opt = sel.options[sel.selectedIndex];
+    var nom = opt ? opt.textContent : "";
+    sel.style.display = "none";
+
+    var d = document.createElement("div");
+    d.id = "clsFixe";
+    d.style.cssText = "display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-top:2px";
+    var b = document.createElement("b"); b.textContent = nom; b.style.cssText = "font-size:1rem";
+    var a = document.createElement("a");
+    a.href = "#"; a.textContent = "ce n'est pas ma classe";
+    a.style.cssText = "font-size:.8rem;color:var(--muted,#7b8794);text-decoration:underline";
+    a.onclick = function(e){
+      e.preventDefault();
+      MONTRE = true;
+      var s = document.getElementById("cls"); if(s) s.style.display = "";
+      var f = document.getElementById("clsFixe"); if(f) f.remove();
+      return false;
+    };
+    d.appendChild(b); d.appendChild(a);
+    sel.parentNode.insertBefore(d, sel.nextSibling);
+  }
+
+  var accueilV47 = window.accueil;
+  window.accueil = function(){
+    var r = accueilV47.apply(this, arguments);
+    try{ poser(); }catch(e){}
+    return r;
+  };
+  window.SELECTEUR_CLASSE_V48 = true;
+  /* ★ On appelle `poser()` et NON `accueil()` : les couches precedentes viennent deja de rendre
+     l'accueil, et le re-rendre relancerait pour rien le calcul du complement de v47. Mesure du
+     banc : c'est la seule soiree ou le complement entre en jeu (« Combustions », 1 capacite) qui
+     changeait de cartes — pas parce que la greffe choisit, mais parce qu'un rendu de plus tirait
+     des nombres au hasard de plus. Un banc a hasard fige rend ce genre d'effet visible ; en usage
+     reel il ne se voit pas. On le supprime quand meme : un rendu inutile n'a rien a faire la. */
+  try{ poser(); }catch(e){}
+})();
+</script>
 </body></html>
