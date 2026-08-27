@@ -865,4 +865,46 @@ charge(); maj(); accueil();
   try{ poser(); }catch(e){}
 })();
 </script>
+<script>
+/* ------------------------------------------------------------------ DESCENTE_UN_CRAN_V48
+   Une erreur faisait tomber la carte a zero. Elle descend maintenant d'un cran et revient
+   des le lendemain. La montee ne change pas : le vert reste a trois reussites espacees.   */
+(function(){
+  "use strict";
+  if(window.DESCENTE_UN_CRAN_V48) return;
+  if(typeof window.avance !== "function") return;
+
+  var dur = window.avance;                      /* l'ancienne regle, gardee pour l'essentiel */
+
+  /* La capacite est-elle « essentielle » ? Le champ n'existe pas encore dans le corpus : tant
+     qu'il est absent, tout le monde beneficie de la descente douce. Le jour ou Laurent aura
+     rendu sa liste, il suffira de poser `essentiel: true` sur la capacite ou la question. */
+  function essentiel(ref){
+    try{
+      for(var niv in RECO){
+        for(var i=0;i<RECO[niv].length;i++){
+          if(RECO[niv][i].ref === ref) return !!RECO[niv][i].essentiel;
+        }
+      }
+    }catch(e){}
+    return false;
+  }
+
+  window.avance = function(r, bon, ms){
+    if(bon || essentiel(r)) return dur(r, bon, ms);   /* montee inchangee · regle dure preservee */
+
+    var b = st.boites[r] || (st.boites[r] = {b:0, j:jour()});
+    b.b = Math.max(0, b.b - 1);
+    /* ... et elle revient DEMAIN, pas dans une semaine : une notion qu'on vient de rater ne se
+       revoit pas dans sept jours. On antidate `j` juste ce qu'il faut pour que `due()` la rende
+       due au prochain soir, sans ajouter le moindre champ au carnet (il est partage avec
+       l'usage reel : sa forme ne doit pas bouger). */
+    b.j = jour() - (BOX_DAYS[b.b] - 1);
+    grave();
+    return "revoir";
+  };
+
+  window.DESCENTE_UN_CRAN_V48 = true;
+})();
+</script>
 </body></html>

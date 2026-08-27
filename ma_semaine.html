@@ -116,10 +116,51 @@ function minLbl(v){var h=Math.floor(v/60),m=v%60;return h+'h'+(m<10?'0'+m:m);}
 function durLbl(d){return d%60===0?(d/60)+'h':(d<60?d+' min':Math.floor(d/60)+'h'+String(d%60).padStart(2,'0'));}
 function isSec(c){return /^2/.test(c.id||'')||/2de|2nd|second/i.test((c.libelle||'')+' '+(c.id||''));}
 function effGrp(c,cr,dayList){if(cr.groupe==='G1'||cr.groupe==='G2')return cr.groupe;if(cr.groupe==='entiere')return '';if(!isSec(c))return '';var tp=(dayList||[]).filter(function(x){return x.debut;}).slice().sort(function(a,b){return a.debut<b.debut?-1:(a.debut>b.debut?1:0);});if(tp.length>=2){var i=tp.indexOf(cr);return i===0?'G1':(i===1?'G2':(i%2===0?'G1':'G2'));}return '';}
+/* ---------------------------------------------------------- SEMAINE_DEPUIS_GESTION_V48
+   La semaine se lit dans le GESTIONNAIRE, la ou chacun corrige ses horaires. La table en dur
+   EDT2026 (brouillon du service) ne sert plus que de repli. */
+function etatGestion(){
+  try{
+    var pid="";
+    var a=null;
+    try{ a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); }catch(e){}
+    if(!a){ try{ a=JSON.parse(localStorage.getItem("pcmajo_acces")); }catch(e){} }
+    if(a && a.role==="prof" && a.pid) pid=a.pid;
+    /* meme piege que dans le gestionnaire : la cle depend de la session. On essaie les deux. */
+    var cles=[ "gestion_majorelle_v01"+(pid?"__"+pid:"")+"__"+YEAR, "gestion_majorelle_v01__"+YEAR ];
+    for(var i=0;i<cles.length;i++){
+      var brut=localStorage.getItem(cles[i]); if(!brut) continue;
+      var o=JSON.parse(brut);
+      if(o && o.classes && o.classes.length){
+        var n=0; o.classes.forEach(function(c){ n+=((c.creneaux||[]).length); });
+        if(n) return o;
+      }
+    }
+  }catch(e){}
+  return null;
+}
 var S=[]; var missing=false, anyProv=false;
-if(YEAR==="2026-2027"){
+var GEST = (YEAR==="2026-2027") ? etatGestion() : null;
+if(GEST){
+  GEST.classes.forEach(function(c){
+    var byJ={}; (c.creneaux||[]).forEach(function(cr){ if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr); });
+    (c.creneaux||[]).forEach(function(cr){
+      var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return;
+      /* ★ le gestionnaire dit EXPLICITEMENT le groupe : on ne le devine pas. `effGrp` classait
+         par ordre horaire et baptisait « Groupe 1 » le cours en classe entiere du vendredi 11h. */
+      var g=(cr.groupe==="G1"||cr.groupe==="G2")?cr.groupe:"";
+      var q=(cr.quinzaine==="A"||cr.quinzaine==="B")?cr.quinzaine:"";
+      S.push({ j:cr.jour, s:s, d:cr.duree||cr.duree_min||60,
+               code:(c.libelle||c.id), full:(c.libelle||c.id)+(q?" · quinzaine "+q:""),
+               prov:false, grp:g, typ:g?"TP":(q?("quinz. "+q):"") });
+    });
+  });
+  if(!S.length) missing=true;
+  try{ subEl.textContent = YEAR + " · d'après tes créneaux du gestionnaire"; }catch(e){}
+}else if(YEAR==="2026-2027"){
   var list=EDT2026[profNom]||[];
   if(!list.length) missing=true;
+  anyProv = anyProv || list.length>0;   /* la table en dur EST un brouillon : on le dit */
   list.forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,d:cr.duree_min||60,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov,grp:'',typ:''}); });
 }else{
   var prof=acces||FALLBACK;
@@ -151,7 +192,7 @@ document.getElementById("leg").innerHTML=legItems.map(function(c){return "<span>
 /* note bas de page */
 var note=document.getElementById("note");
 if(YEAR==="2026-2027"){
-  note.innerHTML="EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":"");
+  note.innerHTML = GEST    ? "Emploi du temps <b>issu du gestionnaire</b> — c'est là qu'il se corrige, onglet « Mes classes &amp; horaires »."    : ("EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":""));
   if(missing) note.innerHTML="Aucun créneau 2026-2027 connu pour ce compte dans le brouillon PHY.pdf.";
 }else{
   note.innerHTML="EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Vue de référence — l'édition reste dans le gestionnaire.";
