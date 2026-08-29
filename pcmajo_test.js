@@ -150,7 +150,9 @@
       if(a.kind!==b.kind) return a.kind==="prof"?-1:1;
       var la=/Laurent/.test(a.label), lb=/Laurent/.test(b.label);
       if(a.kind==="prof" && la!==lb) return la?-1:1;
-      if(a.annee!==b.annee) return a.annee<b.annee?-1:1;
+      /* PORTAIL_ANNEE_V48 : l'annee la PLUS RECENTE en tete. Le portail servait 2025-2026
+         en premier ; on cherchait 2026-2027 tout en bas d'une liste de 68 entrees. */
+      if(a.annee!==b.annee) return a.annee<b.annee?1:-1;
       return a.label.localeCompare(b.label,"fr",{numeric:true});
     });
     return out;

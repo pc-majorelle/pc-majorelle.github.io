@@ -559,7 +559,7 @@ let ANNEES = loadAnnees();
 const PREF_ANNEE = "gestion_majorelle_annee";
 var AGENOR_PID="3126898c42e831a4c34e8991c386c7cad8b3ff522552274d5562d387608d067c";
 function currentPid(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&a.pid) return a.pid;}catch(e){} return "";}
-function lsKey(a){var p=currentPid(); return LSKEY+(p?"__"+p:"")+"__"+a;}
+function lsKey(a){ /* CLE_UNIQUE_GESTION_V48 : la cle ne depend plus de la session. Elle en dependait, et le meme professeur avait deux carnets sans le savoir. */ return LSKEY+"__"+a; }
 let ANNEE = (function(){try{const a=localStorage.getItem(PREF_ANNEE); return (a&&ANNEES.indexOf(a)>=0)?a:"2025-2026";}catch(e){return "2025-2026";}})();
 const CLASSES_PAR_ANNEE = {"2025-2026":[
  {"id":"2G3","niveau":"Seconde","libelle":"2de G3","effectif":null,"emploi_du_temps_pc":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"vendredi","debut":"14:30","duree_min":90}],"note":"2de G3 (Agénor) — TP dédoublé mardi + classe vendredi. Créneaux réels EDT 2025-26."},
@@ -2911,6 +2911,55 @@ function ncImportFile(e){
 
   /* le cache de l'onglet Semaine a pu etre rempli avant cette greffe */
   try{ if (typeof _WKPROG === "object" && _WKPROG){ for (var k2 in _WKPROG) delete _WKPROG[k2]; } }catch(e){}
+})();
+</script>
+<script>
+/* -------------------------------------------------------------- CLE_UNIQUE_GESTION_V48
+   Reprise des etats ranges sous les anciennes cles a session. On ne supprime rien : on
+   recopie le plus riche sur la cle unique, une fois, puis on recharge.                  */
+(function(){
+  "use strict";
+  if(window.CLE_UNIQUE_GESTION_V48) return;
+  window.CLE_UNIQUE_GESTION_V48 = true;
+  var DRAPEAU = "pcmajo_reprise_cle_v48";
+  try{
+    if(sessionStorage.getItem(DRAPEAU)) return;      /* deja fait dans cette session : pas de boucle */
+
+    var an = null;
+    try{ an = localStorage.getItem("gestion_majorelle_annee"); }catch(e){}
+    if(!an) an = (typeof ANNEE === "string") ? ANNEE : null;
+    if(!an) return;
+
+    var PREFIXE = "gestion_majorelle_v01", UNIQUE = PREFIXE + "__" + an;
+
+    function richesse(brut){
+      try{
+        var o = JSON.parse(brut); if(!o || !o.classes) return -1;
+        var n = 0;
+        o.classes.forEach(function(c){ n += ((c.creneaux||[]).length) + ((c.eleves||[]).length); });
+        return n;
+      }catch(e){ return -1; }
+    }
+
+    var courant = localStorage.getItem(UNIQUE);
+    var best = null, bestScore = richesse(courant);
+    for(var i=0;i<localStorage.length;i++){
+      var k = localStorage.key(i);
+      if(!k || k === UNIQUE) continue;
+      if(k.indexOf(PREFIXE + "__") !== 0) continue;
+      if(k.slice(-("__" + an).length + 2) !== an) continue;   /* meme annee scolaire */
+      var s = richesse(localStorage.getItem(k));
+      if(s > bestScore){ bestScore = s; best = k; }
+    }
+
+    if(best){
+      localStorage.setItem(UNIQUE, localStorage.getItem(best));   /* l'ancien tiroir reste intact */
+      sessionStorage.setItem(DRAPEAU, best);
+      location.reload();
+    }else{
+      sessionStorage.setItem(DRAPEAU, "rien");
+    }
+  }catch(e){}
 })();
 </script>
 </body>

@@ -59,6 +59,8 @@
     <label for="code">Code d'accès</label>
     <input id="code" type="text" autocapitalize="characters" autocomplete="off" placeholder="ex. AB12-CD34" inputmode="text">
     <div class="rowck"><input type="checkbox" id="remember"><label for="remember" style="margin:0">Se souvenir de moi sur cet appareil</label></div>
+    <!-- AVERTISSEMENT_APPAREIL_V48 : la case n'est pas un confort, c'est le contrat. -->
+    <p class="note" style="margin:-10px 0 16px">💡 <b>Coche-la sur ton téléphone à toi.</b> Ton carnet de révision est gardé <b>dans ce navigateur</b> : il ne te suit pas d'un appareil à l'autre. Sur un poste partagé (CDI, salle info), ne la coche pas.</p>
     <button class="btn" id="go">Se connecter</button>
     <p class="note">Codes personnels non devinables ; le site n'en garde que l'empreinte cryptée. Aucune donnée d'élève en ligne : tout reste sur l'appareil.</p>
     <div class="thzone"><div class="thlabel">🎨 Thème de l'interface</div><div id="themePick"></div></div>
@@ -159,7 +161,11 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
     liste=PCTest.roles(AUTH, window.CLASSES_ANNEE);
     var h="", grp=null;
     liste.forEach(function(r,i){
-      var g = r.kind==="prof" ? "👤 Espaces enseignants" : "🎓 Élèves — "+r.annee;
+      /* PORTAIL_ANNEE_V48 : dire laquelle est l'annee en cours, sinon 2025-2026 et
+         2026-2027 se ressemblent trop pour qu'on choisisse sans hesiter. */
+      var g = r.kind==="prof" ? "👤 Espaces enseignants"
+            : "🎓 Élèves — "+r.annee+(r.annee===anneeScolaire()?" (année en cours)"
+                                     :(r.annee===anneePrecedente()?" (année précédente)":""));
       if(g!==grp){ if(grp) h+='</optgroup>'; h+='<optgroup label="'+g+'">'; grp=g; }
       h+='<option value="'+i+'">'+r.label+'</option>';
     });
@@ -169,6 +175,17 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
     var n=liste.filter(function(r){return r.kind==="eleve";}).length;
     var lbl=document.querySelector('label[for="tRole"]');
     if(lbl) lbl.textContent="Entrer directement comme… ("+n+" classes)";
+  }
+  /* PORTAIL_ANNEE_V48 : l'annee scolaire se lit sur la VRAIE date — la date simulee de
+     l'outil de test ne doit pas renommer les groupes du menu. */
+  function anneeScolaire(){
+    var d=0; try{ d=(window.PCTest&&PCTest.decalageMs)||0; }catch(e){}
+    var v=new Date(Date.now()-d), y=v.getFullYear();
+    if(v.getMonth()<7) y-=1;            /* avant aout : on est dans l'annee ouverte en aout */
+    return y+"-"+(y+1);
+  }
+  function anneePrecedente(){
+    var y=parseInt(anneeScolaire(),10)-1; return y+"-"+(y+1);
   }
   var MEM="pcmajo_test_role";
   if(window.CLASSES_ANNEE){ poserListe(); }
@@ -188,6 +205,13 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   var champ=document.getElementById("tDate");
   function isoDe(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")
                           +"-"+String(d.getDate()).padStart(2,"0"); }
+  /* VRAIE_DATE_V48 : `new Date()` est decale par l'outil de test. Pour revenir au present il
+     faut retrancher le decalage — sinon le bouton « aujourd'hui » rend la date simulee, et on
+     ne peut plus jamais en sortir. `new Date(<nombre>)`, lui, n'est pas detourne. */
+  function vraieDate(){
+    var d = 0; try{ d = (window.PCTest && PCTest.decalageMs) || 0; }catch(e){}
+    return new Date(Date.now() - d);
+  }
   champ.value = PCTest.dateSimulee || isoDe(new Date());
   document.getElementById("tDateGo").onclick=function(){ PCTest.poser(champ.value||null); };
 
@@ -195,10 +219,10 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
      qu'on veut pour avancer pas à pas dans un scénario (J+1, J+7, J+21 du Leitner). */
   zone.querySelectorAll(".mini button").forEach(function(b){
     b.onclick=function(){
-      if(b.dataset.rentree){ champ.value = (new Date().getFullYear()>=2026?"2026":"2025")+"-09-01"; return; }
+      if(b.dataset.rentree){ champ.value = (vraieDate().getFullYear()>=2026?"2026":"2025")+"-09-01"; return; }
       var n=+b.dataset.jour||0;
-      if(n===0){ champ.value=isoDe(new Date()); return; }
-      var p=(champ.value||isoDe(new Date())).split("-");
+      if(n===0){ champ.value=isoDe(vraieDate()); return; }   /* VRAIE_DATE_V48 */
+      var p=(champ.value||isoDe(vraieDate())).split("-");
       var d=new Date(+p[0],+p[1]-1,+p[2]+n);
       champ.value=isoDe(d);
     };
