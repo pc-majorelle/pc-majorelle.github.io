@@ -202,6 +202,15 @@
       var h=b.getBoundingClientRect().height||44;
       var actuel=parseFloat(getComputedStyle(document.body).paddingBottom)||0;
       document.body.style.paddingBottom=(actuel+h+16)+"px";
+
+      /* BANDEAU_BOUTON_V49 : le bandeau masquait le bouton de theme, qui vit au meme
+         coin. Il connait sa hauteur : c'est a lui de faire de la place, pas au bouton
+         de deviner qu'un bandeau existe. La regle dispararait avec le bandeau. */
+      var r=document.createElement("style");
+      r.id="pcTestBarPlace";
+      r.textContent=".themebtn{bottom:calc("+(h+22)+"px + env(safe-area-inset-bottom))!important}"
+                   +".themepop{bottom:calc("+(h+76)+"px + env(safe-area-inset-bottom))!important}";
+      document.head.appendChild(r);
     }catch(e){}
   }
   if(ARME){
