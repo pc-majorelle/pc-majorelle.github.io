@@ -145,40 +145,65 @@ function etatGestion(){
 var S=[]; var missing=false, anyProv=false;
 var GEST = (YEAR==="2026-2027") ? etatGestion() : null;
 if(GEST){
-  /* ------------------------------------------------------------------ PROPRIETAIRE_V49
-     Une classe porte maintenant le nom de son professeur. Tant qu'elle ne le portait
-     pas, cette page dessinait TOUTES les classes du carnet — celles des collegues
-     comprises — sous le titre « Ma semaine — <prenom> ». */
+  /* ------------------------------------------------------------------ PROPRIETAIRE_V50
+     V49 donnait un proprietaire aux classes, mais jetait une classe SANS proprietaire
+     des qu'une AUTRE en avait un : 28 classes de collegues marquees + 6 classes a moi
+     non marquees = semaine VIDE. Une classe ne disparait plus parce que sa voisine a
+     recu une etiquette, et on ne dessine JAMAIS une semaine vide sans le dire. */
   var _mien = (function(){
     function net(x){ return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
                            .toUpperCase().trim(); }
+    function cl(n){ return n + " classe" + (n>1?"s":""); }
     var moi = [net(acces&&acces.prenom), net(profNom)].filter(Boolean);
-    var miennes=[], etrangeres=0, muettes=0;
+    var miennes=[], etrangeres=[], muettes=[];
     (GEST.classes||[]).forEach(function(c){
       var p = net(c.prof || c.professeur);
-      if(!p){ muettes++; return; }
-      if(moi.indexOf(p)>=0) miennes.push(c); else etrangeres++;
+      if(!p){ muettes.push(c); return; }
+      if(moi.indexOf(p)>=0) miennes.push(c); else etrangeres.push(c);
     });
-    /* Aucune classe ne se declare : vieux carnet. On garde le comportement d'avant
-       — tout afficher — mais on previent, ce qui manquait justement. */
-    if(!miennes.length && !etrangeres) return {liste:GEST.classes||[], avis:
-      "\u26a0 Ce carnet ne dit pas \u00e0 qui appartiennent ses classes : tout est "+
-      "affich\u00e9 ici, y compris ce qui n'est peut-\u00eatre pas \u00e0 toi. "+
-      "R\u00e9importe ton fichier pour le corriger."};
-    var avis = "";
-    if(etrangeres) avis = etrangeres + " classe" + (etrangeres>1?"s":"") +
-      " d'autres professeurs " + (etrangeres>1?"ont":"a") + " \u00e9t\u00e9 mise" +
-      (etrangeres>1?"s":"") + " de c\u00f4t\u00e9.";
-    if(muettes) avis += (avis?" ":"") + muettes + " classe" + (muettes>1?"s":"") +
-      " sans nom de professeur, non affich\u00e9e" + (muettes>1?"s":"") + ".";
-    return {liste:miennes, avis:avis};
+    var ne = etrangeres.length, nm = muettes.length;
+
+    /* 1 — des classes portent mon nom : elles font foi. */
+    if(miennes.length){
+      var avis = "";
+      if(ne) avis = cl(ne) + " d'autres professeurs " + (ne>1?"ont":"a") +
+        " \u00e9t\u00e9 mise" + (ne>1?"s":"") + " de c\u00f4t\u00e9.";
+      if(nm) avis += (avis?" ":"") + cl(nm) +
+        " sans nom de professeur, non affich\u00e9e" + (nm>1?"s":"") + ".";
+      return {liste:miennes, avis:avis, fort:false};
+    }
+
+    /* 2 — aucune ne porte mon nom, mais certaines n'appartiennent a personne :
+       on les dessine PLUTOT QUE RIEN. C'est le defaut paye au v49. */
+    if(nm){
+      return {liste:muettes, fort:true, avis:
+        "\u26a0 Aucune classe de ce carnet ne porte ton nom. " + cl(nm) +
+        " sans propri\u00e9taire " + (nm>1?"sont affich\u00e9es":"est affich\u00e9e") +
+        " ici \u2014 ce n'est peut-\u00eatre pas tout \u00e0 toi." +
+        (ne ? " " + cl(ne) + " d'autres professeurs " + (ne>1?"ont":"a") +
+              " \u00e9t\u00e9 \u00e9cart\u00e9e" + (ne>1?"s":"") + "." : "") +
+        " R\u00e9importe ton fichier de gestion pour ranger \u00e7a."};
+    }
+
+    /* 3 — tout est a quelqu'un d'autre : rien a dessiner, mais on le DIT. */
+    if(ne){
+      return {liste:[], fort:true, avis:
+        "\u26a0 " + cl(ne) + " de ce carnet " + (ne>1?"appartiennent":"appartient") +
+        " \u00e0 d'autres professeurs : il n'y a rien \u00e0 afficher pour toi. " +
+        "R\u00e9importe ton fichier de gestion."};
+    }
+
+    return {liste:[], fort:false, avis:""};
   })();
 
   if(_mien.avis){
     try{
       var _p=document.createElement("p");
       _p.id="avisProprietaire";
-      _p.style.cssText="margin:6px 0 0;font-size:12.5px;opacity:.85";
+      _p.style.cssText = _mien.fort
+        ? "margin:8px 0 0;padding:8px 10px;border-radius:8px;font-size:13.5px;"+
+          "line-height:1.35;background:#fff4d6;color:#5a4300;border:1px solid #e8c96a"
+        : "margin:6px 0 0;font-size:12.5px;opacity:.85";
       _p.textContent=_mien.avis;
       subEl.parentNode.insertBefore(_p, subEl.nextSibling);
     }catch(e){}
