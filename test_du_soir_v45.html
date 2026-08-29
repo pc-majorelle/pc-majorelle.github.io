@@ -11,7 +11,8 @@
 <style>
  :root{--bg:#f6f3ec;--card:#fff;--ink:#2b2b2b;--muted:#6b6b63;--line:#d8d3c4;--accent:#3E6E97;
   --ok:#2e7d51;--okbg:#e6f4ec;--bad:#b3453a;--badbg:#fbeae8;--warn:#a9741f;--warnbg:#fbf1dd;--new:#7b7b8c}
- @media(prefers-color-scheme:dark){:root{--bg:#14161a;--card:#1d2027;--ink:#e9e9ee;--muted:#9a9aa8;
+ /* THEME_SOIR_V49 : le systeme decide tant qu'aucun theme n'est choisi. */
+@media(prefers-color-scheme:dark){:root:not([data-theme]){--bg:#14161a;--card:#1d2027;--ink:#e9e9ee;--muted:#9a9aa8;
   --line:#2e323c;--okbg:#12301f;--badbg:#331917;--warnbg:#332714}}
  *{box-sizing:border-box}
  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
@@ -908,6 +909,21 @@ charge(); maj(); accueil();
 })();
 </script>
 <!-- FOND_REACTIF_V49 -->
+<style>/* THEME_SOIR_V49 : recopie mot pour mot de eleve.html */
+.themebtn{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:60;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:21px;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+.themepop{position:fixed;right:14px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:60;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:12px 14px;max-width:290px;box-shadow:0 8px 28px rgba(0,0,0,.22);display:none}
+.themepop.open{display:block}
+.themepop h4{margin:0 0 8px;font-size:13px;color:var(--muted);font-weight:600}
+.thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
+.thsw:active{transform:scale(.96)}
+.thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+</style>
+<!-- THEME_SOIR_V49 : kit de theme PARTAGE, le meme que les autres pages. -->
+<script src="pcmajo_ui.js"></script>
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+<script>(function(){var b=document.getElementById("themeBtn"),p=document.getElementById("themePop");if(!b||!window.PCTheme)return;PCTheme.swatches("themePick");b.addEventListener("click",function(e){e.stopPropagation();p.classList.toggle("open");});document.addEventListener("click",function(e){if(p.classList.contains("open")&&!p.contains(e.target)&&e.target!==b)p.classList.remove("open");});})();</script>
 <script src="pcmajo_fond.js"></script>
 <script>
 /* ------------------------------------------------------------------ FOND_REACTIF_V49
