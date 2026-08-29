@@ -122,9 +122,23 @@
     hote.appendChild(p);
   }
 
+  /* REGLAGE_A_LA_MAIN_V49 : `?elan=0..80` pose l'elan pour voir le fond tout de
+     suite, sans jouer quatre-vingts cartes. Reserve au mode test (`?test=1`), comme
+     tout le reste de l'outillage : un eleve ne peut pas se peindre un fond. */
+  function reglageManuel() {
+    try {
+      if (!window.PCTest || !PCTest.arme) return;
+      var v = new URLSearchParams(location.search).get("elan");
+      if (v === null) return;
+      var p = Math.max(0, Math.min(PLAFOND, parseFloat(v) || 0));
+      graver({ p: p, j: jour() });
+    } catch (e) {}
+  }
+
   window.PCFond = { lire: lire, point: point, peindre: peindre, ligne: ligne,
                     texte: TEXTE, PLAFOND: PLAFOND };
 
+  reglageManuel();
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", peindre);
   else peindre();
