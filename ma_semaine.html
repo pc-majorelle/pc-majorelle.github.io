@@ -45,8 +45,43 @@
   .ev b{font-weight:700;font-size:12px}
   .ev small{font-weight:400;opacity:.92;font-size:10px}
   .ev .tpg{font-size:10px;font-weight:700;background:rgba(255,255,255,.22);border-radius:4px;padding:0 4px;margin:1px 0;align-self:flex-start}
+  /* COULEURS_V50 — la nuance commune des TP : meme texture pour toutes les classes,
+     par-dessus la couleur de la classe, qui reste ce qui l'identifie. */
+  .ev.tp{box-shadow:inset 0 0 0 2px rgba(255,255,255,.42)}
+  .ev.tp::before{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;
+    background:repeating-linear-gradient(135deg,rgba(255,255,255,.17) 0 5px,transparent 5px 13px)}
+  .ev .chips{display:flex;flex-wrap:wrap;gap:3px;margin:1px 0}
+  .ev .chips .tpg{margin:0}
+  .ev .tpg.ktp{background:rgba(255,255,255,.85);color:#1b2430}
+  .ev .tpg.kco{background:rgba(255,255,255,.18)}
+  /* FAMILLES_V50 — la pastille du groupe, et l'etoile du professeur principal. */
+  .ev .past{float:right;min-width:17px;height:17px;border-radius:999px;
+    background:rgba(255,255,255,.92);color:#16202c;font-size:10px;font-weight:800;
+    line-height:17px;text-align:center;padding:0 4px;margin:0 0 0 5px}
+  .ev .tpg.kpp{background:#ffd76a;color:#3a2b00}
+  .leg b{font-size:9px;font-weight:800;color:#fff;line-height:14px;text-align:center}
   .ev.prov{outline:2px dashed rgba(255,255,255,.8);outline-offset:-3px}
+  /* SEMAINE_AB_V50 : le creneau de l'AUTRE quinzaine n'est pas retire, il passe en retrait. */
+  .ev.hors{opacity:.34;outline:1px dashed rgba(255,255,255,.75);outline-offset:-2px}
+  .ev.hors .tpg{background:rgba(255,255,255,.35)}
   .dlibre{position:absolute;top:6px;left:0;right:0;text-align:center;color:var(--muted);font-size:12px;font-style:italic}
+  /* REPERES_V50 — la pause de midi, hachuree, SOUS les cours ; et les reperes M0/S0. */
+  .repas{position:absolute;left:0;right:0;z-index:0;pointer-events:none;
+         background:repeating-linear-gradient(45deg,
+             color-mix(in srgb,var(--muted) 45%,transparent) 0 3px,
+             transparent 3px 8px),
+           color-mix(in srgb,var(--muted) 10%,transparent);
+         border-top:1px solid color-mix(in srgb,var(--muted) 38%,transparent);
+         border-bottom:1px solid color-mix(in srgb,var(--muted) 38%,transparent)}
+  .dc .ev{z-index:1}
+  /* GRILLE_V50 — les recreations : une bande grisee, discrete, sous les cours. */
+  .recre{position:absolute;left:0;right:0;z-index:0;pointer-events:none;
+         background:color-mix(in srgb,var(--muted) 20%,transparent);
+         border-top:1px solid color-mix(in srgb,var(--muted) 30%,transparent);
+         border-bottom:1px solid color-mix(in srgb,var(--muted) 30%,transparent)}
+  .rep{position:absolute;left:3px;transform:translateY(-1px);font-size:9px;font-weight:700;
+       color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 3px;
+       line-height:1.6;opacity:.85}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -144,6 +179,38 @@ function etatGestion(){
 }
 var S=[]; var missing=false, anyProv=false;
 var GEST = (YEAR==="2026-2027") ? etatGestion() : null;
+
+/* ---------------------------------------------------------------- SEMAINE_AB_V50
+   L'alternance A/B court sur TOUTES les semaines de l'annee, vacances comprises :
+   la semaine de la rentree est A, la suivante B, etc. Verifie sur le calendrier
+   Zone B 2026-2027 : les quatre vacances durent exactement deux semaines, donc
+   suspendre le compte pendant les vacances ne changerait rien — et la regle
+   coincide avec le « n° de semaine de classe » du gestionnaire.
+   La date vient de new Date(), que pcmajo_test.js decale deja. */
+var _AB = (function(){
+  var RENTREE = {"2026-2027":"2026-09-01", "2025-2026":"2025-09-01"};
+  function lundiDe(d){
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay()+6)%7));
+    return x;
+  }
+  function isoDate(s){
+    var p = String(s||"").split("-");
+    if(p.length!==3) return null;
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  var forcee = null;
+  try{
+    var u = new URLSearchParams(location.search).get("sem");
+    if(u==="A" || u==="B") forcee = u;
+  }catch(e){}
+  var ref = isoDate((GEST && GEST.refDate) || RENTREE[YEAR] || "");
+  if(!ref) return {courante: forcee || "A", calculee: null, forcee: forcee};
+  var n = Math.round((lundiDe(new Date()) - lundiDe(ref)) / 604800000);
+  var calc = ((n % 2) + 2) % 2 === 0 ? "A" : "B";
+  return {courante: forcee || calc, calculee: calc, forcee: forcee};
+})();
 if(GEST){
   /* ------------------------------------------------------------------ PROPRIETAIRE_V50
      V49 donnait un proprietaire aux classes, mais jetait une classe SANS proprietaire
@@ -217,13 +284,43 @@ if(GEST){
          par ordre horaire et baptisait « Groupe 1 » le cours en classe entiere du vendredi 11h. */
       var g=(cr.groupe==="G1"||cr.groupe==="G2")?cr.groupe:"";
       var q=(cr.quinzaine==="A"||cr.quinzaine==="B")?cr.quinzaine:"";
+      /* SEMAINE_AB_V50 : un creneau de l'AUTRE quinzaine n'est pas supprime — il serait
+         oublie. Il est dessine en transparence et le dit dans son infobulle. */
+      var hors = !!q && q !== _AB.courante;
+      /* COULEURS_V50 : le TP vient du carnet — `type:"TP"` sur le creneau, ou un
+         groupe, puisqu'un dedoublement est un TP par construction. */
+      var estTP = (String(cr.type||cr.tp||"").toUpperCase()==="TP") || cr.tp===true || !!g;
       S.push({ j:cr.jour, s:s, d:cr.duree||cr.duree_min||60,
-               code:(c.libelle||c.id), full:(c.libelle||c.id)+(q?" · quinzaine "+q:""),
-               prov:false, grp:g, typ:g?"TP":(q?("quinz. "+q):"") });
+               code:(c.libelle||c.id),
+               full:(c.libelle||c.id)+(q?" · semaine "+q+(hors?" — pas cette semaine":""):""),
+               prov:false, grp:g, qz:q, hors:hors, tp:estTP,
+               fam:c.famille||"", past:(c.pastille==null?"":String(c.pastille)), pp:!!c.pp,
+               typ:g?"TP":(q?("sem. "+q):"") });
     });
   });
   if(!S.length) missing=true;
-  try{ subEl.textContent = YEAR + " · d'après tes créneaux du gestionnaire"; }catch(e){}
+  try{
+    /* SEMAINE_AB_V50 — dire la semaine, et permettre de voir l'autre SANS la memoriser :
+       ce qui doit suivre la date ne se met pas en memoire (lecon du menu de test, v49). */
+    subEl.textContent = YEAR + " · semaine " + _AB.courante +
+      (_AB.forcee ? " (aperçu)" : "") + " · d'après tes créneaux du gestionnaire";
+    var _b=document.createElement("button");
+    _b.id="basculeAB"; _b.type="button";
+    _b.textContent = _AB.forcee ? "revenir à la semaine en cours"
+                                : "voir la semaine " + (_AB.courante==="A"?"B":"A");
+    _b.style.cssText="margin:6px 8px 0 0;font:inherit;font-size:12px;padding:2px 9px;"+
+      "border-radius:999px;border:1px solid currentColor;background:transparent;"+
+      "color:inherit;opacity:.7;cursor:pointer";
+    _b.addEventListener("click",function(){
+      try{
+        var u=new URL(location.href);
+        if(_AB.forcee) u.searchParams.delete("sem");
+        else u.searchParams.set("sem", _AB.courante==="A"?"B":"A");
+        location.href=u.toString();
+      }catch(e){}
+    });
+    subEl.parentNode.insertBefore(_b, subEl.nextSibling);
+  }catch(e){}
 }else if(YEAR==="2026-2027"){
   var list=EDT2026[profNom]||[];
   if(!list.length) missing=true;
@@ -234,6 +331,38 @@ if(GEST){
   (prof.classes||[]).forEach(function(c){ var byJ={};(c.creneaux||[]).forEach(function(cr){if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr);});
     (c.creneaux||[]).forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var g=effGrp(c,cr,byJ[cr.jour]||[]); S.push({j:cr.jour,s:s,d:cr.duree_min||90,code:c.id,full:c.libelle||c.id,prov:false,grp:g,typ:g?'TP':''}); }); });
 }
+/* ------------------------------------------------------------------ COULEURS_V50
+   Douze teintes bien ecartees. Chaque classe vise la case donnee par le hachage de
+   son libelle — stable d'une semaine a l'autre — et prend la premiere case LIBRE a
+   partir de la. Deux classes affichees ne peuvent donc plus partager une couleur. */
+var PALETTE=[212, 6, 145, 276, 34, 320, 188, 96, 250, 58, 168, 300];
+/* FAMILLES_V50 : ce qui recoit une couleur, c'est la FAMILLE si la classe en
+   declare une, la classe sinon. Trois groupes d'un meme cours = une seule teinte. */
+var _META=(function(){
+  var m={};
+  S.forEach(function(x){ if(!m[x.code]) m[x.code]={fam:x.fam, past:x.past, pp:x.pp}; });
+  return m;
+})();
+function cleCouleur(code){ var v=_META[code]; return (v && v.fam) ? v.fam : code; }
+var _HUES=(function(){
+  var codes=[]; S.forEach(function(x){ var k=x.fam||x.code; if(codes.indexOf(k)<0) codes.push(k); });
+  codes.sort();                        /* ordre stable, independant de l'emploi du temps */
+  var pris={}, m={};
+  codes.forEach(function(c){
+    var i=hue(c)%PALETTE.length, n=0;
+    while(pris[i] && n<PALETTE.length){ i=(i+1)%PALETTE.length; n++; }
+    pris[i]=1; m[c]=PALETTE[i];
+  });
+  return m;
+})();
+function colOf2(code){
+  var h=_HUES[code];
+  if(h==null) return colOf(code);
+  /* Les jaunes et les verts clairs paraissent plus lumineux a teinte egale : on les
+     assombrit, sinon le texte blanc du bloc n'y est plus lisible. */
+  var l=(h>=40 && h<=115) ? 33 : 42;
+  return "hsl("+h+",56%,"+l+"%)";
+}
 var mins=[]; S.forEach(function(s){mins.push(s.s);mins.push(s.s+s.d);});
 var startH=mins.length?Math.floor(Math.min.apply(null,mins)/60):8;
 var endH=mins.length?Math.ceil(Math.max.apply(null,mins)/60):18;
@@ -241,20 +370,81 @@ if(endH<=startH){startH=8;endH=18;}
 var RS=startH*60,RE=endH*60,PX=1.35,H=(RE-RS)*PX;
 var emptyDay={}; JOURS.forEach(function(j){ emptyDay[j]=!S.some(function(s){return s.j===j;}); });
 function blk(s){ var top=(s.s-RS)*PX,h=Math.max(20,s.d*PX-2);
-  var tp=s.grp?('<span class="tpg">TP \u00b7 Groupe '+(s.grp==='G1'?'1':'2')+'</span>'):(s.typ?('<span class="tpg">'+esc(s.typ)+'</span>'):'');
-  return '<div class="ev'+(s.prov?' prov':'')+'" style="top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf(s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d))+'">'
-    +'<b>'+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
+  /* COULEURS_V50 : « Cours » ou « TP », puis le groupe, puis la quinzaine. */
+  var tp='<div class="chips">'
+    + '<span class="tpg '+(s.tp?'ktp':'kco')+'">'+(s.tp?'TP':'Cours')+'</span>'
+    + (s.pp?'<span class="tpg kpp">\u2605 PP</span>':'')
+    + (s.grp?('<span class="tpg">Groupe '+(s.grp==='G1'?'1':'2')+'</span>'):'')
+    + (s.qz?('<span class="tpg">sem. '+esc(s.qz)+'</span>'):'')
+    + '</div>';
+  /* CHEVAUCHEMENT_V50 : n colonnes cote a cote quand ca se chevauche. */
+  var _n=s.ncol||1, _c=s.col||0;
+  var _pos = (_n>1)
+    ? ('left:calc(2px + '+_c+'*(100% - 4px)/'+_n+');right:auto;width:calc((100% - 4px)/'+_n+' - 2px);')
+    : '';
+  return '<div class="ev'+(s.prov?' prov':'')+(s.hors?' hors':'')+(s.tp?' tp':'')+'" style="'+_pos+'top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf2(s.fam||s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d))+'">'
+    +'<b>'+(s.past?('<span class="past">'+esc(s.past)+'</span>'):'')+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
 var axis=''; for(var hA=startH;hA<=endH;hA++){axis+='<div class="hr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
-function glines(){var g='';for(var hL=startH;hL<=endH;hL++){g+='<div class="gl" style="top:'+(((hL*60)-RS)*PX).toFixed(1)+'px"></div>';if(hL<endH)g+='<div class="gl half" style="top:'+(((hL*60+30)-RS)*PX).toFixed(1)+'px"></div>';}return g;}
+/* ------------------------------------------------------------------- REPERES_V50
+   Les reperes de l'emploi du temps papier, et la pause de midi.
+   La numerotation ne s'ecrit qu'ici. S0 (12h) reste a confirmer sur le papier. */
+/* GRILLE_V50 : la grille reelle. Un cours dure 55 min, l'interclasse 5, la
+   recreation 10. C'est la SEULE ligne a changer si le lycee change ses horaires. */
+var REPERES=[["M0","08:00"],["M1","09:00"],["M2","10:05"],["M3","11:05"],
+             ["S1","13:30"],["S2","14:30"],["S3","15:35"],["S4","16:35"]];
+var RECRES=[["09:55","10:05"],["15:25","15:35"]];
+var REPAS_DEB=toMin("12:00"), REPAS_FIN=toMin("13:30");
+REPERES.forEach(function(r){
+  var m=toMin(r[1]);
+  if(m===null || m<RS || m>RE) return;
+  axis+='<div class="rep" style="top:'+((m-RS)*PX).toFixed(1)+'px">'+esc(r[0])+'</div>';
+});
+function glines(){var g='';for(var hL=startH;hL<=endH;hL++){g+='<div class="gl" style="top:'+(((hL*60)-RS)*PX).toFixed(1)+'px"></div>';if(hL<endH)g+='<div class="gl half" style="top:'+(((hL*60+30)-RS)*PX).toFixed(1)+'px"></div>';}
+  /* REPERES_V50 : la pause de midi, bornee a la plage affichee. Elle est posee
+     AVANT les cours dans le DOM et en z-index 0 : elle ne masque jamais un creneau. */
+  var _r0=Math.max(REPAS_DEB,RS), _r1=Math.min(REPAS_FIN,RE);
+  if(_r1>_r0) g+='<div class="repas" style="top:'+((_r0-RS)*PX).toFixed(1)+'px;height:'+((_r1-_r0)*PX).toFixed(1)+'px"></div>';
+  /* GRILLE_V50 : les deux recreations, bornees a la plage affichee. */
+  RECRES.forEach(function(r){
+    var a=Math.max(toMin(r[0]),RS), b=Math.min(toMin(r[1]),RE);
+    if(b>a) g+='<div class="recre" style="top:'+((a-RS)*PX).toFixed(1)+'px;height:'+((b-a)*PX).toFixed(1)+'px"></div>';
+  });
+  return g;}
 var head='<div class="axh"></div>'+JOURS.map(function(j){return '<div class="dh">'+j.charAt(0).toUpperCase()+j.slice(1)+'</div>';}).join('');
 var body='<div class="axc" style="height:'+H+'px">'+axis+'</div>';
-JOURS.forEach(function(j){ var inner; if(emptyDay[j]){inner=glines()+'<div class="dlibre">libre</div>';} else {inner=glines()+S.filter(function(s){return s.j===j;}).map(blk).join('');} body+='<div class="dc" style="height:'+H+'px">'+inner+'</div>'; });
+/* ------------------------------------------------------------- CHEVAUCHEMENT_V50
+   Deux creneaux au meme moment ne se recouvrent plus : ils partagent la largeur.
+   Sans ca, le creneau de l'autre quinzaine — dessine en transparence — etait
+   integralement cache par son jumeau, et la transparence ne servait a rien. */
+function poserColonnes(list){
+  list.sort(function(a,b){ return (a.s-b.s) || (b.d-a.d); });
+  var i=0;
+  while(i<list.length){
+    var grp=[list[i]], fin=list[i].s+list[i].d, k=i+1;
+    while(k<list.length && list[k].s < fin){ grp.push(list[k]); fin=Math.max(fin,list[k].s+list[k].d); k++; }
+    var cols=[];
+    grp.forEach(function(x){
+      var c=0; while(c<cols.length && cols[c]>x.s) c++;
+      if(c===cols.length) cols.push(0);
+      cols[c]=x.s+x.d; x.col=c;
+    });
+    grp.forEach(function(x){ x.ncol=cols.length; });
+    i=k;
+  }
+  return list;
+}
+JOURS.forEach(function(j){ var inner; if(emptyDay[j]){inner=glines()+'<div class="dlibre">libre</div>';} else {inner=glines()+poserColonnes(S.filter(function(s){return s.j===j;})).map(blk).join('');} body+='<div class="dc" style="height:'+H+'px">'+inner+'</div>'; });
 document.getElementById('edt').innerHTML='<div class="calhead">'+head+'</div><div class="calbody">'+body+'</div>';
 
 /* légende = codes distincts */
 var seen={}, legItems=[];
 S.forEach(function(s){ if(seen[s.code])return; seen[s.code]=1; legItems.push(s.code); });
-document.getElementById("leg").innerHTML=legItems.map(function(c){return "<span><b style='background:"+colOf(c)+"'></b>"+esc(c)+"</span>";}).join("");
+/* FAMILLES_V50 : la legende porte la meme couleur de famille, et la pastille. */
+document.getElementById("leg").innerHTML=legItems.map(function(c){
+  var v=_META[c]||{};
+  return "<span><b style='background:"+colOf2(cleCouleur(c))+"'>"+(v.past?esc(v.past):"")+"</b>"
+       + esc(c) + (v.pp?" \u2605":"") + "</span>";
+}).join("");
 
 /* note bas de page */
 var note=document.getElementById("note");

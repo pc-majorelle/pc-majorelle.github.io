@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12324a">
+<title>Connexion — PC Majorelle</title>
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#12324a;--bad:#e2554f;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#1d3b57;}}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+  header{background:var(--accent);color:var(--onaccent,#fff);padding:calc(26px + env(safe-area-inset-top)) 16px 26px;text-align:center}
+  header h1{margin:0;font-size:20px;font-weight:600} header p{margin:5px 0 0;font-size:13px;opacity:.85}
+  main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;width:100%;max-width:380px}
+  h2{margin:0 0 4px;font-size:18px} .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 5px}
+  input{width:100%;font:inherit;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:14px;letter-spacing:1px}
+  input:focus{outline:none;border-color:var(--accent)}
+  .btn{width:100%;border:none;background:var(--accent);color:var(--onaccent,#fff);border-radius:10px;padding:13px;font-size:16px;font-weight:600;cursor:pointer}
+  .btn.sec{background:transparent;color:var(--ink);border:1.5px solid var(--line);margin-top:10px}
+  .rowck{display:flex;align-items:center;gap:8px;margin:0 0 16px;font-size:14px;color:var(--muted)} .rowck input{width:auto;margin:0}
+  .err{color:var(--bad);font-size:14px;margin:0 0 12px;display:none}
+  .resume{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:14px;font-size:14px}
+  .note{color:var(--muted);font-size:12px;margin:16px 0 0;text-align:center}
+</style>
+<style id="pctheme-css">
+  .thzone{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line)}
+  .thlabel{font-size:13px;color:var(--muted);margin:0 0 4px}
+  .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
+  .thsw:active{transform:scale(.96)}
+  .thsw span.sw{width:15px;height:15px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .thsw[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:1px;font-weight:600}
+  /* ===== OUTILS_TEST_V38 (temporaire) ===== */
+  .tzone{margin-top:18px;border:1.5px dashed #b04a4a;border-radius:12px;padding:14px;background:rgba(176,74,74,.06)}
+  .tzone h3{margin:0 0 2px;font-size:14px;color:#b04a4a}
+  .tzone .sub{margin:0 0 12px;font-size:12px}
+  .tzone select,.tzone input[type=date]{width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--card);
+    border:1.5px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:10px;letter-spacing:normal}
+  .tzone .btn{background:#b04a4a;font-size:15px;padding:11px}
+  .tzone .mini{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+  .tzone .mini button{flex:1 1 auto;font:inherit;font-size:12px;padding:6px 8px;border-radius:8px;cursor:pointer;
+    border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+  .tzone .off{display:block;width:100%;margin-top:9px;text-align:center;font-size:12px;color:var(--muted)}
+  /* ===== fin OUTILS_TEST_V38 ===== */
+</style>
+<!-- OUTILS_TEST_V38 : doit être chargé AVANT tout autre script (il décale l'horloge). -->
+<script src="pcmajo_test.js"></script>
+</head>
+<body>
+<header><h1>Plateforme PC — Majorelle</h1><p>Connexion</p></header>
+<main>
+  <div class="card">
+    <div id="resume"></div>
+    <h2>Se connecter</h2>
+    <p class="sub">Entre ton <b>code d'accès</b> personnel (donné par ton prof, ou ton code enseignant).</p>
+    <div class="err" id="err"></div>
+    <label for="code">Code d'accès</label>
+    <input id="code" type="text" autocapitalize="characters" autocomplete="off" placeholder="ex. AB12-CD34" inputmode="text">
+    <div class="rowck"><input type="checkbox" id="remember"><label for="remember" style="margin:0">Se souvenir de moi sur cet appareil</label></div>
+    <!-- AVERTISSEMENT_APPAREIL_V48 : la case n'est pas un confort, c'est le contrat. -->
+    <p class="note" style="margin:-10px 0 16px">💡 <b>Coche-la sur ton téléphone à toi.</b> Ton carnet de révision est gardé <b>dans ce navigateur</b> : il ne te suit pas d'un appareil à l'autre. Sur un poste partagé (CDI, salle info), ne la coche pas.</p>
+    <button class="btn" id="go">Se connecter</button>
+    <p class="note">Codes personnels non devinables ; le site n'en garde que l'empreinte cryptée. Aucune donnée d'élève en ligne : tout reste sur l'appareil.</p>
+    <div class="thzone"><div class="thlabel">🎨 Thème de l'interface</div><div id="themePick"></div></div>
+
+    <!-- ===== OUTILS_TEST_V38 (temporaire — retirer ce bloc entier avant mise en service) =====
+         Masqué tant que l'outillage n'est pas armé par ?test=1. Le sélecteur est rempli par
+         JS depuis AUTH : aucun code d'accès n'apparaît dans cette page. -->
+    <div class="tzone" id="testZone" hidden>
+      <h3>🧪 Outils de test</h3>
+      <p class="sub">Temporaire. Rien de ceci n'est visible sans <code>?test=1</code>.</p>
+
+      <label for="tRole">Entrer directement comme…</label>
+      <select id="tRole"></select>
+      <button class="btn" id="tGo">Entrer sans code →</button>
+
+      <label for="tDate" style="margin-top:14px">Date du jour simulée</label>
+      <div class="mini">
+        <button type="button" data-jour="0">aujourd'hui</button>
+        <button type="button" data-jour="1">+1 j</button>
+        <button type="button" data-jour="7">+1 sem.</button>
+        <button type="button" data-rentree="1">rentrée</button>
+      </div>
+      <input type="date" id="tDate">
+      <button class="btn" id="tDateGo">Simuler cette date</button>
+      <span class="off" id="tOff"></span>
+    </div>
+    <!-- ===== fin OUTILS_TEST_V38 ===== -->
+  </div>
+</main>
+<script>
+"use strict";
+var LS="pcmajo_acces";
+var AUTH={"1d314fe4431e89e101bcbde3860351a5f87da358750199537f5f76a5aac5e70e":{"r":"e","c":"1PC"},"632c4df62abe335797c61b80d1fdb6688f730dce39efef6c2ceac6201bac317c":{"r":"e","c":"1PC"},"969cf77803ec61dce2ecf4dc8cfb2cabfa8466d1b934e114879737b1a3dbdec7":{"r":"e","c":"1PC"},"b8183487bd7e79235e96678f1d2c608e6f7166ee74c27cf13a12361a1f22f9d2":{"r":"e","c":"1PC"},"e5333da0d160f1a425248604c10027ef1fe8573ae0d405fbb9207a32e4df6061":{"r":"e","c":"1PC"},"4f14901cc62e48db398eb60dc9d1bf57aff0d83856c6f1bed214610557068b60":{"r":"e","c":"1PC"},"f5c6ab270ccc43e78f0b4ab5312841d7ebaad7fa9bba91ffa2570cc263ab0152":{"r":"e","c":"1PC"},"6f0eb3ca03b6ce90d48d65a03dc10a43cc79e7aad0bea46a7afb846a82077619":{"r":"e","c":"1PC"},"9f835260508e4b5f28b5fe7ef5cf7dae77436b52743d30a6e54cd6cefd29b6af":{"r":"e","c":"1PC"},"be51076aafb83f5da7abda38d2ecef22f922e70293716252df919cff4478e15e":{"r":"e","c":"1PC"},"9b7d86f8238f1479f0736fa896c526e3711f92149a599bbfa8d2d4484bdd9de9":{"r":"e","c":"1PC"},"5abdb712f67168f6aab04270c3503cfc30dcec0fa4321c24ac21ef0967e2520b":{"r":"e","c":"1PC"},"cee6642672266d3ccd39fce8b40c2ebcfea64928b4ac5a4ce4dedc0b32b5aade":{"r":"e","c":"1PC"},"6acbc17dc42b7cf5ea1c45c1917bf5f517539a375ec669577e25a5f54aac6da0":{"r":"e","c":"1PC"},"4c1bf64e000ca972b3f6b0df53173310c3e6b889010dde6f304c8976781dc3bd":{"r":"e","c":"1PC"},"56a95dd97eef8d2d33f403213c1508ad45b822d6b201f899ad3cb7f9ebeed50d":{"r":"e","c":"1PC"},"60c0f2c3f4f59245c5de8a301efc03b40d0b93b82d3adbd4eac660e567504492":{"r":"e","c":"1PC"},"34714a22d4344d0fc3e0a8a151c8d2fb47d126eb9bf4e20b804e6d73ca05bce7":{"r":"e","c":"1PC"},"45ea0233a5233571b7e059d73bb761acca2245ccca80a48d65f4a0e6b6c3269e":{"r":"e","c":"1PC"},"dfdad70fac818a2935cf7394626092f022a7cc8dd9636b682d8d06cfdbfabadb":{"r":"e","c":"1PC"},"9069dc490c3cea34068451ba092956779898c1d93ff1f1a18fbab6ac95a991b5":{"r":"e","c":"1PC"},"9cfa064b3d94a24995fdfd26ef7c0d7f7760a67aa2fe83e5233216049947c590":{"r":"e","c":"2G3"},"0dd9227bbcb7adda75f7be8dbef5607dc0e8abe527c49e5f86b7a8ac43b10493":{"r":"e","c":"2G3"},"9d07e8e7d85bf1d5e6bfa03de8f5784ba0d5f517ab439bf88927e586887cae5b":{"r":"e","c":"2G3"},"63e53e706780458e7566c904d0042247683fbe0bba0afff23ab61e414d6ab99e":{"r":"e","c":"2G3"},"5e606d3fe0b2ef0f761f36ac2856b2cd62133c9d02f1f5d16efbeefb1317fd9f":{"r":"e","c":"2G3"},"1b1ccc6a89344c544b7f7abd72a302d4f4803a60102f62792c53b030f7838338":{"r":"e","c":"2G3"},"d1129e690dc5098469ccbfd2040b3d4003b7e79161f490584f2ea4e0a116a1ee":{"r":"e","c":"2G3"},"764e40fa5bd0c669546ab709623d72f249909f9d36bb19930eddd8a02502b46c":{"r":"e","c":"2G3"},"0a14c2ddf79cc0d084f8ea06f605190cc4076f0fb524686d013b9df570e38e5e":{"r":"e","c":"2G3"},"ff0db721516a8ea649b07bc908d49753459233b113a9a4679356a5cc63bd64af":{"r":"e","c":"2G3"},"42b5ab1c92a9aa6913593411ca032002be10d57f602444470195d7866a9805ed":{"r":"e","c":"2G3"},"04f9e56259cace09b09e441ae2ebc1c42ff4fbb5d7fd6ecb8ed8f836feae8656":{"r":"e","c":"2G3"},"f6522c655054d6b467bb93c0a5c09a53bdb68205d3f866a07d4110a0454d3c1c":{"r":"e","c":"2G3"},"6629eb9362b777cbf2dee8443499f572836d90fa74532ca5c66124398a910709":{"r":"e","c":"2G3"},"ed81f5ca09002643eb55e9c81576ff66f7c60ca8e15ebab5832cee1c9fe5521f":{"r":"e","c":"2G3"},"06e5c903d6e6d9c2aeadbb5d866a84f01f1ae24b02a546df87e42599bf0d2082":{"r":"e","c":"2G3"},"cc1908f4d8019d38d4960eb827c4b2a94215f13ba243e4b0a67a193a6728184b":{"r":"e","c":"2G3"},"0641936d02f06355ff1fc5e767e282dc816518cdc3d7ad061d67781f66206111":{"r":"e","c":"2G3"},"cf82891c5dfe71aef3f1df25abd2abb2872baf7c0db8474d4ca67c9f1035f54c":{"r":"e","c":"2G3"},"3bb12fe6e680d96c708ab791e8f6e031838e36ca3602a7108bf37a1463f4bbf6":{"r":"e","c":"2G3"},"92ae6eba81a97c4a5e69dc088ff2ca8885b05799726a5d680fce57cf3a26e514":{"r":"e","c":"2G3"},"6f02a86da11b09870cc80c7e417b9e3376a499a8cddb9c77ee0121ce73b5f9e9":{"r":"e","c":"2G3"},"3d6506b721958c895cd9d4acb15dcefa0d4d10434ab6744df4b4f98c0cc83bf4":{"r":"e","c":"2G3"},"279972465b1a83cd0a0779266ce5b49a80749c1a4cd6d9c1a908f477cd6055a8":{"r":"e","c":"2G3"},"db58135d214d0c54defc627a0f2ec0f5c4225770ab495279f1dad8906e23f2bb":{"r":"e","c":"2G3"},"aa39df6ec1d874c0a24a72c354bceb2d26a5178ebe2e46665cca70be01c15195":{"r":"e","c":"2G3"},"921d5b5c3b0ef0104add621ec3926623afffb06a9511029654f27ca595b25f8e":{"r":"e","c":"2G3"},"139e2908c866bf9fd88962e505daca85e3cb2acccaf4ba59b05781b825e0c12f":{"r":"e","c":"2G3"},"2cd2a1c5c880b98ac8092adfc590beb7292efcf2973bb195d97eda8fbb194303":{"r":"e","c":"2G3"},"4af0b3dc026bbeabdefbe4bc63d7b49e2a03d459bff5b196a4b96b92e8b8a7c1":{"r":"e","c":"2G3"},"c7a856b71ac01f0dcd1dcf241e7daeb6b06911dcbf3a2a80bc0412a5b73c2e15":{"r":"e","c":"2G3"},"4e190e2347f12b6156f68463662f085b8bf3946c7cad2d7c5fbd4658c3e541a7":{"r":"e","c":"2G3"},"165a37f477d50b0138629ed23f5ffe9717b132dc99db13a8525cbaac2c173153":{"r":"e","c":"2G6"},"3cbd59d127065ce89dbad074c38a27b6bb7c79463d7c5c00b651f55376ef2693":{"r":"e","c":"2G6"},"f032af09b6f73aa1c0488ed6941e6dfe23c6805f8af080e1a7fcb7cdab601ebc":{"r":"e","c":"2G6"},"2d6d493ec5fe5d8f8c26a0fb73572e5843305f0547d69f6539aa8821fa74c370":{"r":"e","c":"2G6"},"1347a40ad3606251a3237ddb1155c2fec90bdf3b4240b2ce984c9533c1b700e6":{"r":"e","c":"2G6"},"235790f409bc5f809f95a04415b3d18f01c7cb94f2c382c8479d25dac87b1906":{"r":"e","c":"2G6"},"5a716e84fb4808040db1d08ec8ff7b07960225e4e3efc8f56c3bba2cd69c7e04":{"r":"e","c":"2G6"},"99dad12c0b2b1fe56d473c850085414eb3f7bc23c70aa6d074f0e9dace5347be":{"r":"e","c":"2G6"},"7e9bc84882c30de05825d01f858aa381acc36fab0fd61407c9fbc2aecffdcebd":{"r":"e","c":"2G6"},"48d330eec25fc0e76d06bcad7d30fcfed01a8e21915ece127dcddd9295d96831":{"r":"e","c":"2G6"},"041f8a97bc5823e0d7e7f4d41167ab7aa8375b6eab3b66c5a689adfe7bccc85c":{"r":"e","c":"2G6"},"a5051ab8f65a1b00ad0cbe86b0161d78e2b49cd2c9e78e0208105382dc3820ff":{"r":"e","c":"2G6"},"0d3a6c09b90a4d602138eb9295a10371915bc6026cdc12f8b6cca1dc0167bfdd":{"r":"e","c":"2G6"},"5345ee036c41a6aa77be83fa400acc9a6fe530cafe54048eaa02e26a9ec7d89c":{"r":"e","c":"2G6"},"0a35d4da5b748b103f61fbdac9af9c1a6079f334936fbd0f937777b7e0ffae7f":{"r":"e","c":"2G6"},"e540703fecc5a3492068ba7ace3d97e2c812832746dbb1c2b8931ba42f431c97":{"r":"e","c":"2G6"},"43ed10aa48216596304d5fde143c89fbbce0972412edb7303316c0ecc4b2e1a5":{"r":"e","c":"2G6"},"3cd81334897d34f5437f772c0243a26fa0cb34d2fd73a35b6c6f1f172fc7a293":{"r":"e","c":"2G6"},"f3a53240c678d981618e04f47acc020987a95b6c45954957b4a1512456191438":{"r":"e","c":"2G6"},"2e3f580cc7eba4c448b3d9a3bbd5ab22ae866d072965d6b3c634ae1ffd79cc07":{"r":"e","c":"2G6"},"4b594f46b14af43b5b8c02ffd913ecb10666ec888a6cf06bd0280e137482f197":{"r":"e","c":"2G6"},"df5a58c6edbcd2ec0503ec33924559244fb0f9b69e75150489ef5ede259cca07":{"r":"e","c":"2G6"},"81858fedbec3bef911704b7bcc59a92f1144cb827323f1b4d2ce4c5c25845399":{"r":"e","c":"2G6"},"579e11ffc4378f5ea3ea5fba40a3610dafdb73d5324e81e62c2aa6d3ba1527ba":{"r":"e","c":"2G6"},"06b3cfa57435f101b439e651eeb27b933770c61dc94a68540b4f6fa98c7c188d":{"r":"e","c":"2G6"},"823c3666b26914f7c7993bee74817f3757a1b7b63a9aaf39ced954705928fe4d":{"r":"e","c":"2G6"},"cbd2382fb335766b1d1156e6881d8c7648b79b994e71af42ada6b807ef72e9bd":{"r":"e","c":"2G6"},"3a5a1405d8aa8587252ea49330814bdd5795be314203e04e34f7c8eb0a4f4a8f":{"r":"e","c":"2G6"},"82c88305ab784db10045c3babd60d55983a82c62c2e9b05b39e9ba0690b0deb4":{"r":"e","c":"2G6"},"c7993f9c88d3c9362c8833812791c87ad6b5bab920c0c2f9b616973f9ee19a50":{"r":"e","c":"2G6"},"9d2e0c3b9a3087b343fbe97d19474cb68a8df98602d0038438565b5ebd56aab3":{"r":"e","c":"2G6"},"5053bf28599465817bea9885b1a48c7a29db71aa459176184e25cb8f2e8832dd":{"r":"e","c":"2G6"},"8598a447f8062ac8fcbf417c1253faca2f201f7a1cfab4f43c7e5beb135ff9f2":{"r":"e","c":"2G6"},"8b9b79670f74db452bad2c57eb25c5894762fafc0ac757cce6c6595ddf44146e":{"r":"e","c":"TG5"},"576271893cfc7df20dda0b763912f7b1b4058a55ff353420c7ad831938fd09d1":{"r":"e","c":"TG5"},"7a090cae542fa39e7249f4531795b65094e5ffc2b98a1b9dcf76f59c869081ab":{"r":"e","c":"TG5"},"96494dd0fa81ccafa2a69fa321782e5e717e5b59b489fd318fa88341499855a3":{"r":"e","c":"TG5"},"db2b6b0b74968ccd22027dd7643b3bcc4f75051b8747a78a77d10c33b56aa793":{"r":"e","c":"TG5"},"4fd2c6a5fb9ba6ffbd9ea667f8dadc133cc59a347040bcb0ec9805cbe8dcb063":{"r":"e","c":"TG5"},"02874b97c024ec36d25cdcd5012ab28b60d9d3a25351058ea25eaa352cd41ce4":{"r":"e","c":"TG5"},"e225b4217d5613a5f7fc9ca0b55e238639f5073019617d7ef3e401e62361c3bc":{"r":"e","c":"TG5"},"341abbf307fd69ebb9cb77baf78f2d88b346bc579c2a715e570afb76f17b8926":{"r":"e","c":"TG5"},"0b72f6f94658333f21322ce9c9698b01c7cbf7dd57ff97135ab9cd4ae6c275a4":{"r":"e","c":"TG5"},"1207df97c6f08c5c2f61bc51632b3479716feacade7ef638d7e0ea0d62845b2f":{"r":"e","c":"TG5"},"680c3291a86ba1f2fb6e4146497abac087d4954a43706904862aface98a0f529":{"r":"e","c":"TG5"},"023ea3917561d186d743ffc0d86fce5c6986adda4bd4b258fdb825fa3acaab24":{"r":"e","c":"TG5"},"3c76d19365b6132086e30c524e85cb5ac64bde42a86be028104a16cf4068dcb4":{"r":"e","c":"TG5"},"fed148a2eaf859295973f56d316aa8da85415c1f9cbfab6e0b4dc113d1e0fcf6":{"r":"e","c":"TG5"},"4b77aec926b5f82c3fe5108f0fb9838b16f769fe50120e31a39562f27a6126b4":{"r":"e","c":"TG5"},"70f9371e01c52e06f4f5643aa6946f71418a5d78e2650843caaa6e6b31fe2e9c":{"r":"e","c":"TG5"},"99ba2af7f80bbf777fca81c12c908f35708f3da591469d73d30490855afec579":{"r":"e","c":"TG5"},"204de1b3615153e71fd4ce14f9b3b95ad25c4eb3eded7d78ddad071253a3c1cf":{"r":"e","c":"TG5"},"e4f887c8e180b41edca4dcb7c996561d49d6898c098e969562e535c75c912ff7":{"r":"e","c":"TG5"},"d0c89a2377d10d92daea2884e4d9cd6acafa3d83d49ec785c9053a800df63c0c":{"r":"e","c":"TG5"},"567625081e8f8fb4cac4bc6e1c1726c3e6034430027e909b8f90b944d630535d":{"r":"e","c":"TG5"},"b0c740501b7b67b9858c2d9cccbd380dbbcc678b811ef2b0316cf9b21165af77":{"r":"e","c":"TG5"},"3463a6d838abc042cc612a197d917cf72b9f1479a2cf5ccd80bc3ff2075e6bd7":{"r":"e","c":"TG5"},"7d0142203473c7a9cbc07cda0d22c1481970fc18c90f45dfb1488a99a6fa5350":{"r":"e","c":"TG5"},"c7b41ba877df82779cbc4ff4c18475acf48dda36bb6083fa0dc5f849c29741c6":{"r":"e","c":"TG5"},"d3a8a16f43ce14d90b2ed7e2aa6566cf1b33f015cb2839677fed22fe60c40599":{"r":"e","c":"TG5"},"6a2bda41b01a51734af39679836151691785eb253bdb599e80388ac155f55c8c":{"r":"e","c":"TG5"},"fb1ed7768ce0c0a392081250e9cdd77f2e576c8f2cd41b18f6c7329f8161de16":{"r":"e","c":"TG5"},"b0afd48449d195e8a19e9839d4e93310ddc1657107b5a227bc2e4a5107b95bee":{"r":"e","c":"TG5"},"31122091a38afde8c3c4f2a3cced27d97f7740277511a1935bc74ef602cc9a08":{"r":"e","c":"TG5"},"61cb6db5db3445d1b5f1766591a67d411a0510b278554afa2f1190183e900adb":{"r":"e","c":"TG5"},"9e4a2903c37d13e2ab35f68098afcc3d15b80507ba83019a40fa876649536465":{"r":"e","c":"TG5"},"55fc35f697e95ba515fe154345a7148c2017b63a71a290e6be421810f339d9a4":{"r":"e","c":"TG5"},"693c4a44788efbdde7799e5269b727fb4a3020f813501d7804bb0ee84740b20f":{"r":"e","c":"TG5"},"80cc47d146fa4fb25f6575a238d4c61562369d72039fd8393e81761d4f2e6ceb":{"r":"e","c":"TG6"},"dbb47339f05fda50c8a45cc261d63627ce76933693c6a3e94b2e6bde95cf4de4":{"r":"e","c":"TG6"},"d0f745141a81865cb992a10c502045a87dce57a0f4035eafd0559363c0e5361c":{"r":"e","c":"TG6"},"98308dedd8478e66b5a8a1a0f2e456a7150a200a5c3f133c3ec81c0aef837744":{"r":"e","c":"TG6"},"9265eb56b44b7051fac4905a44974ac4192c7af22a9ef168e5bf02e58687348e":{"r":"e","c":"TG6"},"56330816f6002e8660f68656a76aadfbe5f8e66731992e028aefe7c1cf91ec8b":{"r":"e","c":"TG6"},"73291c3f64a2bbb515c045e833ba76700a0cbac8505f1f547378330c17721840":{"r":"e","c":"TG6"},"0bd949c874614f17d59f078c180ce263785c8c8a5379fbbb8efc29212f1e1ae5":{"r":"e","c":"TG6"},"a2d6a6b6d2da4550329eecc0f84fb059575b79e4b4f29b3645f6a11d9d12d560":{"r":"e","c":"TG6"},"e1188db9f6fd9489b57589a22ead3a2f88136bc5b3de29b55e537e8c7f54e287":{"r":"e","c":"TG6"},"b4694300151ddbe500e2428e2b718484ce3bc66a0407b5b80c1146e14dab7a2a":{"r":"e","c":"TG6"},"b807b92161b18119393cb35f86004d66ba54931b14f03c7cb02fc132301d83c5":{"r":"e","c":"TG6"},"9a9a125d88e458c67c1fa5086ac0b92efaf293af67559f7207473f3e029f5e55":{"r":"e","c":"TG6"},"3d3616dba106b15002e6198bdc0a1559e48f40e37fa374939b3ecb4ec39507e4":{"r":"e","c":"TG6"},"045f26545700a12ad83832de12d09325019396844dec5d45a49cdd9e29bef058":{"r":"e","c":"TG6"},"dccbb67fd28272340ec7c11d23f25f9831145a2d265bdeb5ff99dbd545295a78":{"r":"e","c":"TG6"},"cd0971c689919f1f9fa1d5cd5947079af47302ef895df362910b2f29f5209dd7":{"r":"e","c":"TG6"},"b08de8834fc7406f25fe3ec6f7ebaa05c4a56ab0f34769b5894851a4912b45cd":{"r":"e","c":"TG6"},"061ce8384d49ca7b8bf763f43ad914492ffbaa2893f811b881f24e5aa1281f62":{"r":"e","c":"TG6"},"b5bccaeddb7137890d7b0e72d27eba3b4cece6d5010c470c0b735b05492044b3":{"r":"e","c":"TG6"},"61bc9ddbc6bb22da1b89c7ab6fbb3080efdd156d7b0518c0b9608a1182423c7e":{"r":"e","c":"TG6"},"178a63a2f3bbd274b72d92a5b24bde193d3396090749a02a3b8ce686625a3c4a":{"r":"e","c":"TG6"},"3259c9659f00ad113fa388f498755b4e85345c70e60b65f9fdfe49f505150241":{"r":"e","c":"TG6"},"ad1eaad8ac83c8e4eb464fa996949293df1e314c6edb4eb16337ad8bdcc436a3":{"r":"e","c":"TG6"},"ae05d653034e4e38f33f44cc994aee779148ca71809eeeb398b9fc00874ae376":{"r":"e","c":"TG6"},"da3721c478229345ac52718de14f01b30d52813569cda9374b40d9ab0f07fe85":{"r":"e","c":"TG6"},"5e55069c07147e24a58a6673a0f6f1eb958ab3fcf63fe74c4c05ecf30193f7c5":{"r":"e","c":"TG6"},"d5a2d9ea3eaaacd22327af53e0dcd2d7b35bccf7ce65f6d536457d44592ec5c7":{"r":"e","c":"TG6"},"0ac61afc51adec92105df62b101143a6795efbf92157ce009bc71eaebb10342f":{"r":"e","c":"TG6"},"bfe205545e20d8442d61a7797f5bd1409072d502e91c16c8a88f3b2c57017591":{"r":"e","c":"TG6"},"1bd8cba339c63e778b05448da2f32c83f901e552414c4ea7f6fe40534a40f063":{"r":"e","c":"TG6"},"82f5bff13a35faed25a58ed4fda282fd8e19132a169dbd79d07af7537b478904":{"r":"e","c":"TG6"},"2fca139f081607b36f3fe8a5c3aa98088048524e1aa21c318df6c2d4e2b91c41":{"r":"e","c":"TG6"},"43f43fd16291055b695d92518beb4f09e380029bbc5e619db29293258407e4ee":{"r":"e","c":"TSTI2D"},"fd52b00de9397fda1e66c0252c7012e2b2538ecfc5c974a63a4fa7f0fea7f5e7":{"r":"e","c":"TSTI2D"},"c907ae66b9a964d4851b756041f849eee2e5b5a354f2e2cb0580612350c25945":{"r":"e","c":"TSTI2D"},"1d0d9f584c072c88240677b6a832df019cea9f93c7fd713f19167670728816e3":{"r":"e","c":"TSTI2D"},"4de2858cb28435702f316ccdb3feef168c9988d51c6f51cef600c565f0d35865":{"r":"e","c":"TSTI2D"},"dde9cc6f7e10ee629c01eaebf16e550b9ecdf6eaf67e637cf65fa1779dca0f34":{"r":"e","c":"TSTI2D"},"630c30f8a7e467a88405ef78ce890f307b5ee4d9464c630393c6a377151d9c41":{"r":"e","c":"TSTI2D"},"a59c89b57e1e279afbc84c8f45e9383871eb2c20b8f33e0a5e3da37c1734ca4a":{"r":"e","c":"TSTI2D"},"4b1c3131bc90ba306f66bebc97370875aedf55016853cb2bbe4dd2c5cb32df5d":{"r":"e","c":"TSTI2D"},"b82f3024d60f0c377cf750b1b65fb1c609ed0bd273f48624e84604eb5e794fa0":{"r":"e","c":"TSTI2D"},"0109388c60eba5441731456eac586c9aa2c04601e2b8f7c28fe76bfea39ef514":{"r":"e","c":"TSTI2D"},"f6d0eff7b0e2fa231d5e9cba848bce182fd5f858162a887586eeaa0b9eb2b1b1":{"r":"e","c":"TSTI2D"},"13f0aeea2d9c5f50f6224f523d663c83165df10f4c56fc0e638f0974ff077bd2":{"r":"e","c":"TSTI2D"},"afd63e51f2b61cd4fcdd2606b806e1654e4245cc9333b15a398431ad24e93af9":{"r":"e","c":"TSTI2D"},"3126898c42e831a4c34e8991c386c7cad8b3ff522552274d5562d387608d067c":{"r":"p","p":"Laurent","classes":[{"id":"2G3","libelle":"2de G3","niveau":"Seconde","creneaux":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"vendredi","debut":"14:30","duree_min":90}]},{"id":"2G6","libelle":"2de G6","niveau":"Seconde","creneaux":[{"jour":"mercredi","debut":"09:00","duree_min":90},{"jour":"mercredi","debut":"10:30","duree_min":90},{"jour":"jeudi","debut":"14:30","duree_min":90}]},{"id":"1PC","libelle":"1re spé PC","niveau":"Première","creneaux":[{"jour":"jeudi","debut":"08:00","duree_min":120},{"jour":"mardi","debut":"15:30","duree_min":120}]},{"id":"TSTI2D","libelle":"Tale STI2D","niveau":"Terminale","creneaux":[{"jour":"jeudi","debut":"10:00","duree_min":120},{"jour":"vendredi","debut":"08:00","duree_min":120}]},{"id":"TG5","libelle":"Tale G5 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"vendredi","debut":"10:00","duree_min":60}]},{"id":"TG6","libelle":"Tale G6 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"vendredi","debut":"11:00","duree_min":60}]}]},"b0c01b9b6779a4d771ad8f01c0c452db0db41832e99943345c0935ad354d63a9":{"r":"p","p":"Nicolas","classes":[{"id":"2G1","libelle":"2de G1","niveau":"Seconde","creneaux":[{"jour":"jeudi","debut":"10:00","duree_min":60},{"jour":"lundi","debut":"13:30","duree_min":90},{"jour":"lundi","debut":"15:00","duree_min":90}]},{"id":"2G8","libelle":"2de G8","niveau":"Seconde","creneaux":[{"jour":"mercredi","debut":"12:00","duree_min":60},{"jour":"mardi","debut":"14:00","duree_min":90},{"jour":"mardi","debut":"15:30","duree_min":90}]},{"id":"TPCg2","libelle":"Tale spé PC gr.2","niveau":"Terminale","creneaux":[{"jour":"mardi","debut":"08:00","duree_min":120},{"jour":"mercredi","debut":"10:00","duree_min":120},{"jour":"jeudi","debut":"15:30","duree_min":120}]},{"id":"TPCg3","libelle":"Tale spé PC gr.3","niveau":"Terminale","creneaux":[{"jour":"mardi","debut":"10:00","duree_min":120},{"jour":"mercredi","debut":"08:00","duree_min":120},{"jour":"jeudi","debut":"13:30","duree_min":120}]}]},"445624dd4504f7363c9d41013b11bfbdec1b4063f0fd1f17b91f9d5f99a172d8":{"r":"p","p":"Alain","classes":[{"id":"1STI2D","libelle":"1re STI2D","niveau":"Première","creneaux":[{"jour":"lundi","debut":"11:00","duree_min":60},{"jour":"mardi","debut":"09:00","duree_min":120},{"jour":"vendredi","debut":"08:00","duree_min":60}]},{"id":"1G5","libelle":"1re G5 ens.sci.","niveau":"Première","creneaux":[{"jour":"lundi","debut":"10:00","duree_min":60}]},{"id":"1G6","libelle":"1re G6 ens.sci.","niveau":"Première","creneaux":[{"jour":"vendredi","debut":"10:00","duree_min":60}]},{"id":"1G7","libelle":"1re G7 ens.sci.","niveau":"Première","creneaux":[{"jour":"vendredi","debut":"11:00","duree_min":60}]},{"id":"TSISPHg1","libelle":"Tale STI2D SI/phys gr.1","niveau":"Terminale","creneaux":[{"jour":"mercredi","debut":"15:30","duree_min":120}]}]},"84ab3c0dab39e23820aa275c1ec35ede03ae8006dd4367b840a4a8a0e157fd21":{"r":"p","p":"Saadia","classes":[{"id":"2G2","libelle":"2de G2","niveau":"Seconde","creneaux":[{"jour":"vendredi","debut":"09:00","duree_min":90},{"jour":"vendredi","debut":"10:30","duree_min":90},{"jour":"mardi","debut":"15:30","duree_min":60}]},{"id":"2G4","libelle":"2de G4","niveau":"Seconde","creneaux":[{"jour":"vendredi","debut":"13:30","duree_min":90},{"jour":"vendredi","debut":"15:00","duree_min":90}]},{"id":"1PCg1","libelle":"1re spé PC gr.1","niveau":"Première","creneaux":[{"jour":"lundi","debut":"13:30","duree_min":120}]},{"id":"1PCg3","libelle":"1re spé PC gr.3","niveau":"Première","creneaux":[{"jour":"lundi","debut":"15:30","duree_min":120},{"jour":"jeudi","debut":"10:00","duree_min":120}]},{"id":"TG2","libelle":"Tale G2 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"lundi","debut":"11:00","duree_min":60}]},{"id":"TG4","libelle":"Tale G4 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"vendredi","debut":"08:00","duree_min":60}]}]},"33ef3663b8d93a74ee00f531eedcf0ec07d223aeecd49646d482f32ca121802f":{"r":"p","p":"Malika","classes":[{"id":"2G9","libelle":"2de G9","niveau":"Seconde","creneaux":[{"jour":"mardi","debut":"08:00","duree_min":60},{"jour":"jeudi","debut":"10:00","duree_min":90},{"jour":"jeudi","debut":"11:30","duree_min":90}]},{"id":"2G10","libelle":"2de G10","niveau":"Seconde","creneaux":[{"jour":"jeudi","debut":"14:30","duree_min":90},{"jour":"jeudi","debut":"16:00","duree_min":90},{"jour":"vendredi","debut":"11:00","duree_min":60}]},{"id":"TG3","libelle":"Tale G3 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"vendredi","debut":"08:00","duree_min":60}]}]},"8b4187d75ef772d6952ea1d35e1201e7d2fa119f1bfbe7c73df5027d8cb0ee60":{"r":"p","p":"Anne","classes":[{"id":"2G5","libelle":"2de G5","niveau":"Seconde","creneaux":[{"jour":"lundi","debut":"09:00","duree_min":90},{"jour":"lundi","debut":"10:30","duree_min":90}]},{"id":"2G7","libelle":"2de G7","niveau":"Seconde","creneaux":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"lundi","debut":"15:30","duree_min":60}]},{"id":"1PCg4","libelle":"1re spé PC gr.4","niveau":"Première","creneaux":[{"jour":"lundi","debut":"13:30","duree_min":120}]},{"id":"1PCg5","libelle":"1re spé PC gr.5","niveau":"Première","creneaux":[{"jour":"mardi","debut":"15:30","duree_min":120},{"jour":"jeudi","debut":"08:00","duree_min":120}]},{"id":"TG1","libelle":"Tale G1 ens.sci.","niveau":"Terminale","creneaux":[{"jour":"lundi","debut":"08:00","duree_min":60}]}]},"1bedf08995e34ed00749ae71c02c70653e2ad95664325fc8c6419e672b0eb1d5":{"r":"p","p":"Serge","classes":[{"id":"1G1","libelle":"1re G1 ens.sci.","niveau":"Première","creneaux":[{"jour":"lundi","debut":"08:00","duree_min":60}]},{"id":"1G2","libelle":"1re G2 ens.sci.","niveau":"Première","creneaux":[{"jour":"lundi","debut":"09:00","duree_min":60}]},{"id":"1G3","libelle":"1re G3 ens.sci.","niveau":"Première","creneaux":[{"jour":"lundi","debut":"10:00","duree_min":60}]},{"id":"1G4","libelle":"1re G4 ens.sci.","niveau":"Première","creneaux":[{"jour":"lundi","debut":"11:00","duree_min":60}]},{"id":"TPCg1","libelle":"Tale spé PC gr.1","niveau":"Terminale","creneaux":[{"jour":"mardi","debut":"08:00","duree_min":120},{"jour":"mercredi","debut":"10:00","duree_min":120},{"jour":"jeudi","debut":"15:30","duree_min":120}]},{"id":"1NSI","libelle":"1re NSI","niveau":"Première","creneaux":[{"jour":"lundi","debut":"13:30","duree_min":120}]},{"id":"TNSI","libelle":"Tale NSI","niveau":"Terminale","creneaux":[{"jour":"mardi","debut":"10:00","duree_min":120},{"jour":"mercredi","debut":"08:00","duree_min":120},{"jour":"jeudi","debut":"13:30","duree_min":120}]}]}};
+function norm(s){ return String(s||"").trim().toUpperCase().replace(/\s+/g,""); }
+async function sha256hex(s){
+  var buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.prototype.map.call(new Uint8Array(buf), function(b){return b.toString(16).padStart(2,"0");}).join("");
+}
+/* MENU_UNIQUE_V37 : le prof arrive sur prof.html (menu par fréquence, validé en v29). */
+function goTo(a){ if(a.role==="prof") location.href="prof.html"; else location.href="eleve.html?classe="+encodeURIComponent(a.code); }
+function store(a){ try{ localStorage.setItem(LS, JSON.stringify(a)); }catch(e){} }
+async function resolve(raw){
+  var code=norm(raw); if(!code) return null;
+  var h=await sha256hex(code); var r=AUTH[h]; if(!r) return null;
+  return (r.r==="p") ? {role:"prof", pid:h, prenom:(r.p||""), classes:(r.classes||[]), cl:(r.classes||[]).map(function(c){return c.libelle;})} : {role:"eleve", code:r.c, eleve:code};
+}
+async function connect(){
+  var a=await resolve(document.getElementById("code").value);
+  if(!a){ var e=document.getElementById("err"); e.style.display="block"; e.textContent="Code non reconnu. Vérifie, ou demande-le à ton prof."; return; }
+  try{sessionStorage.setItem(LS,JSON.stringify(a));}catch(x){}
+  if(document.getElementById("remember").checked) store(a); else { try{localStorage.removeItem(LS);}catch(x){} }
+  goTo(a);
+}
+document.getElementById("go").onclick=connect;
+document.getElementById("code").addEventListener("keydown",function(e){ if(e.key==="Enter") connect(); });
+
+/* connexion directe par lien / QR : ?code=XXXX-YYYY */
+(function(){
+  var p=new URLSearchParams(location.search); var code=p.get("code"); if(!code) return;
+  resolve(code).then(function(a){ if(a){ try{sessionStorage.setItem(LS,JSON.stringify(a));}catch(x){} store(a); goTo(a); } });
+})();
+
+/* profil mémorisé -> "Continuer" */
+(function(){
+  var saved=null; try{ saved=JSON.parse(localStorage.getItem(LS)); }catch(e){}
+  if(saved && saved.role){
+    var who=saved.role==="prof"?"enseignant":("classe "+saved.code);
+    /* SORTIE_PROFIL_V46 — ce bloc n'offrait que « Continuer → ». Sur un poste partagé, le
+       deuxième élève héritait du profil du premier sans aucune sortie visible ; et une session
+       fabriquée par les outils de test survivait à `?test=0`. Le formulaire de code était bien
+       là, dessous, mais rien ne le disait. */
+    document.getElementById("resume").innerHTML='<div class="resume">Déjà connecté : <b>'+who+'</b></div><button class="btn" id="cont">Continuer →</button><p class="note" style="text-align:center;margin:8px 0 0"><a href="#" id="notme">Ce n\'est pas moi — changer de profil</a></p><hr style="border:none;border-top:1px solid var(--line);margin:16px 0">';
+    document.getElementById("cont").onclick=function(){ goTo(saved); };
+    document.getElementById("notme").onclick=function(e){
+      e.preventDefault();
+      try{ localStorage.removeItem(LS); }catch(x){}
+      try{ sessionStorage.removeItem(LS); }catch(x){}
+      location.href = location.pathname;     /* on repart propre, sans paramètre */
+    };
+  }
+})();
+</script>
+<!-- ===== OUTILS_TEST_V38 (temporaire) — dépend de AUTH, donc placé APRÈS le script de connexion ===== -->
+<script>
+(function(){
+  "use strict";
+  if(!window.PCTest || !PCTest.arme) return;          // dormant tant que ?test=1 n'a pas armé
+  var zone=document.getElementById("testZone"); if(!zone) return;
+  zone.hidden=false;
+
+  /* 1) Les rôles — construits depuis les empreintes, sans jamais toucher à un code.
+        OUTILS_TEST_V38b : `classes_annee.js` n'est chargé QUE si l'outillage est armé — inutile
+        d'imposer 11 Ko à tous les visiteurs pour une commodité de test. On construit la liste
+        une fois qu'il est là (ou tout de suite s'il ne vient pas : les classes 2026-27 manqueront
+        simplement, sans casser le reste). */
+  var sel=document.getElementById("tRole"), liste=[];
+  function poserListe(){
+    liste=PCTest.roles(AUTH, window.CLASSES_ANNEE);
+    var h="", grp=null;
+    liste.forEach(function(r,i){
+      /* PORTAIL_ANNEE_V48 : dire laquelle est l'annee en cours, sinon 2025-2026 et
+         2026-2027 se ressemblent trop pour qu'on choisisse sans hesiter. */
+      var g = r.kind==="prof" ? "👤 Espaces enseignants"
+            : "🎓 Élèves — "+r.annee+(r.annee===anneeScolaire()?" (année en cours)"
+                                     :(r.annee===anneePrecedente()?" (année précédente)":""));
+      if(g!==grp){ if(grp) h+='</optgroup>'; h+='<optgroup label="'+g+'">'; grp=g; }
+      h+='<option value="'+i+'">'+r.label+'</option>';
+    });
+    if(grp) h+='</optgroup>';
+    sel.innerHTML=h;
+    /* MEMOIRE_ROLE_V48 : on retrouve l'entree par son ETIQUETTE. Une valeur ancienne
+       (un simple numero) ne veut plus rien dire depuis que l'ordre a change :
+       on la jette au lieu de la suivre vers une classe au hasard. */
+    try{
+      var m=localStorage.getItem(MEM);
+      if(m!==null && !/^\d+$/.test(m)){
+        for(var k=0;k<liste.length;k++){ if(liste[k].label===m){ sel.value=String(k); break; } }
+      }
+    }catch(e){}
+    var n=liste.filter(function(r){return r.kind==="eleve";}).length;
+    var lbl=document.querySelector('label[for="tRole"]');
+    if(lbl) lbl.textContent="Entrer directement comme… ("+n+" classes)";
+  }
+  /* PORTAIL_ANNEE_V48 : l'annee scolaire se lit sur la VRAIE date — la date simulee de
+     l'outil de test ne doit pas renommer les groupes du menu. */
+  function anneeScolaire(){
+    var d=0; try{ d=(window.PCTest&&PCTest.decalageMs)||0; }catch(e){}
+    var v=new Date(Date.now()-d), y=v.getFullYear();
+    if(v.getMonth()<7) y-=1;            /* avant aout : on est dans l'annee ouverte en aout */
+    return y+"-"+(y+1);
+  }
+  function anneePrecedente(){
+    var y=parseInt(anneeScolaire(),10)-1; return y+"-"+(y+1);
+  }
+  var MEM="pcmajo_test_role";
+  if(window.CLASSES_ANNEE){ poserListe(); }
+  else {
+    var sc=document.createElement("script"); sc.src="classes_annee.js";
+    sc.onload=poserListe; sc.onerror=poserListe;
+    document.head.appendChild(sc);
+    poserListe();   /* affichage immédiat ; complété dès que le fichier arrive */
+  }
+  document.getElementById("tGo").onclick=function(){
+    var r=liste[+sel.value]; if(!r) return;
+    /* MEMOIRE_ROLE_V48 : on ecrit l'etiquette, pas la position. */
+    try{ localStorage.setItem(MEM, r.label); }catch(e){}
+    PCTest.entrer(r.session);
+  };
+
+  /* 2) La date — le champ montre la date SIMULÉE si elle l'est, sinon la vraie. */
+  var champ=document.getElementById("tDate");
+  function isoDe(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")
+                          +"-"+String(d.getDate()).padStart(2,"0"); }
+  /* VRAIE_DATE_V48 : `new Date()` est decale par l'outil de test. Pour revenir au present il
+     faut retrancher le decalage — sinon le bouton « aujourd'hui » rend la date simulee, et on
+     ne peut plus jamais en sortir. `new Date(<nombre>)`, lui, n'est pas detourne. */
+  function vraieDate(){
+    var d = 0; try{ d = (window.PCTest && PCTest.decalageMs) || 0; }catch(e){}
+    return new Date(Date.now() - d);
+  }
+  champ.value = PCTest.dateSimulee || isoDe(new Date());
+  document.getElementById("tDateGo").onclick=function(){ PCTest.poser(champ.value||null); };
+
+  /* Raccourcis : le « + N j » part de la date affichée, pas de la date réelle — c'est ce
+     qu'on veut pour avancer pas à pas dans un scénario (J+1, J+7, J+21 du Leitner). */
+  zone.querySelectorAll(".mini button").forEach(function(b){
+    b.onclick=function(){
+      if(b.dataset.rentree){ champ.value = (vraieDate().getFullYear()>=2026?"2026":"2025")+"-09-01"; return; }
+      var n=+b.dataset.jour||0;
+      if(n===0){ champ.value=isoDe(vraieDate()); return; }   /* VRAIE_DATE_V48 */
+      var p=(champ.value||isoDe(vraieDate())).split("-");
+      var d=new Date(+p[0],+p[1]-1,+p[2]+n);
+      champ.value=isoDe(d);
+    };
+  });
+
+  var off=document.getElementById("tOff");
+  off.innerHTML=(PCTest.dateSimulee?"Date simulée active. ":"")
+    +'<a href="?test=0">désarmer les outils de test et tout nettoyer</a>';
+})();
+</script>
+<!-- ===== fin OUTILS_TEST_V38 ===== -->
+
+<!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
+     inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
+     unique désormais : une palette à corriger, pas sept. -->
+<script src="pcmajo_ui.js"></script>
+
+<script>if(window.PCTheme)PCTheme.swatches("themePick");</script>
+<!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
+<script src="pcmajo_fond.js"></script>
+</body>
+</html>
