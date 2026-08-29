@@ -65,9 +65,38 @@
   .clsrow .two a:active{border-color:var(--accent)}
   .note{color:var(--muted);font-size:.75rem;padding:2px 4px 6px}
   .anneesel{display:flex;align-items:center;gap:8px;padding:4px 2px}
-  .ctxbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
-  .ctxbox{flex:1 1 220px;display:flex;align-items:center;gap:8px;background:var(--card);
+  /* LIGNE_CONTEXTE_V51 : la barre passait a deux lignes en 2026-2027. Ce n'est PAS
+     l'annee — « 2025-2026 » et « 2026-2027 » font exactement la meme largeur. C'est le
+     menu des classes : un <select> ne descend pas sous son option la plus longue, et
+     2026-2027 en apporte une de 32 caracteres (« 2de 1 — TP vendredi (a preciser) »)
+     la ou 2025-2026 plafonne a 16. Sans min-width, .ctxbox heritait de ce plancher,
+     reclamait ~330 px, cassait la ligne, et debordait de 55 px sur un ecran de 390.
+
+     La ligne ne tient qu'a une condition : rendre aux VALEURS la place que prenaient
+     les MOTS. « Annee » et « Classe active » coutaient 176 px a eux deux, pour dire ce
+     que l'emoji et la valeur disent deja. Ils passent en infobulle et en nom accessible
+     (aria-label, pose plus bas) ; l'emoji reste visible. Mesure au banc : le menu des
+     classes passe de 20 px illisibles a 173 px sur un telephone de 390. */
+  .ctxbar{display:flex;flex-wrap:nowrap;gap:10px;margin:0 0 14px}
+  .ctxbox{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:8px;background:var(--card);
     border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+  .ctxbar>.ctxbox:first-child{flex:0 1 auto}
+  .ctxbar>.ctxbox label{font-size:1rem}
+  .ctxbar>.ctxbox label .mot{display:none}
+  .ctxbar>.ctxbox select{text-overflow:ellipsis}
+  @media (max-width:430px){
+    .ctxbar{gap:6px}
+    .ctxbox{gap:6px;padding:8px 8px}
+  }
+  /* Sous 420 px, une seule ligne ne montrerait plus que 130 px de nom de classe :
+     un libelle sur six tiendrait entier. La ligne ne vaut que si elle se lit — on
+     repasse donc a deux lignes pleine largeur, sans debordement cette fois, et les
+     mots reviennent puisque la place existe. Seuil mesure au banc, pas choisi. */
+  @media (max-width:419px){
+    .ctxbar{flex-wrap:wrap}
+    .ctxbox,.ctxbar>.ctxbox:first-child{flex:1 1 100%}
+    .ctxbar>.ctxbox label .mot{display:inline}
+  }
   .ctxbox label{color:var(--muted);font-size:.85rem;white-space:nowrap}
   .ctxbox select{flex:1;min-width:0;font:inherit;color:var(--ink);background:transparent;border:0;padding:2px}
   .ctxbox select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -100,8 +129,8 @@
   <!-- MENU_UNIQUE_V37 : prof.html devient le menu unique (choix de Laurent, 23/08).
        Les deux sélecteurs viennent d'app.html, qui redirige désormais ici. -->
   <div class="ctxbar">
-    <div class="ctxbox"><label for="annee">📅 Année</label><select id="annee"></select></div>
-    <div class="ctxbox"><label for="classe">🎓 Classe active</label><select id="classe"></select></div>
+    <div class="ctxbox"><label for="annee">📅<span class="mot"> Année</span></label><select id="annee" aria-label="Année scolaire" title="Année scolaire"></select></div>
+    <div class="ctxbox"><label for="classe">🎓<span class="mot"> Classe active</span></label><select id="classe" aria-label="Classe active" title="Classe active"></select></div>
   </div>
   <div class="legend">
     <span class="chip q">quotidien</span>
