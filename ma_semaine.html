@@ -126,8 +126,11 @@ function etatGestion(){
     try{ a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); }catch(e){}
     if(!a){ try{ a=JSON.parse(localStorage.getItem("pcmajo_acces")); }catch(e){} }
     if(a && a.role==="prof" && a.pid) pid=a.pid;
-    /* meme piege que dans le gestionnaire : la cle depend de la session. On essaie les deux. */
-    var cles=[ "gestion_majorelle_v01"+(pid?"__"+pid:"")+"__"+YEAR, "gestion_majorelle_v01__"+YEAR ];
+    /* CLE_UNIQUE_GESTION_V48 : le gestionnaire n'ecrit plus que sur la cle sans session.
+       On la lit EN PREMIER ; l'ancienne cle a session n'est qu'un repli pour les navigateurs
+       qui n'ont pas encore rouvert le gestionnaire depuis la correction. */
+    var cles=[ "gestion_majorelle_v01__"+YEAR ];
+    if(pid) cles.push("gestion_majorelle_v01__"+pid+"__"+YEAR);
     for(var i=0;i<cles.length;i++){
       var brut=localStorage.getItem(cles[i]); if(!brut) continue;
       var o=JSON.parse(brut);
@@ -205,5 +208,7 @@ if(!acces){ note.innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voi
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
+<!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
+<script src="pcmajo_fond.js"></script>
 </body>
 </html>

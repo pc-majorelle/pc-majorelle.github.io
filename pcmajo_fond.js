@@ -24,7 +24,7 @@
   var LS = "pcmajo_elan_v49";
   var PLAFOND = 80;          /* points pour l'eclair a pleine intensite */
   var GARDE = 0.93;          /* ce qui reste apres un jour sans rien faire */
-  var OPACITE_NAPPES = 0.42;
+  var OPACITE_NAPPES = 0.46;
   var OPACITE_ECLAIR = 0.72;
 
   function jour() {          /* numero de jour LOCAL ; suit la date simulee du mode test */
@@ -65,6 +65,14 @@
     '#pcmajo-fond{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}' +
     '#pcmajo-fond i{position:absolute;inset:0;display:block;background-repeat:no-repeat;' +
       'transition:opacity 1.4s ease}' +
+    /* L'ouverture : la nappe monte, l'eclair arrive juste apres. Rien ne saute aux yeux,
+       la page a simplement l'air de se poser. */
+    '@keyframes pcmajoLever{from{opacity:0;transform:translateY(14px) scale(1.03)}' +
+      'to{opacity:1;transform:none}}' +
+    /* L'animation porte sur le CONTENEUR : posee sur les deux couches, sa valeur
+       finale `opacity:1` ecraserait l'opacite que `peindre()` calcule pour l'eclair,
+       et le fond serait au maximum quel que soit l'elan. */
+    '#pcmajo-fond{animation:pcmajoLever 1200ms cubic-bezier(.22,.7,.3,1) both}' +
     '#pcmajo-fond .nappes{background-image:url("fonds/nappes.webp");' +
       'background-position:center bottom;background-size:cover;opacity:' + OPACITE_NAPPES + '}' +
     '#pcmajo-fond .eclair{background-image:url("fonds/eclair.webp");' +
@@ -74,10 +82,9 @@
        couvrent presque tout l'ecran et il ne reste que les marges. On les rend
        legerement translucides — le texte ne bouge pas, l'atmosphere passe dessous.
        Les navigateurs qui ignorent color-mix laissent simplement les cartes opaques. */
-    '.card,.pilote{background-color:color-mix(in srgb, var(--card,#fff) 82%, transparent);' +
-      '-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}' +
+    '.card,.pilote{background-color:color-mix(in srgb, var(--card,#fff) 74%, transparent)}' +
     '@media print{#pcmajo-fond{display:none}}' +
-    '@media (prefers-reduced-motion:reduce){#pcmajo-fond i{transition:none}}';
+    '@media (prefers-reduced-motion:reduce){#pcmajo-fond{animation:none}#pcmajo-fond i{transition:none}}';
 
   /* Le fond est en `position:fixed` : sans precaution il passerait DEVANT le
      contenu, qui lui est en flux normal. On ne pose donc pas une regle CSS
