@@ -171,7 +171,15 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
     });
     if(grp) h+='</optgroup>';
     sel.innerHTML=h;
-    try{ var m=localStorage.getItem(MEM); if(m!==null && liste[+m]) sel.value=m; }catch(e){}
+    /* MEMOIRE_ROLE_V48 : on retrouve l'entree par son ETIQUETTE. Une valeur ancienne
+       (un simple numero) ne veut plus rien dire depuis que l'ordre a change :
+       on la jette au lieu de la suivre vers une classe au hasard. */
+    try{
+      var m=localStorage.getItem(MEM);
+      if(m!==null && !/^\d+$/.test(m)){
+        for(var k=0;k<liste.length;k++){ if(liste[k].label===m){ sel.value=String(k); break; } }
+      }
+    }catch(e){}
     var n=liste.filter(function(r){return r.kind==="eleve";}).length;
     var lbl=document.querySelector('label[for="tRole"]');
     if(lbl) lbl.textContent="Entrer directement comme… ("+n+" classes)";
@@ -197,7 +205,8 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   }
   document.getElementById("tGo").onclick=function(){
     var r=liste[+sel.value]; if(!r) return;
-    try{ localStorage.setItem(MEM, sel.value); }catch(e){}
+    /* MEMOIRE_ROLE_V48 : on ecrit l'etiquette, pas la position. */
+    try{ localStorage.setItem(MEM, r.label); }catch(e){}
     PCTest.entrer(r.session);
   };
 

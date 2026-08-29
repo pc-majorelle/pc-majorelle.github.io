@@ -907,4 +907,41 @@ charge(); maj(); accueil();
   window.DESCENTE_UN_CRAN_V48 = true;
 })();
 </script>
+<!-- FOND_REACTIF_V49 -->
+<script src="pcmajo_fond.js"></script>
+<script>
+/* ------------------------------------------------------------------ FOND_REACTIF_V49
+   Un point par carte JOUEE — juste ou fausse. C'est le travail qu'on valorise,
+   pas l'aisance : une carte ratee puis reprise vaut autant qu'une carte sue.
+   Double le soir meme du cours. On lit le jour de cours dans le calendrier publie
+   (`window.PCMAJO_PLAN`), pas dans le corps de la page : `chapitreDuJour()` vit
+   dans une fermeture et n'est pas joignable d'ici. Les vacances ne retirent pas
+   le double — se tromper dans ce sens ne coute rien a personne.                  */
+(function(){
+  "use strict";
+  if(window.FOND_REACTIF_V49) return;
+  if(!window.PCFond || typeof window.avance !== "function") return;
+
+  var dur = window.avance;
+
+  function soirDuCours(){
+    try{
+      var cid = (typeof st==="object" && st) ? st.classe : null;
+      var P = window.PCMAJO_PLAN;
+      if(!cid || !P || !P.classes || !P.classes[cid]) return false;
+      var cal = P.classes[cid].calendrier; if(!cal || !cal.joursCours) return false;
+      var j = new Date().getDay();          /* 0 = dimanche */
+      return cal.joursCours.indexOf(j) >= 0;
+    }catch(e){ return false; }
+  }
+
+  window.avance = function(r, bon, ms){
+    try{ PCFond.point(soirDuCours()); }catch(e){}
+    return dur(r, bon, ms);
+  };
+
+  try{ PCFond.peindre(); PCFond.ligne(document.body); }catch(e){}
+  window.FOND_REACTIF_V49 = true;
+})();
+</script>
 </body></html>

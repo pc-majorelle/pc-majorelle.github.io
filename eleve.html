@@ -51,6 +51,7 @@
 <section class="pdfsec" id="pdfsec" hidden></section>
 <p class="note" id="softnote" hidden></p>
 <p class="note">Bientôt : accès direct au portail de ta classe par QR.</p>
+<div id="pcmajo-regle-ici"><!-- FOND_REACTIF_V49 : la regle du fond se pose ici --></div>
 <script>(function(){
   var LAB={
     "2G3":"2nde G3","2G6":"2nde G6",
@@ -210,5 +211,8 @@
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
+<!-- FOND_REACTIF_V49 : le fond raconte le travail fourni. Voir pcmajo_fond.js. -->
+<script src="pcmajo_fond.js"></script>
+<script>(function(){ if(window.PCFond){ PCFond.peindre(); PCFond.ligne("#pcmajo-regle-ici"); } })();</script>
 </body>
 </html>
