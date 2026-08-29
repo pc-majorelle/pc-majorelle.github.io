@@ -145,7 +145,46 @@ function etatGestion(){
 var S=[]; var missing=false, anyProv=false;
 var GEST = (YEAR==="2026-2027") ? etatGestion() : null;
 if(GEST){
-  GEST.classes.forEach(function(c){
+  /* ------------------------------------------------------------------ PROPRIETAIRE_V49
+     Une classe porte maintenant le nom de son professeur. Tant qu'elle ne le portait
+     pas, cette page dessinait TOUTES les classes du carnet — celles des collegues
+     comprises — sous le titre « Ma semaine — <prenom> ». */
+  var _mien = (function(){
+    function net(x){ return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+                           .toUpperCase().trim(); }
+    var moi = [net(acces&&acces.prenom), net(profNom)].filter(Boolean);
+    var miennes=[], etrangeres=0, muettes=0;
+    (GEST.classes||[]).forEach(function(c){
+      var p = net(c.prof || c.professeur);
+      if(!p){ muettes++; return; }
+      if(moi.indexOf(p)>=0) miennes.push(c); else etrangeres++;
+    });
+    /* Aucune classe ne se declare : vieux carnet. On garde le comportement d'avant
+       — tout afficher — mais on previent, ce qui manquait justement. */
+    if(!miennes.length && !etrangeres) return {liste:GEST.classes||[], avis:
+      "\u26a0 Ce carnet ne dit pas \u00e0 qui appartiennent ses classes : tout est "+
+      "affich\u00e9 ici, y compris ce qui n'est peut-\u00eatre pas \u00e0 toi. "+
+      "R\u00e9importe ton fichier pour le corriger."};
+    var avis = "";
+    if(etrangeres) avis = etrangeres + " classe" + (etrangeres>1?"s":"") +
+      " d'autres professeurs " + (etrangeres>1?"ont":"a") + " \u00e9t\u00e9 mise" +
+      (etrangeres>1?"s":"") + " de c\u00f4t\u00e9.";
+    if(muettes) avis += (avis?" ":"") + muettes + " classe" + (muettes>1?"s":"") +
+      " sans nom de professeur, non affich\u00e9e" + (muettes>1?"s":"") + ".";
+    return {liste:miennes, avis:avis};
+  })();
+
+  if(_mien.avis){
+    try{
+      var _p=document.createElement("p");
+      _p.id="avisProprietaire";
+      _p.style.cssText="margin:6px 0 0;font-size:12.5px;opacity:.85";
+      _p.textContent=_mien.avis;
+      subEl.parentNode.insertBefore(_p, subEl.nextSibling);
+    }catch(e){}
+  }
+
+  _mien.liste.forEach(function(c){
     var byJ={}; (c.creneaux||[]).forEach(function(cr){ if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr); });
     (c.creneaux||[]).forEach(function(cr){
       var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return;
