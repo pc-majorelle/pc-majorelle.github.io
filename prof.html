@@ -244,6 +244,8 @@
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 
 <script src="classes_annee.js"></script>
+<!-- CLASSES_DEPUIS_BASE_V52 : la base d'abord. Ce fichier absent = repli sur classes_annee.js. -->
+<script src="base_edt.js"></script>
 <script src="store.js"></script>
 <script>
 /* ===== Contexte prof + construction du sous-menu Constructeur (par classe) ===== */
@@ -255,6 +257,9 @@
   if(a&&a.role==="prof"&&a.prenom){ document.getElementById("h1").textContent="Espace "+a.prenom; }
 
   var classes=(a&&a.role==="prof"&&Array.isArray(a.classes))?a.classes:[];
+  /* CLASSES_DEPUIS_BASE_V52 : meme source que le menu deroulant. `store.js` est charge
+     juste au-dessus ; s'il manquait, on garde la session, comme avant. */
+  try{ if(window.Store && Store.classesProf){ var _cs=Store.classesProf(); if(_cs && _cs.length) classes=_cs; } }catch(e){}
   if(classes.length){
     document.getElementById("cls").innerHTML=classes.map(function(c){
       return '<span class="clschip">'+(c.libelle||c.id)+'</span>';
@@ -267,6 +272,11 @@
     if(/^2G/.test(id)) return "2nde";
     if(/^1PC/.test(id)) return "1spe";
     if(/^TPC/.test(id)) return "Tspe";
+    /* CLASSES_DEPUIS_BASE_V52 : les identifiants du CARNET, que la base transporte.
+       Sans ces deux lignes, TSPE-PHY1 et 2NDE ne matchent rien : le lien du
+       constructeur tomberait sur null et s'ouvrirait sur un autre niveau, sans un mot. */
+    if(/^TSPE/.test(id)) return "Tspe";
+    if(/^2NDE/.test(id)||/^2DE/.test(id)) return "2nde";
     if(/^1STI/.test(id)) return "1sti";
     if(/^TSTI/.test(id)||/^TSISPH/.test(id)||/^TSI/.test(id)) return "Tsti";
     /* ENSSCI_CONSTR_V37 : le constructeur gère ens1/ensT depuis v34 — ils avaient été oubliés ici,
@@ -340,7 +350,10 @@
     var liste = Store.classesProf();                 // classes de l'ANNÉE courante
     if(pastilles){
       pastilles.innerHTML = liste.map(function(c){
-        return '<span class="clschip">'+(c.libelle||c.id)+'</span>';
+        /* CLASSES_DEPUIS_BASE_V52 : un nom venu du brouillon le dit. */
+        var prov = (c._source === "brouillon");
+        var t = prov ? ' title="Nom provisoire : emploi du temps brouillon, faute de carnet export\u00e9."' : '';
+        return '<span class="clschip"'+t+'>'+(prov?'\u25cb ':'')+(c.libelle||c.id)+'</span>';
       }).join("");
     }
     if(!liste.length){

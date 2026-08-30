@@ -23,8 +23,29 @@ window.Store = (function(){
   function classesAuth(){ var a=acces(); return (a && Array.isArray(a.classes)) ? a.classes : []; }
   /* classes POUR UNE ANNÉE donnée. 2025-2026 = réelles (AUTH). Autres années = classes d'ESSAI
      (numéros fixés par le MAÎTRE en attendant les vraies) — visiblement distinctes pour ne pas confondre. */
+  /* CLASSES_DEPUIS_BASE_V52 : les creneaux du carnet, regroupes par classe.
+     Renvoie null si la base est absente ou muette pour ce prof — la page retombe
+     alors exactement sur ce qu'elle faisait avant. */
+  function classesBase(an){
+    try{
+      var nom = (window.PRENOM2NOM && prenom()) ? window.PRENOM2NOM[String(prenom()).toLowerCase()] : null;
+      var cr  = (window.BASE_EDT && nom && window.BASE_EDT[an]) ? window.BASE_EDT[an][nom] : null;
+      if(!cr || !cr.length) return null;
+      var par={}, ordre=[];
+      cr.forEach(function(x){
+        var id = x.code || x.nom; if(!id) return;
+        if(!par[id]){ par[id]={ id:id, libelle:(x.nom||id), niveau:(x.niveau||""), creneaux:[], _source:x.source }; ordre.push(id); }
+        /* un seul creneau de brouillon suffit a marquer la classe comme provisoire */
+        if(x.source === "brouillon") par[id]._source = "brouillon";
+        par[id].creneaux.push({ jour:x.jour, debut:x.debut, duree_min:x.duree, groupe:(x.groupe||null), type:(x.type||null) });
+      });
+      return ordre.map(function(k){ return par[k]; });
+    }catch(e){ return null; }
+  }
   function classesForAnnee(an){
     an = an || annee();
+    var _base = classesBase(an);            /* CLASSES_DEPUIS_BASE_V52 : la base d'abord */
+    if(_base) return _base;
     if(an === "2025-2026") return classesAuth();
     // Autres années : classes ATTRIBUÉES (window.CLASSES_ANNEE), clé = NOM via PRENOM2NOM.
     var nom = (window.PRENOM2NOM && prenom()) ? window.PRENOM2NOM[String(prenom()).toLowerCase()] : null;
