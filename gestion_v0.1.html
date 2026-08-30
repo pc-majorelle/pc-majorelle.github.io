@@ -772,13 +772,19 @@ function seancesOf(cls){
   const out=[];
   /* FIN_DES_COURS_V52 : chaque classe s'arrete a la fin des cours de SON niveau. */
   const _fin = parseD(finDesCours(CAL_ANNEE_COURANTE||"", cls.niveau));
+  /* PERIODE_PAR_CLASSE_V52 : une classe partagee n'est a moi que sur une periode.
+     `du` est inclus, `au` est EXCLU — meme convention que la base. Vides = toute l'annee. */
+  const _du = (cls.du && cls.du.length>=10) ? parseD(cls.du) : null;
+  const _au = (cls.au && cls.au.length>=10) ? parseD(cls.au) : null;
   (cls.creneaux||[]).forEach((cr,ci)=>{
     if(!cr.jour||!JOURS.hasOwnProperty(cr.jour)) return;
     const wd=JOURS[cr.jour]; let occ=0;
     for(let d=new Date(R0);d<=_fin;d.setDate(d.getDate()+1)){
       if(d.getDay()!==wd) continue;
       if(!isSchoolDay(d)) continue;
-      occ++;
+      occ++;                                  /* la quinzaine se compte sur l'ANNEE, pas sur ma part */
+      if(_du && d<_du) continue;              /* PERIODE_PAR_CLASSE_V52 */
+      if(_au && d>=_au) continue;
       if(cr.quinzaine==="A"&&occ%2===0) continue;
       if(cr.quinzaine==="B"&&occ%2===1) continue;
       out.push({id:iso(d)+"#"+ci, date:iso(d), jour:cr.jour, debut:cr.debut||"", duree:cr.duree, ci});
@@ -888,10 +894,17 @@ function renderClasses(){
         <select onchange="setClass(${idx},'programme',this.value)">${GD.programmes.map(pr=>`<option value="${pr.key}" ${pr.key===c.programme?"selected":""}>${esc(pr.label)}</option>`).join("")}</select>
         <label class="small muted">Effectif</label><input type="number" min="0" value="${c.effectif??""}" onchange="setClass(${idx},'effectif',this.value===''?null:+this.value)" style="width:70px">
       </div>
+      <div class="row" style="margin-top:8px">
+        <label class="small muted" title="Classe partagée avec un ou plusieurs collègues : la période pendant laquelle elle est à vous. Laisser vide si elle est à vous toute l'année.">Ma part &mdash; du</label>
+        <input type="date" value="${esc(c.du||"")}" onchange="setClass(${idx},'du',this.value)" style="width:145px">
+        <label class="small muted" title="Premier jour qui n'est PLUS à vous. Le collègue suivant commence ce jour-là.">au (exclu)</label>
+        <input type="date" value="${esc(c.au||"")}" onchange="setClass(${idx},'au',this.value)" style="width:145px">
+        ${(c.du||c.au)?`<span class="pill" title="PERIODE_PAR_CLASSE_V52">classe partagée</span>`:`<span class="small muted">vide = à vous toute l'année</span>`}
+      </div>
       <div style="margin-top:10px"><span class="small muted">Emploi du temps PC (créneaux)</span></div>
       <div id="cr-${idx}">${c.creneaux.map((cr,ci)=>creneauRow(idx,ci,cr)).join("")||"<p class='small muted'>Aucun créneau — ajoutez-en pour générer les séances.</p>"}</div>
       <button class="mini" onclick="addCreneau(${idx})">+ Créneau</button>
-      <span class="small muted" style="margin-left:12px">→ <b>${S.length}</b> séances générées sur l'année</span>
+      <span class="small muted" style="margin-left:12px">→ <b>${S.length}</b> séances ${(c.du||c.au)?`pour <b>votre part</b> (sur ${seancesOf(Object.assign({},c,{du:null,au:null})).length} dans l'année)`:`générées sur l'année`}</span>
     </div>`;
   });
   h+=`<button class="primary" onclick="addClass()">+ Ajouter une classe</button>`;
@@ -966,7 +979,7 @@ function renderSeances(){
   const S=seancesOf(c);
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Séances réelles — ${esc(c.libelle)}</h3><span class="pill acc">${S.length} séances</span></div>
-    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année. ${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
+    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année. ${(c.du||c.au)?`<b>Classe partagée : seule votre part est listée, du ${c.du?_dateFr(c.du):"début"} au ${c.au?_dateFr(c.au):"fin"} exclu.</b> `:``}${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
   if(S.length){
     h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Prévu (prévisionnel)</th></tr></thead><tbody>`;
     const pv=prevOf(c.id); const bySeance={}; Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
