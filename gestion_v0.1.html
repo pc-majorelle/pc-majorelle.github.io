@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
 <script src="pcmajo_test.js"></script>
+<!-- DATES_DEPUIS_BASE_V52 : les dates cles, ecrites par _BASE. Absent = repli en dur. -->
+<script src="base_dates.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestion — Classes & progression · Plateforme PC</title>
@@ -621,15 +623,68 @@ function _clefNiveau(n){
   if(/tale|term/.test(n)) return "Tale";
   return "";
 }
+/* DATES_DEPUIS_BASE_V52 : d'ou viennent les dates de cours, dans l'ordre.
+   `SOURCE_DATES` retient laquelle a servi, pour que la page puisse le dire. */
+var SOURCE_DATES = "";
+/* CALENDRIER_MODIFIABLE_V52 : ce que l'utilisateur a change ici, pas encore exporte. */
+var DC_KEY = "gestion_majorelle_dates_cours";
+function datesLocales(){ try{ return JSON.parse(localStorage.getItem(DC_KEY)) || {}; }catch(e){ return {}; } }
+function poserDateCours(a, champ, niveau, iso){
+  var L = datesLocales(); var t = L[a] || (L[a] = {});
+  var c = t[champ] || (t[champ] = {});
+  if(iso) c[niveau] = iso; else delete c[niveau];
+  try{ localStorage.setItem(DC_KEY, JSON.stringify(L)); }catch(e){}
+  applyCalendar(ANNEE); renderCalendrier(); renderClasses(); switchTab("calendrier");
+}
+function datesEcartees(a){
+  /* Y a-t-il ici quelque chose que la base ne sait pas encore ? */
+  var L = datesLocales()[a]; if(!L) return false;
+  var b = null; try{ b = window.BASE_DATES && BASE_DATES[a]; }catch(e){}
+  var n = 0;
+  ["debut_cours","fin_cours"].forEach(function(champ){
+    var mien = L[champ] || {}, base = (b && b[champ]) || {};
+    Object.keys(mien).forEach(function(k){ if(mien[k] !== base[k]) n++; });
+  });
+  return n;
+}
+function _tableDates(a){
+  var L = datesLocales()[a];
+  if(L && ((L.fin_cours && Object.keys(L.fin_cours).length) || (L.debut_cours && Object.keys(L.debut_cours).length))){
+    var b0 = null; try{ b0 = window.BASE_DATES && BASE_DATES[a]; }catch(e){}
+    SOURCE_DATES = "local";
+    return { fin_cours:   Object.assign({}, (b0&&b0.fin_cours)||{},   L.fin_cours||{}),
+             debut_cours: Object.assign({}, (b0&&b0.debut_cours)||{}, L.debut_cours||{}) };
+  }
+  try{
+    var b = window.BASE_DATES && BASE_DATES[a];
+    if(b && (b.fin_cours || b.debut_cours)){ SOURCE_DATES = "base"; return b; }
+  }catch(e){}
+  if(FIN_DES_COURS[a]){ SOURCE_DATES = "dur"; return {fin_cours: FIN_DES_COURS[a], debut_cours: null}; }
+  SOURCE_DATES = "officiel"; return null;
+}
 function finDesCours(a, niveau){
-  var t=FIN_DES_COURS[a];
-  if(!t) return calOf(a).fin_des_cours;
-  return t[_clefNiveau(niveau)] || t["_"] || calOf(a).fin_des_cours;
+  var t=_tableDates(a);
+  if(!t || !t.fin_cours) return calOf(a).fin_des_cours;
+  var f=t.fin_cours;
+  return f[_clefNiveau(niveau)] || f["_"] || calOf(a).fin_des_cours;
+}
+function debutDesCours(a, niveau){
+  /* Aucune valeur inventee : sans ligne `debut_cours`, c'est la rentree des eleves.
+     Pour faire partir un niveau plus tard, on ajoute une ligne dans dates_cles.json. */
+  var t=_tableDates(a);
+  var d=t && t.debut_cours;
+  if(d) return d[_clefNiveau(niveau)] || d["_"] || calOf(a).rentree_eleves;
+  return calOf(a).rentree_eleves;
 }
 function finLaPlusTardive(a){
-  var t=FIN_DES_COURS[a]; if(!t) return calOf(a).fin_des_cours;
-  var v=Object.keys(t).map(function(k){return t[k];}).sort();
+  var t=_tableDates(a); var f=t&&t.fin_cours; if(!f) return calOf(a).fin_des_cours;
+  var v=Object.keys(f).map(function(k){return f[k];}).sort();
   return v[v.length-1] || calOf(a).fin_des_cours;
+}
+function debutLePlusTot(a){
+  var t=_tableDates(a); var d=t&&t.debut_cours; if(!d) return calOf(a).rentree_eleves;
+  var v=Object.keys(d).map(function(k){return d[k];}).sort();
+  return v[0] || calOf(a).rentree_eleves;
 }
 function loggedProfClasses(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&Array.isArray(a.classes)&&a.classes.length) return a.classes;}catch(e){} return null;}
 function migrateOldLS(){try{
@@ -741,7 +796,7 @@ function applyCalendar(a){
   /* FIN_DES_COURS_V52 : R1 borne l'annee sur la fin des COURS, pas sur la fin
      officielle. On prend la plus tardive des dates par niveau, pour ne fermer
      la porte a personne ; chaque classe se rebornera sur la sienne dans seancesOf. */
-  R0 = parseD(CAL.rentree_eleves); R1 = parseD(finLaPlusTardive(CAL_ANNEE_COURANTE||""));
+  R0 = parseD(debutLePlusTot(CAL_ANNEE_COURANTE||"")); R1 = parseD(finLaPlusTardive(CAL_ANNEE_COURANTE||""));
   R1_OFFICIEL = parseD(CAL.fin_des_cours);
   VAC = (CAL.vacances||[]).map(v=>({nom:v.nom,d0:parseD(v.debut),d1:v.reprise&&v.reprise.length>=10?parseD(v.reprise):null}));
   OFF = {};
@@ -772,6 +827,7 @@ function seancesOf(cls){
   const out=[];
   /* FIN_DES_COURS_V52 : chaque classe s'arrete a la fin des cours de SON niveau. */
   const _fin = parseD(finDesCours(CAL_ANNEE_COURANTE||"", cls.niveau));
+  const _deb = parseD(debutDesCours(CAL_ANNEE_COURANTE||"", cls.niveau));
   /* PERIODE_PAR_CLASSE_V52 : une classe partagee n'est a moi que sur une periode.
      `du` est inclus, `au` est EXCLU — meme convention que la base. Vides = toute l'annee. */
   const _du = (cls.du && cls.du.length>=10) ? parseD(cls.du) : null;
@@ -779,7 +835,7 @@ function seancesOf(cls){
   (cls.creneaux||[]).forEach((cr,ci)=>{
     if(!cr.jour||!JOURS.hasOwnProperty(cr.jour)) return;
     const wd=JOURS[cr.jour]; let occ=0;
-    for(let d=new Date(R0);d<=_fin;d.setDate(d.getDate()+1)){
+    for(let d=new Date(_deb);d<=_fin;d.setDate(d.getDate()+1)){
       if(d.getDay()!==wd) continue;
       if(!isSchoolDay(d)) continue;
       occ++;                                  /* la quinzaine se compte sur l'ANNEE, pas sur ma part */
@@ -932,9 +988,70 @@ function addClass(){
 function delClass(i){ if(!confirm("Supprimer cette classe et son suivi ?")) return; const id=state.classes[i].id; state.classes.splice(i,1); delete state.prev[id]; delete state.suivi[id]; save(); renderClasses(); refreshClassSelector(); }
 
 /* ---------- CALENDRIER ---------- */
+var DC_OUVERT = false;
+function basculerVerrou(){ DC_OUVERT = !DC_OUVERT; renderCalendrier(); }
+function exporterDatesCours(){
+  /* On rend le fichier ENTIER, base + modifications, pour qu'il remplace franchement
+     `_BASE\dates_cours.json` au lieu d'etre fusionne a la main. */
+  var out = { "_lisezmoi": "LE DEBUT ET LA FIN DES COURS. Ecrit par le bouton « exporter les dates » "
+    + "du gestionnaire, ou a la main. Les dates OFFICIELLES (rentree, vacances, feries, ponts) "
+    + "restent dans dates_cles.json : elles sont exterieures et verifiables. Celles-ci sont une "
+    + "decision, elles changent, elles sont portees PAR NIVEAU. La cle '_' est le repli." };
+  ANNEES.forEach(function(a){
+    var t = _tableDates(a) || {};
+    out[a] = { debut_cours: t.debut_cours || {}, fin_cours: t.fin_cours || {} };
+  });
+  var b = new Blob([JSON.stringify(out, null, 1)], {type:"application/json"});
+  var lien = document.createElement("a");
+  lien.href = URL.createObjectURL(b); lien.download = "dates_cours.json"; lien.click();
+  _dlg("<h3 style='margin:0 0 8px'>dates_cours.json est dans vos telechargements</h3>"
+     + "<p>Deposez-le dans <code>_BASE\\</code>, puis relancez "
+     + "<code>exporter_edt_site_v52.py</code> : la base et le site suivront.</p>"
+     + "<p class='small muted'>Tant que ce n'est pas fait, cette page affiche vos dates "
+     + "et la base garde les siennes.</p>", [{texte:"Compris", fort:true}]);
+}
+function _ligneDateCours(a, champ, niveau, etiquette){
+  var t = _tableDates(a) || {}; var c = (t[champ]) || {};
+  var val = c[niveau] || "";
+  var herite = !c[niveau] && c["_"] ? c["_"] : "";
+  return `<div class="row" style="align-items:center;gap:8px">
+    <label class="small muted" style="width:120px">${esc(etiquette)}</label>
+    <input type="date" value="${esc(val)}" ${DC_OUVERT?"":"disabled"}
+      onchange="poserDateCours('${a}','${champ}','${niveau}',this.value)" style="width:160px">
+    ${herite?`<span class="small muted">hérite du repli : ${_dateFr(herite)}</span>`:``}
+  </div>`;
+}
 function renderCalendrier(){
   const el=document.getElementById("p-calendrier");
-  let h=`<div class="card"><h3>Calendrier officiel ${esc(CAL.meta.annee_scolaire)} — Zone ${esc(CAL.meta.zone)}</h3>
+  const _a = CAL_ANNEE_COURANTE || ANNEE;
+  const _ec = datesEcartees(_a);
+  let h=`<div class="card"><div class="row" style="justify-content:space-between;align-items:center">
+      <h3 style="margin:0">📆 Début et fin des cours <span class="pill acc">votre décision</span></h3>
+      <div class="row" style="gap:8px">
+        <button class="mini ghost" onclick="basculerVerrou()">${DC_OUVERT?"🔓 verrouiller":"🔒 modifier"}</button>
+        <button class="mini" onclick="exporterDatesCours()">⬇︎ exporter les dates</button>
+      </div></div>
+    <p class="hint">Au lycée les cours s'arrêtent avant la fin officielle, à cause des examens.
+      Ces dates sont <b>portées par niveau</b> : un niveau peut partir avant les autres.
+      Laissez vide pour suivre le repli. Elles valent pour <b>tous les professeurs</b> —
+      d'où le verrou.</p>
+    ${["2de","1re","Tale"].map(n=>`<div class="row" style="gap:18px;margin-top:4px">
+        <b style="width:44px">${n}</b>
+        ${_ligneDateCours(_a,"debut_cours",n,"début des cours")}
+        ${_ligneDateCours(_a,"fin_cours",n,"fin des cours")}
+      </div>`).join("")}
+    <div class="row" style="gap:18px;margin-top:8px;opacity:.85">
+        <b style="width:44px">repli</b>
+        ${_ligneDateCours(_a,"debut_cours","_","début des cours")}
+        ${_ligneDateCours(_a,"fin_cours","_","fin des cours")}
+    </div>
+    <p class="hint" style="margin-top:10px">Source actuelle :
+      ${SOURCE_DATES==="base"?`<b>la base</b> (<code>base_dates.js</code>)`
+        :SOURCE_DATES==="local"?`<b>vos modifications dans ce navigateur</b>`
+        :SOURCE_DATES==="dur"?`<b>le repli écrit dans la page</b> — <code>base_dates.js</code> n'a pas été chargé`
+        :`<b>le calendrier officiel</b>`}
+      ${_ec?` &middot; <b style="color:#b3541e">${_ec} date${_ec>1?"s":""} modifiée${_ec>1?"s":""} ici et pas encore exportée${_ec>1?"s":""} vers la base</b>`:``}</p>
+  </div>` + `<div class="card"><h3>Calendrier officiel ${esc(CAL.meta.annee_scolaire)} — Zone ${esc(CAL.meta.zone)} <span class="pill">🔒 non modifiable</span></h3>
     <p class="hint">Source : ${esc(CAL.meta.source)}</p>
     <table><thead><tr><th>Vacances</th><th>Dernier jour de cours</th><th>Reprise</th></tr></thead><tbody>
     ${CAL.vacances.map(v=>`<tr><td>${esc(v.nom)}</td><td>${v.dernier_jour_cours?frDate(v.dernier_jour_cours):"—"}</td><td>${v.reprise?esc(v.reprise.length>=10?frDate(v.reprise.slice(0,10)):v.reprise):"—"}</td></tr>`).join("")}
@@ -979,7 +1096,7 @@ function renderSeances(){
   const S=seancesOf(c);
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Séances réelles — ${esc(c.libelle)}</h3><span class="pill acc">${S.length} séances</span></div>
-    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année. ${(c.du||c.au)?`<b>Classe partagée : seule votre part est listée, du ${c.du?_dateFr(c.du):"début"} au ${c.au?_dateFr(c.au):"fin"} exclu.</b> `:``}${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
+    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année${SOURCE_DATES==="base"?``:SOURCE_DATES==="dur"?` <b title="base_dates.js n’a pas été chargé">`+`(dates de repli écrites dans la page — base_dates.js manque)</b>`:``}. ${(c.du||c.au)?`<b>Classe partagée : seule votre part est listée, du ${c.du?_dateFr(c.du):"début"} au ${c.au?_dateFr(c.au):"fin"} exclu.</b> `:``}${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
   if(S.length){
     h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Prévu (prévisionnel)</th></tr></thead><tbody>`;
     const pv=prevOf(c.id); const bySeance={}; Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
