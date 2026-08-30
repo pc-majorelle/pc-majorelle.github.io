@@ -163,15 +163,27 @@ function etatGestion(){
     try{ a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); }catch(e){}
     if(!a){ try{ a=JSON.parse(localStorage.getItem("pcmajo_acces")); }catch(e){} }
     if(a && a.role==="prof" && a.pid) pid=a.pid;
-    /* CLE_UNIQUE_GESTION_V48 : le gestionnaire n'ecrit plus que sur la cle sans session.
-       On la lit EN PREMIER ; l'ancienne cle a session n'est qu'un repli pour les navigateurs
-       qui n'ont pas encore rouvert le gestionnaire depuis la correction. */
-    var cles=[ "gestion_majorelle_v01__"+YEAR ];
+    /* CLE_PAR_PROF_SEMAINE_V52 : la cle DU PROFESSEUR d'abord.
+       v48 lisait la cle partagee en premier. Depuis CLE_PAR_PROF_V52 (ce matin), le
+       gestionnaire n'ecrit plus que sur la cle par prof : garder l'ordre de v48
+       revenait a afficher ici le carnet fige au matin, quoi que Laurent enregistre.
+       La cle partagee reste lue EN REPLI — les navigateurs qui n'ont pas rouvert le
+       gestionnaire depuis n'ont encore qu'elle — mais seulement si le carnet qu'elle
+       contient est bien celui du prof connecte. Aucune cle n'est supprimee. */
+    var cles=[];
     if(pid) cles.push("gestion_majorelle_v01__"+pid+"__"+YEAR);
+    cles.push("gestion_majorelle_v01__"+YEAR);
+    var monNom=""; try{ if(a && a.prenom && window.PRENOM2NOM) monNom=PRENOM2NOM[String(a.prenom).toLowerCase()]||""; }catch(e){}
+    function _aMoi(o){
+      if(!pid) return true;                                   /* pas connecte : on ne trie pas */
+      if(o && o.prof_pid) return o.prof_pid===pid;             /* carnet signe depuis ce matin */
+      if(o && o.prof && monNom) return String(o.prof).toUpperCase()===monNom;
+      return true;   /* carnet d'avant la signature : on l'accepte, c'est le repli v48 */
+    }
     for(var i=0;i<cles.length;i++){
       var brut=localStorage.getItem(cles[i]); if(!brut) continue;
       var o=JSON.parse(brut);
-      if(o && o.classes && o.classes.length){
+      if(o && o.classes && o.classes.length && _aMoi(o)){
         var n=0; o.classes.forEach(function(c){ n+=((c.creneaux||[]).length); });
         if(n) return o;
       }
