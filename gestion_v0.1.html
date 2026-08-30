@@ -228,6 +228,7 @@
       <input type="file" id="fileIn" accept="application/json" style="display:none">
     </span>
   </div>
+  <div class="row" id="propage" style="gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 2px"></div>
   <div class="tabs" id="tabs"><!--RATIONALIZE_V30 : onglets rangés par fréquence-->
     <div class="tab on" data-t="semaine">Semaine</div>
     <div class="tab" data-t="seances">Séances</div>
@@ -758,6 +759,7 @@ function save(){
      prochaine lecture sache a qui il est sans avoir a le deviner. */
   try{ var p=currentPid(); if(p){ state.prof_pid=p; state.prof=loggedProfNom(); } }catch(e){}
   try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
+  try{ renderVoyants(); }catch(e){}   /* VOYANTS_A_PROPAGER_V52 */
 }
 /* MAITRE v22 — migration filière/programme : corrige les états sauvegardés antérieurs
    où TG5/TG6 (enseignement scientifique) et TSTI2D/1STI2D pointaient encore vers un
@@ -1004,6 +1006,7 @@ function exporterDatesCours(){
   var b = new Blob([JSON.stringify(out, null, 1)], {type:"application/json"});
   var lien = document.createElement("a");
   lien.href = URL.createObjectURL(b); lien.download = "dates_cours.json"; lien.click();
+  try{ poserMarqueur("dates"); }catch(e){}
   _dlg("<h3 style='margin:0 0 8px'>dates_cours.json est dans vos telechargements</h3>"
      + "<p>Deposez-le dans <code>_BASE\\</code>, puis relancez "
      + "<code>exporter_edt_site_v52.py</code> : la base et le site suivront.</p>"
@@ -2249,6 +2252,70 @@ function _nomFichierSauvegarde(){
   var qui=_sansAccent(profPrenom());
   return "gestion_"+(qui?qui+"_":"")+(state.annee||ANNEE)+"_"+_isoJour()+".json";
 }
+/* ---------------- VOYANTS_A_PROPAGER_V52 ---------------- */
+function _hash(s){ var h=5381,i=s.length; while(i) h=(h*33) ^ s.charCodeAt(--i); return (h>>>0).toString(36); }
+function _empreinteEDT(){
+  /* ce qui perime la BASE : l'emploi du temps, rien d'autre. */
+  var t=(state.classes||[]).map(function(c){
+    return [c.id,c.libelle,c.niveau,c.du||"",c.au||"",
+            (c.creneaux||[]).map(function(x){
+              return [x.jour,x.debut,x.duree,x.quinzaine||"",x.groupe||"",x.type||""].join("~");
+            }).sort().join("|")].join("#");
+  }).sort().join("\n");
+  return _hash(t);
+}
+function _empreintePlan(){
+  /* ce qui perime le PLAN : l'emploi du temps ET les progressions. */
+  var p=""; try{ p=JSON.stringify(state.progressions||{}); }catch(e){}
+  return _hash(_empreinteEDT()+"::"+_hash(p)+"::"+(state.classes||[]).map(function(c){return c.programme;}).join(","));
+}
+var MK_KEY = "gestion_majorelle_propage";
+function _mkCle(){ var p=currentPid(); return MK_KEY+"__"+(p||"anon")+"__"+(state.annee||ANNEE); }
+function marqueurs(){ try{ return JSON.parse(localStorage.getItem(_mkCle()))||{}; }catch(e){ return {}; } }
+function poserMarqueur(quoi){
+  var m=marqueurs();
+  if(quoi==="base") m.base=_empreinteEDT();
+  if(quoi==="plan") m.plan=_empreintePlan();
+  if(quoi==="dates"){ try{ localStorage.removeItem(DC_KEY); }catch(e){} }
+  try{ localStorage.setItem(_mkCle(), JSON.stringify(m)); }catch(e){}
+  renderVoyants();
+}
+function etatPropagation(){
+  var m=marqueurs();
+  return { base:  m.base !== _empreinteEDT(),
+           plan:  m.plan !== _empreintePlan(),
+           dates: !!datesEcartees(state.annee||ANNEE) };
+}
+function renderVoyants(){
+  var z=document.getElementById("propage"); if(!z) return;
+  var e=etatPropagation();
+  var L=[["base","la base","Enregistre ton carnet, puis dépose-le dans _BASE\\carnets\\ et relance exporter_edt_site_v52.py."],
+         ["plan","le plan","Republie le plan : sinon les questions du soir restent sur l’ancien emploi du temps."],
+         ["dates","les dates","Exporte dates_cours.json et dépose-le dans _BASE\\."]];
+  z.innerHTML='<span class="small muted" style="letter-spacing:.04em">à propager</span>'
+    + L.map(function(x){
+        var on=e[x[0]];
+        return '<button class="mini '+(on?"":"ghost")+'" title="'+x[2]+'" onclick="gestePropager(\''+x[0]+'\')"'
+          + ' style="'+(on?"background:#b3541e;border-color:transparent;color:#fff;font-weight:600":"opacity:.6")+'">'
+          + (on?"● ":"○ ") + x[1] + (on?" — à faire":" — à jour") + '</button>';
+      }).join("")
+    + (e.base||e.plan||e.dates ? '<span class="small" style="color:#b3541e">ce qui est ici n’est pas encore sorti d’ici</span>' : '');
+}
+function gestePropager(quoi){
+  if(quoi==="base"){ var b=document.getElementById("btnSave"); if(b) b.click(); }
+  if(quoi==="plan"){ if(typeof publierPlan==="function") publierPlan(); }
+  if(quoi==="dates"){ if(typeof exporterDatesCours==="function") exporterDatesCours(); }
+}
+window.addEventListener("beforeunload", function(ev){
+  try{ var e=etatPropagation(); if(e.base||e.plan||e.dates){ ev.preventDefault(); ev.returnValue=""; } }catch(x){}
+});
+/* Amorcage : `save()` ne part qu'a la premiere modification. Sans ceci la bande reste
+   vide tant qu'on n'a rien touche — c'est-a-dire au moment ou on en a le plus besoin. */
+(function amorcerVoyants(){
+  function go(){ try{ renderVoyants(); }catch(e){} }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", go); else go();
+  setTimeout(go, 400); setTimeout(go, 1200);
+})();
 function _compteEleves(){
   var n=0; (state.classes||[]).forEach(function(c){ n+=((c.eleves||[]).length); }); return n;
 }
@@ -2286,6 +2353,7 @@ function _telecharger(){
   var blob=new Blob([JSON.stringify(paquet,null,2)],{type:"application/json"});
   var a=document.createElement("a");
   a.href=URL.createObjectURL(blob); a.download=_nomFichierSauvegarde(); a.click();
+  try{ poserMarqueur("base"); }catch(e){}   /* VOYANTS_A_PROPAGER_V52 */
   setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
 }
 
@@ -3006,6 +3074,7 @@ function ncImportFile(e){
     a.href = URL.createObjectURL(blob);
     a.download = "progression_dates.js";
     document.body.appendChild(a); a.click();
+  try{ poserMarqueur("plan"); }catch(e){}
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 
     var msg = "Plan publié — " + n + " classe(s), " + seances + " séance(s) datée(s).\n"
