@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
 <script src="pcmajo_test.js"></script>
+<!-- SEMAINE_DEPUIS_BASE_V52 : l'emploi du temps ecrit par _BASE. Absent = repli sur EDT2026. -->
+<script src="base_edt.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12324a">
@@ -322,10 +324,30 @@ if(GEST){
     subEl.parentNode.insertBefore(_b, subEl.nextSibling);
   }catch(e){}
 }else if(YEAR==="2026-2027"){
-  var list=EDT2026[profNom]||[];
-  if(!list.length) missing=true;
-  anyProv = anyProv || list.length>0;   /* la table en dur EST un brouillon : on le dit */
-  list.forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,d:cr.duree_min||60,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov,grp:'',typ:''}); });
+  /* SEMAINE_DEPUIS_BASE_V52 : la semaine se lit dans base_edt.js, ecrit par _BASE, qui
+     prend le CARNET du professeur quand il en existe un et le brouillon PHY.pdf sinon.
+     Chaque creneau porte sa `source`. Un creneau venu du brouillon reste marque « a
+     placer » : une page ne doit jamais faire passer un brouillon pour du reel.
+     EDT2026, la vieille table en dur, ne sert plus que si base_edt.js manque. */
+  var _B=null;
+  try{ _B=(window.BASE_EDT&&BASE_EDT["2026-2027"]&&BASE_EDT["2026-2027"][profNom])||null; }catch(e){}
+  if(_B&&_B.length){
+    _B.forEach(function(cr){
+      var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return;
+      var brouillon=(cr.source!=="carnet"); if(brouillon) anyProv=true;
+      var lib=cr.nom||cr.code;
+      S.push({j:cr.jour, s:s, d:cr.duree||55, code:lib,
+              full:lib+(cr.groupe?(" \u00b7 groupe "+cr.groupe):"")+(cr.quinzaine?(" \u00b7 sem. "+cr.quinzaine):""),
+              prov:brouillon, grp:(cr.groupe||""), qz:(cr.quinzaine||""),
+              tp:(cr.type==="TP"), fam:(cr.famille||""), past:"", pp:!!cr.pp,
+              typ:(cr.type==="TP"?"TP":"")});
+    });
+  }else{
+    var list=EDT2026[profNom]||[];
+    if(!list.length) missing=true;
+    anyProv = anyProv || list.length>0;   /* la table en dur EST un brouillon : on le dit */
+    list.forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var prov=/^A placer/i.test(cr.etiquette||""); if(prov)anyProv=true; S.push({j:cr.jour,s:s,d:cr.duree_min||60,code:tag2026(cr.etiquette),full:cr.etiquette||"",prov:prov,grp:'',typ:''}); });
+  }
 }else{
   var prof=acces||FALLBACK;
   (prof.classes||[]).forEach(function(c){ var byJ={};(c.creneaux||[]).forEach(function(cr){if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr);});

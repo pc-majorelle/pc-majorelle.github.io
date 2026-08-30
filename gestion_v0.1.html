@@ -559,7 +559,29 @@ let ANNEES = loadAnnees();
 const PREF_ANNEE = "gestion_majorelle_annee";
 var AGENOR_PID="3126898c42e831a4c34e8991c386c7cad8b3ff522552274d5562d387608d067c";
 function currentPid(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&a.pid) return a.pid;}catch(e){} return "";}
-function lsKey(a){ /* CLE_UNIQUE_GESTION_V48 : la cle ne depend plus de la session. Elle en dependait, et le meme professeur avait deux carnets sans le savoir. */ return LSKEY+"__"+a; }
+/* CLE_PAR_PROF_V52 — la cle du carnet porte de nouveau le PROFESSEUR.
+   CLE_UNIQUE_GESTION_V48 avait retire la session pour supprimer un doublon reel ;
+   en retirant l'identite au lieu de la corriger, elle a cree un MELANGE : sur un
+   poste partage tous les professeurs ouvraient le meme carnet, et le premier qui
+   enregistrait ecrasait le precedent (capture de_laurent\bug_classe.png).
+   On ne rustine pas la cle une troisieme fois : on lui rend son proprietaire.
+     lecture  : cle par prof d'abord ; a defaut l'ancienne cle partagee, ADOPTEE
+                seulement si elle appartient bien a ce professeur (voir carnetEstAMoi).
+     ecriture : TOUJOURS la cle par prof. L'ancienne cle n'est plus jamais ecrite.
+     rien     : aucune cle n'est effacee. */
+function lsKeyPartagee(a){ return LSKEY+"__"+a; }
+function lsKey(a){ var p=currentPid(); return p ? (LSKEY+"__"+p+"__"+a) : lsKeyPartagee(a); }
+function carnetEstAMoi(o){
+  /* Un carnet marque dit a qui il est. Un carnet NON marque date d'avant la v52 :
+     seul AGENOR l'adopte, comme migrateOldLS() le decidait deja. Personne n'herite
+     du carnet d'un collegue. */
+  try{
+    var p=currentPid(); if(!p) return false;
+    if(o && o.prof_pid) return o.prof_pid===p;
+    if(o && o.prof)     return String(o.prof).toUpperCase()===loggedProfNom();
+    return p===AGENOR_PID;
+  }catch(e){ return false; }
+}
 let ANNEE = (function(){try{const a=localStorage.getItem(PREF_ANNEE); return (a&&ANNEES.indexOf(a)>=0)?a:"2025-2026";}catch(e){return "2025-2026";}})();
 const CLASSES_PAR_ANNEE = {"2025-2026":[
  {"id":"2G3","niveau":"Seconde","libelle":"2de G3","effectif":null,"emploi_du_temps_pc":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"vendredi","debut":"14:30","duree_min":90}],"note":"2de G3 (Agénor) — TP dédoublé mardi + classe vendredi. Créneaux réels EDT 2025-26."},
@@ -646,6 +668,9 @@ function defaultState(annee){
 let state = defaultState(ANNEE);
 
 function save(){
+  /* CLE_PAR_PROF_V52 : on signe le carnet en l'enregistrant, pour que la
+     prochaine lecture sache a qui il est sans avoir a le deviner. */
+  try{ var p=currentPid(); if(p){ state.prof_pid=p; state.prof=loggedProfNom(); } }catch(e){}
   try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
 }
 /* MAITRE v22 — migration filière/programme : corrige les états sauvegardés antérieurs
@@ -662,7 +687,16 @@ function reconcileFiliere(st){
   return chg;
 }
 function tryLoadLS(){
-  try{const s=localStorage.getItem(lsKey(ANNEE)); if(s){const o=JSON.parse(s); if(o&&o.classes){ if(reconcileFiliere(o)){ try{localStorage.setItem(lsKey(ANNEE),JSON.stringify(o));}catch(e){} } if(ANNEE==="2026-2027"&&o.classes.length&&o.classes.every(function(c){return (!c.creneaux||!c.creneaux.length)&&(!c.eleves||!c.eleves.length);})){ state=defaultState(ANNEE); try{localStorage.setItem(lsKey(ANNEE),JSON.stringify(state));}catch(e){} } else { state=o; try{ if(seedProfProgressions(state)){ localStorage.setItem(lsKey(ANNEE),JSON.stringify(state)); } }catch(e){} } }}}catch(e){}
+  /* CLE_PAR_PROF_V52 : ma cle d'abord ; a defaut l'ancienne cle partagee, et
+     seulement si le carnet qu'elle contient est bien le mien. */
+  try{
+    var s=localStorage.getItem(lsKey(ANNEE));
+    if(!s){
+      var vieux=localStorage.getItem(lsKeyPartagee(ANNEE));
+      if(vieux){ try{ if(carnetEstAMoi(JSON.parse(vieux))) s=vieux; }catch(e){} }
+    }
+    if(s){const o=JSON.parse(s); if(o&&o.classes){ if(reconcileFiliere(o)){ try{localStorage.setItem(lsKey(ANNEE),JSON.stringify(o));}catch(e){} } if(ANNEE==="2026-2027"&&o.classes.length&&o.classes.every(function(c){return (!c.creneaux||!c.creneaux.length)&&(!c.eleves||!c.eleves.length);})){ state=defaultState(ANNEE); try{localStorage.setItem(lsKey(ANNEE),JSON.stringify(state));}catch(e){} } else { state=o; try{ if(seedProfProgressions(state)){ localStorage.setItem(lsKey(ANNEE),JSON.stringify(state)); } }catch(e){} } }}
+  }catch(e){}
 }
 
 /* ===================== DATES & CALENDRIER (données réelles Zone B) ===================== */
