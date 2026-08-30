@@ -316,8 +316,8 @@ window.BASE_EDT = {
      "jour": "lundi"
     },
     "code": "2NDE-1",
-    "debut": "15:08",
-    "duree": 82,
+    "debut": "15:00",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "lundi",
@@ -376,8 +376,8 @@ window.BASE_EDT = {
      "jour": "mardi"
     },
     "code": "2NDE-2",
-    "debut": "15:08",
-    "duree": 82,
+    "debut": "15:00",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "mardi",
@@ -673,8 +673,8 @@ window.BASE_EDT = {
      "jour": "mardi"
     },
     "code": "2NDE-1",
-    "debut": "10:38",
-    "duree": 82,
+    "debut": "10:30",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "mardi",
@@ -766,8 +766,8 @@ window.BASE_EDT = {
      "jour": "vendredi"
     },
     "code": "2NDE-2",
-    "debut": "10:38",
-    "duree": 82,
+    "debut": "10:30",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "vendredi",
@@ -828,8 +828,8 @@ window.BASE_EDT = {
      "jour": "jeudi"
     },
     "code": "2NDE-2",
-    "debut": "15:08",
-    "duree": 82,
+    "debut": "15:00",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "jeudi",
@@ -897,20 +897,7 @@ window.BASE_EDT = {
     "nom": "TG3",
     "pp": false,
     "quinzaine": null,
-    "relais": [
-     [
-      "BASTIAN",
-      "0,5"
-     ],
-     [
-      "GIRSCH",
-      "0,25"
-     ],
-     [
-      "PARISE",
-      "0,25"
-     ]
-    ],
+    "relais": null,
     "source": "brouillon",
     "type": "Cours"
    },
@@ -981,8 +968,8 @@ window.BASE_EDT = {
      "jour": "mercredi"
     },
     "code": "2NDE-1",
-    "debut": "10:38",
-    "duree": 82,
+    "debut": "10:30",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "mercredi",
@@ -1056,8 +1043,8 @@ window.BASE_EDT = {
      "jour": "jeudi"
     },
     "code": "2NDE-2",
-    "debut": "10:38",
-    "duree": 82,
+    "debut": "10:30",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "jeudi",
@@ -1209,8 +1196,8 @@ window.BASE_EDT = {
      "jour": "mardi"
     },
     "code": "2NDE-1",
-    "debut": "15:08",
-    "duree": 82,
+    "debut": "15:00",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "mardi",
@@ -1331,8 +1318,8 @@ window.BASE_EDT = {
      "jour": "lundi"
     },
     "code": "2NDE-1",
-    "debut": "10:38",
-    "duree": 82,
+    "debut": "10:30",
+    "duree": 90,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "lundi",
