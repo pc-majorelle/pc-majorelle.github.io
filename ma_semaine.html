@@ -149,6 +149,32 @@ if(ysel){ ysel.innerHTML=YEARS.map(function(y){return '<option value="'+y+'"'+(y
 
 /* construire les séances (agnostique de la source) : {j,s,n,code,full,prov} */
 function toMin(hhmm){if(!hhmm||hhmm.indexOf(':')<0)return null;var p=hhmm.split(':');var v=(+p[0])*60+(+p[1]);return isNaN(v)?null:v;}
+/* META_DEPUIS_BASE_V52 : ce que la base sait et que le carnet ne sait pas dire.
+   Les deux fonctions rendent "" si base_edt.js manque : la page retombe alors
+   exactement sur ce qu'elle faisait avant. */
+function _creBase(cle){
+  try{
+    var L=(window.BASE_EDT&&BASE_EDT[YEAR]&&BASE_EDT[YEAR][profNom])||null;
+    if(!L||!cle) return [];
+    var k=String(cle);
+    return L.filter(function(x){ return x.code===k || x.nom===k; });
+  }catch(e){ return []; }
+}
+/* La famille appartient a la CLASSE : on la cherche sur le code seul. L'heure ne peut
+   pas servir de cle — le carnet dit 10:00 la ou la base, recalee sur la grille du
+   lycee, dit 10:05. */
+function _famBase(cle){
+  var L=_creBase(cle);
+  for(var i=0;i<L.length;i++){ if(L[i].famille) return L[i].famille; }
+  return "";
+}
+/* Le type appartient au CRENEAU : (code, jour), et seulement si la base n'a qu'un seul
+   creneau ce jour-la. Le vendredi de la 2de GT3 en compte trois, de types differents :
+   on n'en devine aucun. */
+function _typeBase(cle,jour){
+  var L=_creBase(cle).filter(function(x){ return x.jour===jour; });
+  return (L.length===1 && L[0].type) ? L[0].type : "";
+}
 function minLbl(v){var h=Math.floor(v/60),m=v%60;return h+'h'+(m<10?'0'+m:m);}
 function durLbl(d){return d%60===0?(d/60)+'h':(d<60?d+' min':Math.floor(d/60)+'h'+String(d%60).padStart(2,'0'));}
 function isSec(c){return /^2/.test(c.id||'')||/2de|2nd|second/i.test((c.libelle||'')+' '+(c.id||''));}
@@ -185,7 +211,9 @@ function etatGestion(){
       var o=JSON.parse(brut);
       if(o && o.classes && o.classes.length && _aMoi(o)){
         var n=0; o.classes.forEach(function(c){ n+=((c.creneaux||[]).length); });
-        if(n) return o;
+        /* CARNET_SIGNE_V52 : une cle qui porte mon pid, ou un carnet estampille par
+           save(), n'a pas besoin qu'on redemande a chaque classe a qui elle est. */
+        if(n){ try{ o.__signe = !!(pid && (i===0 || o.prof_pid===pid)); }catch(e){} return o; }
       }
     }
   }catch(e){}
@@ -235,6 +263,12 @@ if(GEST){
     function net(x){ return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
                            .toUpperCase().trim(); }
     function cl(n){ return n + " classe" + (n>1?"s":""); }
+    /* CARNET_SIGNE_V52 : carnet lu sur MA cle, ou estampille a mon pid — tout est a moi.
+       Le tri ci-dessous reste en vigueur pour l'ancienne cle partagee, ou plusieurs
+       carnets ont pu se melanger, et pour un fichier reimporte a la main. */
+    if(GEST.__signe && (GEST.classes||[]).length){
+      return {liste:GEST.classes, avis:"", fort:false};
+    }
     var moi = [net(acces&&acces.prenom), net(profNom)].filter(Boolean);
     var miennes=[], etrangeres=[], muettes=[];
     (GEST.classes||[]).forEach(function(c){
@@ -304,12 +338,18 @@ if(GEST){
       /* COULEURS_V50 : le TP vient du carnet — `type:"TP"` sur le creneau, ou un
          groupe, puisqu'un dedoublement est un TP par construction. */
       var estTP = (String(cr.type||cr.tp||"").toUpperCase()==="TP") || cr.tp===true || !!g;
+      /* META_DEPUIS_BASE_V52 : le carnet dit QUAND, la base dit QUOI. Le gestionnaire
+         n'a pas de case « famille » ni « TP » ; on va les chercher dans base_edt.js,
+         sans jamais contredire le carnet. */
+      var _fam=c.famille||"";
+      if(!_fam) _fam=_famBase(c.id)||_famBase(c.libelle)||"";
+      if(!estTP && !g){ var _t=_typeBase(c.id,cr.jour)||_typeBase(c.libelle,cr.jour); if(_t==="TP") estTP=true; }
       S.push({ j:cr.jour, s:s, d:cr.duree||cr.duree_min||60,
                code:(c.libelle||c.id),
                full:(c.libelle||c.id)+(q?" · semaine "+q+(hors?" — pas cette semaine":""):""),
                prov:false, grp:g, qz:q, hors:hors, tp:estTP,
-               fam:c.famille||"", past:(c.pastille==null?"":String(c.pastille)), pp:!!c.pp,
-               typ:g?"TP":(q?("sem. "+q):"") });
+               fam:_fam, past:(c.pastille==null?"":String(c.pastille)), pp:!!c.pp,
+               typ:(g||estTP)?"TP":(q?("sem. "+q):"") });
     });
   });
   if(!S.length) missing=true;
