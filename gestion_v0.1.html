@@ -1065,10 +1065,24 @@ function renderCalendrier(){
     .filter(cr => cr.jour && JOURS.hasOwnProperty(cr.jour))
     .map(cr => JOURS[cr.jour]));
   const tousOff = Object.keys(OFF).sort();
-  const concernes = joursClasse.size
+  const surUnCreneau = joursClasse.size
     ? tousOff.filter(d => joursClasse.has(new Date(d + "T00:00:00").getDay()))
     : tousOff;
-  const ecartes = tousOff.length - concernes.length;
+  /* JOURS_OTES_MA_PART_V52 : un jour ote hors de ma part n'est pas une seance perdue —
+     je ne l'aurais pas faite. On borne comme seancesOf : debut et fin des COURS du
+     niveau, puis periode de la classe (`du` inclus, `au` exclu). */
+  const _debCal = parseD(debutDesCours(CAL_ANNEE_COURANTE||"", cCal && cCal.niveau));
+  const _finCal = parseD(finDesCours(CAL_ANNEE_COURANTE||"", cCal && cCal.niveau));
+  const _duCal = (cCal && cCal.du && cCal.du.length>=10) ? parseD(cCal.du) : null;
+  const _auCal = (cCal && cCal.au && cCal.au.length>=10) ? parseD(cCal.au) : null;
+  const dansMaPart = d => { const x = parseD(d);
+    if(x < _debCal || x > _finCal) return false;
+    if(_duCal && x < _duCal) return false;
+    if(_auCal && x >= _auCal) return false;
+    return true; };
+  const concernes = surUnCreneau.filter(dansMaPart);
+  const ecartes = tousOff.length - surUnCreneau.length;
+  const horsPart = surUnCreneau.length - concernes.length;
 
   h += `<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Jours ôtés — ${cCal ? esc(cCal.libelle) : "toutes classes"}</h3>
@@ -1085,7 +1099,7 @@ function renderCalendrier(){
   } else {
     h += `<p class="muted">Aucun jour férié ni pont ne tombe sur un jour de cours de cette classe.</p>`;
   }
-  h += `<p class="hint">${ecartes ? ecartes + " autre" + (ecartes > 1 ? "s jours ôtés ne tombent" : " jour ôté ne tombe") + " pas sur un créneau de cette classe. " : ""}Les jours fériés de week-end ou de vacances n'apparaissent jamais ici.</p></div>`;
+  h += `<p class="hint">${ecartes ? ecartes + " autre" + (ecartes > 1 ? "s jours ôtés ne tombent" : " jour ôté ne tombe") + " pas sur un créneau de cette classe. " : ""}${horsPart ? `<b>${horsPart} tombe${horsPart > 1 ? "nt" : ""} sur un créneau de cette classe mais <u>hors de votre part</u>` + ((cCal && (cCal.du || cCal.au)) ? ` (${cCal.du ? _dateFr(cCal.du) : "début"} → ${cCal.au ? _dateFr(cCal.au) : "fin"} exclu)` : ``) + ` : ce n'est pas vous qui les perdez.</b> ` : ``}Les jours fériés de week-end ou de vacances n'apparaissent jamais ici.</p></div>`;
   el.innerHTML=h;
 }
 
