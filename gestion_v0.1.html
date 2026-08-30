@@ -599,7 +599,38 @@ const CLASSES_PAR_ANNEE = {"2025-2026":[
  {"id":"TG6","niveau":"Terminale","libelle":"Tale G6 ens.sci.","effectif":null,"emploi_du_temps_pc":[],"note":"2026-27 — provisoire."}
 ]};
 const CAL_PAR_ANNEE = {"2025-2026":{"meta":{"annee_scolaire":"2025-2026","zone":"B","academie":"Nancy-Metz","commune":"Toul (54)","source":"Officiel Zone B (vacances-scolaires-gouv.com), vérifié 2026-08-10 par le MAÎTRE.","note":"Dates réelles Zone B. 'reprise' = lundi de reprise des cours."},"prerentree_enseignants":"2025-08-29","rentree_eleves":"2025-09-01","fin_des_cours":"2026-07-03","debut_vacances_ete":"2026-07-04","vacances":[{"nom":"Toussaint","dernier_jour_cours":"2025-10-17","debut":"2025-10-18","reprise":"2025-11-03"},{"nom":"Noël","dernier_jour_cours":"2025-12-19","debut":"2025-12-20","reprise":"2026-01-05"},{"nom":"Hiver","dernier_jour_cours":"2026-02-13","debut":"2026-02-14","reprise":"2026-03-02"},{"nom":"Printemps","dernier_jour_cours":"2026-04-10","debut":"2026-04-11","reprise":"2026-04-27"},{"nom":"Été","dernier_jour_cours":"2026-07-03","debut":"2026-07-04","reprise":"2026-09-01 (prévisionnel)"}],"jours_feries":[{"nom":"Toussaint","date":"2025-11-01","en_classe":false,"raison":"week-end + vacances"},{"nom":"Armistice 1918","date":"2025-11-11","en_classe":true},{"nom":"Noël","date":"2025-12-25","en_classe":false,"raison":"vacances de Noël"},{"nom":"Jour de l'an","date":"2026-01-01","en_classe":false,"raison":"vacances de Noël"},{"nom":"Lundi de Pâques","date":"2026-04-06","en_classe":true},{"nom":"Fête du travail","date":"2026-05-01","en_classe":true},{"nom":"Victoire 1945","date":"2026-05-08","en_classe":true},{"nom":"Ascension","date":"2026-05-14","en_classe":true},{"nom":"Lundi de Pentecôte","date":"2026-05-25","en_classe":true}],"ponts":[{"nom":"Pont de l'Ascension","date":"2026-05-15","note":"classe vaquante (vendredi après l'Ascension)"}]},"2026-2027":GD.cal};
+var CAL_ANNEE_COURANTE = "";
+var R1_OFFICIEL = null;
+function _dateFr(iso){
+  if(!iso||iso.length<10) return "?";
+  var M=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  return (+iso.slice(8,10))+" "+M[(+iso.slice(5,7))-1]+" "+iso.slice(0,4);
+}
 function calOf(a){return CAL_PAR_ANNEE[a]||GD.cal;}
+/* FIN_DES_COURS_V52 — voir l'entete du splice. La seule table a changer le jour ou
+   le lycee bouge ses dates, ou le jour ou un niveau part avant les autres : mettre
+   "Tale":"2027-05-22" a cote du "_" et rien d'autre ne bouge. */
+var FIN_DES_COURS = {
+  "2025-2026": {"_":"2026-06-12"},
+  "2026-2027": {"_":"2027-06-12"}
+};
+function _clefNiveau(n){
+  n=String(n||"").toLowerCase();
+  if(/(^|[^0-9])2|seconde|2nde|2de/.test(n)) return "2de";
+  if(/1re|1ere|premi/.test(n)) return "1re";
+  if(/tale|term/.test(n)) return "Tale";
+  return "";
+}
+function finDesCours(a, niveau){
+  var t=FIN_DES_COURS[a];
+  if(!t) return calOf(a).fin_des_cours;
+  return t[_clefNiveau(niveau)] || t["_"] || calOf(a).fin_des_cours;
+}
+function finLaPlusTardive(a){
+  var t=FIN_DES_COURS[a]; if(!t) return calOf(a).fin_des_cours;
+  var v=Object.keys(t).map(function(k){return t[k];}).sort();
+  return v[v.length-1] || calOf(a).fin_des_cours;
+}
 function loggedProfClasses(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&Array.isArray(a.classes)&&a.classes.length) return a.classes;}catch(e){} return null;}
 function migrateOldLS(){try{
   var p=currentPid();
@@ -705,8 +736,13 @@ function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"
 function frDate(s){const d=parseD(s);return d.toLocaleDateString("fr-FR",{weekday:"short",day:"2-digit",month:"short"});}
 let CAL, R0, R1, VAC, OFF;
 function applyCalendar(a){
+  CAL_ANNEE_COURANTE = a;
   CAL = calOf(a);
-  R0 = parseD(CAL.rentree_eleves); R1 = parseD(CAL.fin_des_cours);
+  /* FIN_DES_COURS_V52 : R1 borne l'annee sur la fin des COURS, pas sur la fin
+     officielle. On prend la plus tardive des dates par niveau, pour ne fermer
+     la porte a personne ; chaque classe se rebornera sur la sienne dans seancesOf. */
+  R0 = parseD(CAL.rentree_eleves); R1 = parseD(finLaPlusTardive(CAL_ANNEE_COURANTE||""));
+  R1_OFFICIEL = parseD(CAL.fin_des_cours);
   VAC = (CAL.vacances||[]).map(v=>({nom:v.nom,d0:parseD(v.debut),d1:v.reprise&&v.reprise.length>=10?parseD(v.reprise):null}));
   OFF = {};
   (CAL.jours_feries||[]).forEach(f=>{if(f.en_classe) OFF[f.date]={nom:f.nom,type:"férié"};});
@@ -734,10 +770,12 @@ function schoolStats(){
 // séances réelles d'une classe = créneaux × dates de classe (− vacances/fériés/pont)
 function seancesOf(cls){
   const out=[];
+  /* FIN_DES_COURS_V52 : chaque classe s'arrete a la fin des cours de SON niveau. */
+  const _fin = parseD(finDesCours(CAL_ANNEE_COURANTE||"", cls.niveau));
   (cls.creneaux||[]).forEach((cr,ci)=>{
     if(!cr.jour||!JOURS.hasOwnProperty(cr.jour)) return;
     const wd=JOURS[cr.jour]; let occ=0;
-    for(let d=new Date(R0);d<=R1;d.setDate(d.getDate()+1)){
+    for(let d=new Date(R0);d<=_fin;d.setDate(d.getDate()+1)){
       if(d.getDay()!==wd) continue;
       if(!isSchoolDay(d)) continue;
       occ++;
@@ -928,7 +966,7 @@ function renderSeances(){
   const S=seancesOf(c);
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Séances réelles — ${esc(c.libelle)}</h3><span class="pill acc">${S.length} séances</span></div>
-    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts. ${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
+    <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année. ${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
   if(S.length){
     h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Prévu (prévisionnel)</th></tr></thead><tbody>`;
     const pv=prevOf(c.id); const bySeance={}; Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
