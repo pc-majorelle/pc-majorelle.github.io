@@ -219,7 +219,7 @@ function etatGestion(){
   }catch(e){}
   return null;
 }
-var S=[]; var missing=false, anyProv=false;
+var S=[]; var missing=false, anyProv=false, anyOff=false;   /*EDT_OFFICIEL_V53*/
 var GEST = (YEAR==="2026-2027") ? etatGestion() : null;
 
 /* ---------------------------------------------------------------- SEMAINE_AB_V50
@@ -386,11 +386,12 @@ if(GEST){
   if(_B&&_B.length){
     _B.forEach(function(cr){
       var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return;
-      var brouillon=(cr.source!=="carnet"); if(brouillon) anyProv=true;
+      /*EDT_OFFICIEL_V53*/ var offi=(cr.source==="officiel");
+      var brouillon=(cr.source!=="carnet"&&!offi); if(brouillon) anyProv=true; if(offi) anyOff=true;
       var lib=cr.nom||cr.code;
       S.push({j:cr.jour, s:s, d:cr.duree||55, code:lib,
               full:lib+(cr.groupe?(" \u00b7 groupe "+cr.groupe):"")+(cr.quinzaine?(" \u00b7 sem. "+cr.quinzaine):""),
-              prov:brouillon, grp:(cr.groupe||""), qz:(cr.quinzaine||""),
+              prov:brouillon, offi:offi, grp:(cr.groupe||""), qz:(cr.quinzaine||""),
               tp:(cr.type==="TP"), fam:(cr.famille||""), past:"", pp:!!cr.pp,
               typ:(cr.type==="TP"?"TP":"")});
     });
@@ -456,7 +457,7 @@ function blk(s){ var top=(s.s-RS)*PX,h=Math.max(20,s.d*PX-2);
   var _pos = (_n>1)
     ? ('left:calc(2px + '+_c+'*(100% - 4px)/'+_n+');right:auto;width:calc((100% - 4px)/'+_n+' - 2px);')
     : '';
-  return '<div class="ev'+(s.prov?' prov':'')+(s.hors?' hors':'')+(s.tp?' tp':'')+'" style="'+_pos+'top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf2(s.fam||s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d))+'">'
+  return '<div class="ev'+(s.prov?' prov':'')+(s.hors?' hors':'')+(s.tp?' tp':'')+'" style="'+_pos+'top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf2(s.fam||s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+(s.offi?' \u2014 EDT officiel de l\u2019\u00e9tablissement (26/08/2026) ; ce professeur n\u2019a pas encore export\u00e9 son carnet':''))+'">'
     +'<b>'+(s.past?('<span class="past">'+esc(s.past)+'</span>'):'')+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
 var axis=''; for(var hA=startH;hA<=endH;hA++){axis+='<div class="hr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
 /* ------------------------------------------------------------------- REPERES_V50
@@ -523,7 +524,9 @@ document.getElementById("leg").innerHTML=legItems.map(function(c){
 /* note bas de page */
 var note=document.getElementById("note");
 if(YEAR==="2026-2027"){
-  note.innerHTML = GEST    ? "Emploi du temps <b>issu du gestionnaire</b> — c'est là qu'il se corrige, onglet « Mes classes &amp; horaires »."    : ("EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":""));
+  note.innerHTML = GEST    ? "Emploi du temps <b>issu du gestionnaire</b> — c'est là qu'il se corrige, onglet « Mes classes &amp; horaires »."
+    : anyOff ? "Emploi du temps <b>officiel de l'établissement</b> (26/08/2026). Il fait foi tant qu'aucun carnet n'a été exporté&nbsp;: dès que vous enregistrez le vôtre dans le gestionnaire, c'est lui qui prime."   /*EDT_OFFICIEL_V53*/
+    : ("EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":""));
   if(missing) note.innerHTML="Aucun créneau 2026-2027 connu pour ce compte dans le brouillon PHY.pdf.";
 }else{
   note.innerHTML="EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Vue de référence — l'édition reste dans le gestionnaire.";

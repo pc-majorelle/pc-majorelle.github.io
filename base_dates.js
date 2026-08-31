@@ -1,9 +1,9 @@
-/* base_dates.js — ECRIT PAR _BASE\exporter_edt_site_v52.py. NE PAS EDITER A LA MAIN.
+/* base_dates.js — ECRIT PAR _BASE\exporter_edt_site_v53.py. NE PAS EDITER A LA MAIN.
    Les dates cles, lues dans _BASE\dates_cles.json (ecrit a la main, jamais regenere).
    Les dates OFFICIELLES (rentree, vacances, feries) viennent des sources publiques ;
    le DEBUT et la FIN DES COURS viennent de Laurent, sont portes PAR NIVEAU, et
    changent — c'est pourquoi ils ne doivent jamais etre ecrits en dur dans une page.
-   Regenere par : python exporter_edt_site_v52.py */
+   Regenere par : python exporter_edt_site_v53.py */
 window.BASE_DATES = {
  "2025-2026": {
   "debut_cours": {
