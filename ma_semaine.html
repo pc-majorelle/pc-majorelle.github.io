@@ -524,7 +524,21 @@ document.getElementById("leg").innerHTML=legItems.map(function(c){
 /* note bas de page */
 var note=document.getElementById("note");
 if(YEAR==="2026-2027"){
+  /*SOUS_TITRE_V53 — deux choses que la v53 avait laissees derriere elle.
+     (1) Le sous-titre etait ecrit 250 lignes plus haut, sur la seule ANNEE : il annoncait
+         « EDT provisoire (brouillon) » meme devant l'EDT officiel. Il se reecrit ici, ou
+         les sources sont enfin connues.
+     (2) Un professeur dont les creneaux viennent de son CARNET via base_edt.js, mais qui
+         n'a pas ouvert le gestionnaire dans CE navigateur, avait GEST a null : sa propre
+         semaine etait donc annoncee comme un brouillon. Trouve par le banc, pas par moi.
+     Les blocs de 2026-2027 sont d'une seule source par professeur : ni « a placer »,
+     ni « officiel », c'est donc le carnet. */
+  var anyCar = (S.length>0 && !anyProv && !anyOff);
+  try{ subEl.textContent = YEAR + ((GEST||anyCar) ? " · d’après ton carnet"
+                                 : anyOff ? " · EDT officiel de l’établissement"
+                                 : " · EDT provisoire (brouillon)"); }catch(e){}
   note.innerHTML = GEST    ? "Emploi du temps <b>issu du gestionnaire</b> — c'est là qu'il se corrige, onglet « Mes classes &amp; horaires »."
+    : anyCar ? "Emploi du temps <b>issu de ton carnet</b>, tel qu'il a été exporté dans la base — il se corrige dans le gestionnaire, onglet « Mes classes &amp; horaires »."
     : anyOff ? "Emploi du temps <b>officiel de l'établissement</b> (26/08/2026). Il fait foi tant qu'aucun carnet n'a été exporté&nbsp;: dès que vous enregistrez le vôtre dans le gestionnaire, c'est lui qui prime."   /*EDT_OFFICIEL_V53*/
     : ("EDT <b>2026-2027 PROVISOIRE</b> (brouillon de service PHY.pdf) — à confirmer par l'emploi du temps définitif."+(anyProv?" Les créneaux « à placer » ne sont pas figés.":""));
   if(missing) note.innerHTML="Aucun créneau 2026-2027 connu pour ce compte dans le brouillon PHY.pdf.";

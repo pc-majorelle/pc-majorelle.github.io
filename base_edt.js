@@ -225,7 +225,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "jeudi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR2)",
+    "nom": "Tale spé PC (CHGR2)",
     "officiel": {
      "classe": null,
      "debut": "13:30",
@@ -370,7 +370,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mardi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR2)",
+    "nom": "Tale spé PC (CHGR2)",
     "officiel": {
      "classe": null,
      "debut": "10:00",
@@ -458,7 +458,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mercredi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR2)",
+    "nom": "Tale spé PC (CHGR2)",
     "officiel": {
      "classe": null,
      "debut": "08:00",
@@ -717,7 +717,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "jeudi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR4)",
+    "nom": "1re spé PC (CHGR4)",
     "officiel": {
      "classe": null,
      "debut": "08:00",
@@ -783,7 +783,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "lundi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR3)",
+    "nom": "1re spé PC (CHGR3)",
     "officiel": {
      "classe": null,
      "debut": "13:30",
@@ -893,7 +893,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mardi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR3)",
+    "nom": "1re spé PC (CHGR3)",
     "officiel": {
      "classe": null,
      "debut": "13:30",
@@ -915,7 +915,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mardi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR4)",
+    "nom": "1re spé PC (CHGR4)",
     "officiel": {
      "classe": null,
      "debut": "15:30",
@@ -1018,7 +1018,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "jeudi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR2)",
+    "nom": "1re spé PC (CHGR2)",
     "officiel": {
      "classe": null,
      "debut": "10:00",
@@ -1194,7 +1194,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "lundi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR2)",
+    "nom": "1re spé PC (CHGR2)",
     "officiel": {
      "classe": null,
      "debut": "15:30",
@@ -1429,7 +1429,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "jeudi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR1)",
+    "nom": "Tale spé PC (CHGR1)",
     "officiel": {
      "classe": null,
      "debut": "13:30",
@@ -1552,7 +1552,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mardi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR1)",
+    "nom": "Tale spé PC (CHGR1)",
     "officiel": {
      "classe": null,
      "debut": "10:00",
@@ -1618,7 +1618,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mercredi",
     "niveau": "Tale",
-    "nom": "Tale spe PC (CHGR1)",
+    "nom": "Tale spé PC (CHGR1)",
     "officiel": {
      "classe": null,
      "debut": "08:00",
@@ -1708,7 +1708,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "jeudi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR1)",
+    "nom": "1re spé PC (CHGR1)",
     "officiel": {
      "classe": null,
      "debut": "08:00",
@@ -1884,7 +1884,7 @@ window.BASE_EDT = {
     "groupe": null,
     "jour": "mardi",
     "niveau": "1re",
-    "nom": "1re spe PC (CHGR1)",
+    "nom": "1re spé PC (CHGR1)",
     "officiel": {
      "classe": null,
      "debut": "15:30",
