@@ -6,6 +6,9 @@
 <script src="pcmajo_test.js"></script>
 <!-- SEMAINE_DEPUIS_BASE_V52 : l'emploi du temps ecrit par _BASE. Absent = repli sur EDT2026. -->
 <script src="base_edt.js"></script>
+<!-- PART_DANS_SEMAINE_V54 : les dates cles (vacances, feries, ponts, fin des cours).
+     Elles servent a nommer la premiere et la derniere seance REELLES de ma part. -->
+<script src="base_dates.js"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12324a">
@@ -66,6 +69,11 @@
   /* SEMAINE_AB_V50 : le creneau de l'AUTRE quinzaine n'est pas retire, il passe en retrait. */
   .ev.hors{opacity:.34;outline:1px dashed rgba(255,255,255,.75);outline-offset:-2px}
   .ev.hors .tpg{background:rgba(255,255,255,.35)}
+  /* PART_DANS_SEMAINE_V54 : une classe partagee, hors de ma periode. Meme langage
+     visuel que la quinzaine d'en face : en retrait, jamais supprimee. */
+  .ev.pasmapart{opacity:.34;outline:1px dashed rgba(255,255,255,.75);outline-offset:-2px}
+  .ev.pasmapart .tpg{background:rgba(255,255,255,.35)}
+  .part-tag{font-size:9px;opacity:.95;font-style:italic}
   .dlibre{position:absolute;top:6px;left:0;right:0;text-align:center;color:var(--muted);font-size:12px;font-style:italic}
   /* REPERES_V50 — la pause de midi, hachuree, SOUS les cours ; et les reperes M0/S0. */
   .repas{position:absolute;left:0;right:0;z-index:0;pointer-events:none;
@@ -174,6 +182,70 @@ function _famBase(cle){
 function _typeBase(cle,jour){
   var L=_creBase(cle).filter(function(x){ return x.jour===jour; });
   return (L.length===1 && L[0].type) ? L[0].type : "";
+}
+/* ------------------------------------------------------------ PART_DANS_SEMAINE_V54
+   `du` inclus, `au` EXCLU — la convention de la base, celle qu'ecrit l'onglet
+   Classes du gestionnaire. Vides = la classe est a moi toute l'annee. */
+var _JMAP={"lundi":1,"mardi":2,"mercredi":3,"jeudi":4,"vendredi":5};
+function _jourD(s){ var p=String(s||"").split("-"); if(p.length!==3) return null;
+  var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d.getTime())?null:d; }
+function _isoD(d){ function z(n){return (n<10?"0":"")+n;}
+  return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate()); }
+function _frD(d){ function z(n){return (n<10?"0":"")+n;}
+  return z(d.getDate())+"/"+z(d.getMonth()+1)+"/"+d.getFullYear(); }
+/* Le jour de classe, tel que base_dates.js le definit. Sans ce fichier : null,
+   et l'appelant dira les bornes brutes plutot que d'en inventer. */
+function _calAnnee(){ try{ return (window.BASE_DATES && BASE_DATES[YEAR]) || null; }catch(e){ return null; } }
+function _estJourDeClasse(d,C){
+  if(!C) return null;
+  var s=_isoD(d);
+  var deb=_jourD((C.debut_cours&&(C.debut_cours._))||C.rentree_eleves||"");
+  var fin=_jourD((C.fin_cours&&(C.fin_cours._))||"");
+  if(deb && d<deb) return false;
+  if(fin && d>fin) return false;
+  var i;
+  for(i=0;i<(C.vacances||[]).length;i++){
+    var v=C.vacances[i], a=_jourD(v.debut), r=v.reprise?_jourD(v.reprise):null;
+    if(a && ((r && d>=a && d<r) || (!r && d>=a))) return false;
+  }
+  if((C.feries_en_classe||[]).indexOf(s)>=0) return false;
+  if((C.ponts||[]).indexOf(s)>=0) return false;
+  return true;
+}
+/* La date de CE creneau dans la semaine affichee : le vendredi de cette semaine-ci
+   pour un creneau du vendredi. On ne compare pas « aujourd'hui » a la periode. */
+function _dateDuCreneau(jour){
+  var wd=_JMAP[jour]; if(!wd) return null;
+  var t=new Date(); var lundi=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  lundi.setDate(lundi.getDate()-((lundi.getDay()+6)%7));
+  lundi.setDate(lundi.getDate()+(wd-1));
+  return lundi;
+}
+/* Rend null si la classe n'a pas de periode : rien ne change pour elle. */
+function _maPart(c,jour){
+  try{
+    var du=(c && c.du && String(c.du).length>=10) ? _jourD(c.du) : null;
+    var au=(c && c.au && String(c.au).length>=10) ? _jourD(c.au) : null;
+    if(!du && !au) return null;
+    var d=_dateDuCreneau(jour);
+    var dedans = !d || ((!du || d>=du) && (!au || d<au));
+    /* Les VRAIES premiere et derniere seances, faute de quoi on dit les bornes. */
+    var C=_calAnnee(), wd=_JMAP[jour], txt="";
+    if(C && wd){
+      var p=null,q=null,x,lim;
+      x=new Date(du||_jourD(C.rentree_eleves));
+      lim=au?new Date(au):_jourD((C.fin_cours&&C.fin_cours._)||"");
+      if(lim){
+        while(x<lim){ if(x.getDay()===wd && _estJourDeClasse(x,C)){ if(!p)p=new Date(x); q=new Date(x); }
+                      x.setDate(x.getDate()+1); }
+      }
+      if(p&&q) txt="ma part : "+_frD(p)+" \u2192 "+_frD(q);
+    }
+    if(!txt){
+      txt="ma part : "+(du?("du "+_frD(du)):"debut")+" "+(au?("au "+_frD(au)+" exclu"):"a la fin");
+    }
+    return {dedans:dedans, txt:txt};
+  }catch(e){ return null; }
 }
 function minLbl(v){var h=Math.floor(v/60),m=v%60;return h+'h'+(m<10?'0'+m:m);}
 function durLbl(d){return d%60===0?(d/60)+'h':(d<60?d+' min':Math.floor(d/60)+'h'+String(d%60).padStart(2,'0'));}
@@ -344,9 +416,13 @@ if(GEST){
       var _fam=c.famille||"";
       if(!_fam) _fam=_famBase(c.id)||_famBase(c.libelle)||"";
       if(!estTP && !g){ var _t=_typeBase(c.id,cr.jour)||_typeBase(c.libelle,cr.jour); if(_t==="TP") estTP=true; }
+      /* PART_DANS_SEMAINE_V54 : cette classe est-elle a moi CETTE semaine ? */
+      var _part=_maPart(c,cr.jour);
       S.push({ j:cr.jour, s:s, d:cr.duree||cr.duree_min||60,
                code:(c.libelle||c.id),
-               full:(c.libelle||c.id)+(q?" · semaine "+q+(hors?" — pas cette semaine":""):""),
+               full:(c.libelle||c.id)+(q?" · semaine "+q+(hors?" — pas cette semaine":""):"")
+                    +(_part?(" — "+_part.txt+(_part.dedans?"":" ; pas ma part cette semaine")):""),
+               pasmapart:!!(_part&&!_part.dedans), parttxt:(_part?_part.txt:""),
                prov:false, grp:g, qz:q, hors:hors, tp:estTP,
                fam:_fam, past:(c.pastille==null?"":String(c.pastille)), pp:!!c.pp,
                typ:(g||estTP)?"TP":(q?("sem. "+q):"") });
@@ -457,8 +533,8 @@ function blk(s){ var top=(s.s-RS)*PX,h=Math.max(20,s.d*PX-2);
   var _pos = (_n>1)
     ? ('left:calc(2px + '+_c+'*(100% - 4px)/'+_n+');right:auto;width:calc((100% - 4px)/'+_n+' - 2px);')
     : '';
-  return '<div class="ev'+(s.prov?' prov':'')+(s.hors?' hors':'')+(s.tp?' tp':'')+'" style="'+_pos+'top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf2(s.fam||s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+(s.offi?' \u2014 EDT officiel de l\u2019\u00e9tablissement (26/08/2026) ; ce professeur n\u2019a pas encore export\u00e9 son carnet':''))+'">'
-    +'<b>'+(s.past?('<span class="past">'+esc(s.past)+'</span>'):'')+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
+  return '<div class="ev'+(s.prov?' prov':'')+(s.hors?' hors':'')+(s.pasmapart?' pasmapart':'')+(s.tp?' tp':'')+'" style="'+_pos+'top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;background:'+colOf2(s.fam||s.code)+'" title="'+esc(s.full+' \u2014 '+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+(s.offi?' \u2014 EDT officiel de l\u2019\u00e9tablissement (26/08/2026) ; ce professeur n\u2019a pas encore export\u00e9 son carnet':''))+'">'
+    +'<b>'+(s.past?('<span class="past">'+esc(s.past)+'</span>'):'')+esc(s.code)+'</b>'+(s.prov?'<small class="prov-tag">à placer</small>':'')+(s.pasmapart?'<small class="part-tag">'+esc(s.parttxt)+'</small>':'')+tp+'<small>'+minLbl(s.s)+'\u2013'+minLbl(s.s+s.d)+' \u00b7 '+durLbl(s.d)+'</small></div>'; }
 var axis=''; for(var hA=startH;hA<=endH;hA++){axis+='<div class="hr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
 /* ------------------------------------------------------------------- REPERES_V50
    Les reperes de l'emploi du temps papier, et la pause de midi.
