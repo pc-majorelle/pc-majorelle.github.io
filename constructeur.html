@@ -2190,6 +2190,10 @@ function etatVide(){
     compareLabel: REAL_LABEL,      // libellé éditable de la 2e frise
     plan: null,                    /*EDITEUR_SEANCES_V33*/ // unitéId -> [séances éditées] (modèle unique)
     planOn: false,                 /*EDITEUR_SEANCES_V33*/ // false = génération heuristique d'origine
+    /* REPLI_MEMORISE_V57 : unitéId -> true = groupe replié. Champ NEUF : aucun lecteur existant
+       ne le lit, aucun contrat touché. chargerEtat() fait Object.assign(base,o), donc un état
+       déjà enregistré sans ce champ reçoit {} sans rien perdre. */
+    fold:{},
   };
 }
 function chargerEtat(){
@@ -4191,7 +4195,11 @@ function majPlan_V33(){
    VUE ÉDITEUR
    ============================================================================ */
 var _edFolded_V33=false;
-var _edFoldSet_V33={};
+/* REPLI_MEMORISE_V57 : le repli vivait dans une variable de page, donc il etait perdu a chaque
+   rechargement — une fonction qu'il faut refaire a chaque visite ne se sent pas comme une fonction.
+   Il vit maintenant dans STATE, donc dans localStorage. Accesseur : STATE n'existe pas encore
+   quand cette ligne est evaluee. */
+function _edFoldSet_V33_(){ if(!STATE.fold) STATE.fold={}; return STATE.fold; }
 function edStatsHTML_V33(){
   var slots=slotsAnnee_V33();
   var dispo=slots.reduce(function(a,s){return a+s.min;},0);
@@ -4288,8 +4296,8 @@ function renderEditeur(){
       +'<span class="ed-gtitle">'+esc_V33(ch.titre||ch.themeLabel||"")+'</span>'
       +'<span class="ed-gmeta">'+ses.length+' séances'+(refs.length?(' · '+placees+'/'+refs.length+' cap.'):'')
         +'<br>'+(d1?frShort(d1):"—")+' → '+(d2?frShort(d2):"—")+'</span>'
-      +'<button class="ed-fold" data-fold="'+esc_V33(u.id)+'">'+(_edFoldSet_V33[u.id]?"▸":"▾")+'</button></div>'
-      +(_edFoldSet_V33[u.id]?"":('<ul class="ed-seances" data-id="'+esc_V33(u.id)+'">'+seHTML+'</ul>'
+      +'<button class="ed-fold" data-fold="'+esc_V33(u.id)+'">'+(_edFoldSet_V33_()[u.id]?"▸":"▾")+'</button></div>'
+      +(_edFoldSet_V33_()[u.id]?"":('<ul class="ed-seances" data-id="'+esc_V33(u.id)+'">'+seHTML+'</ul>'
         +'<div class="ed-foot">'+TYPES_V33.map(function(x){ return '<button data-add="'+esc_V33(u.id)+'" data-t="'+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')+'</div>'
         +ref))
       +'</div>';
@@ -4325,7 +4333,9 @@ function edWire_V33(board){
     commit(); }; });
   board.querySelectorAll("[data-fold]").forEach(function(b){ b.onclick=function(){
     var uid=b.getAttribute("data-fold");
-    _edFoldSet_V33[uid]=!_edFoldSet_V33[uid]; renderEditeur(); }; });
+    var _F=_edFoldSet_V33_(); _F[uid]=!_F[uid];
+    sauverEtat();   /* REPLI_MEMORISE_V57 : sans ceci le repli ne survit pas au rechargement */
+    renderEditeur(); }; });
   board.querySelectorAll("[data-dur]").forEach(function(r){
     r.oninput=function(){ var v=r.parentNode.querySelector(".val"); if(v) v.textContent=fmtMin_V33(+r.value); };
     r.onchange=function(){ var f=planFindSe(r.getAttribute("data-dur")); if(!f) return;
@@ -4482,9 +4492,15 @@ function bootEditeur_V33(){
     var b=document.getElementById("modeEditeur");
     if(b) b.addEventListener("click", function(){ setMode("editeur"); });
     var fb=document.getElementById("edFoldBtn");
+    /* REPLI_MEMORISE_V57 : l'etat est restaure depuis STATE ; le libelle du bouton doit le suivre,
+       sinon il annonce « Tout replier » devant des groupes deja replies. */
+    if(fb){ var _F0=_edFoldSet_V33_(), _U0=unitesOrdonnees();
+      _edFolded_V33 = _U0.length>0 && _U0.every(function(u){ return !!_F0[u.id]; });
+      fb.textContent=_edFolded_V33?"⊞ Tout déplier":"⊟ Tout replier"; }
     if(fb) fb.addEventListener("click", function(){
       _edFolded_V33=!_edFolded_V33;
-      unitesOrdonnees().forEach(function(u){ _edFoldSet_V33[u.id]=_edFolded_V33; });
+      var _F=_edFoldSet_V33_(); unitesOrdonnees().forEach(function(u){ _F[u.id]=_edFolded_V33; });
+      sauverEtat();   /* REPLI_MEMORISE_V57 */
       fb.textContent=_edFolded_V33?"⊞ Tout déplier":"⊟ Tout replier";
       renderEditeur(); });
     var sb=document.getElementById("edSeedBtn");
