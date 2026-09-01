@@ -827,7 +827,37 @@ function defaultState(annee){
 }
 let state = defaultState(ANNEE);
 
+/* GARDE_ENREGISTRER_V56a — voir l'entete de splice_garde_enregistrer_v56.py. */
+function _sessionFabriquee(){
+  var a=null;
+  try{ a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); }catch(e){}
+  if(!a){ try{ a=JSON.parse(localStorage.getItem("pcmajo_acces")); }catch(e){} }
+  return !!(a && a.test);
+}
+function _carnetExistant(){
+  try{ return !!localStorage.getItem(lsKey(ANNEE)); }catch(e){ return false; }
+}
+/* Rend true quand il faut REFUSER. Un seul cas, et il est etroit. */
+function _gardeEnregistrer(){
+  try{ return _sessionFabriquee() && !_carnetExistant(); }catch(e){ return false; }
+}
+/* Le bouton dit pourquoi, sans boite de dialogue : il est grise et son titre parle. */
+function _appliquerGardeAuBouton(){
+  try{
+    var b=document.getElementById("btnSave"); if(!b) return;
+    if(_gardeEnregistrer()){
+      b.disabled=true; b.style.opacity=".45"; b.style.cursor="not-allowed";
+      b.title="Session de test : enregistrer creerait le carnet de ce professeur a sa place. "
+            + "Depuis sa propre session, le bouton fonctionne normalement.";
+    }else{
+      b.disabled=false; b.style.opacity=""; b.style.cursor="";
+      b.title="Enregistrer (telecharger l'etat)";
+    }
+  }catch(e){}
+}
+try{ window.addEventListener("load", _appliquerGardeAuBouton); }catch(e){}
 function save(){
+  /*GARDE_ENREGISTRER_V56a*/ if(_gardeEnregistrer()){ try{ _appliquerGardeAuBouton(); }catch(e){} return; }
   /* CLE_PAR_PROF_V52 : on signe le carnet en l'enregistrant, pour que la
      prochaine lecture sache a qui il est sans avoir a le deviner. */
   try{ var p=currentPid(); if(p){ state.prof_pid=p; state.prof=loggedProfNom(); } }catch(e){}
@@ -2431,6 +2461,7 @@ function _telecharger(){
 }
 
 document.getElementById("btnSave").addEventListener("click",function(){
+  /*GARDE_ENREGISTRER_V56b*/ if(_gardeEnregistrer()){ _appliquerGardeAuBouton(); return; }
   var nEl=_compteEleves(), nCl=(state.classes||[]).length, an=(state.annee||ANNEE);
   _dlg(
      '<h3 style="margin:0 0 4px;font-size:1.05rem">💾 Enregistrer ton travail</h3>'
