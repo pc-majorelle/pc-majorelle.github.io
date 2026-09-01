@@ -2309,7 +2309,12 @@ function unitesOrdonnees(order){
   /* GROUPE_LIBRE_V58 : les libres absents de l'ordre sont ajoutes A LA FIN — un
      groupe hors programme n'a pas de place naturelle dans la sequence B.O. ; c'est
      ensuite a la poignee de glisser de decider. */
-  groupesLibres().forEach(g=>{ if(!seen.has(g.id)){ out.push(g.id); seen.add(g.id); } });
+  /* LIBRE_EN_TETE_V58 : en TETE, pas a la fin. A la fin, un groupe neuf tombe apres
+     le dernier creneau et nait « hors annee ». unshift.apply d'un seul coup : une
+     boucle d'unshift retournerait leur ordre de creation. */
+  var _lib=[];
+  groupesLibres().forEach(g=>{ if(!seen.has(g.id)){ _lib.push(g.id); seen.add(g.id); } });
+  if(_lib.length) out.unshift.apply(out, _lib);
   return out.map(id=> estLibreId(id)
     ? {id, kind:"libre", chap:chapLibre(id)}
     : estSuiteId(id)
@@ -4592,7 +4597,7 @@ function bootEditeur_V33(){
       groupesLibres().push(g);
       if(!STATE.plan) STATE.plan={};
       STATE.plan[g.id]=[];
-      if(STATE.order.indexOf(g.id)<0) STATE.order.push(g.id);
+      if(STATE.order.indexOf(g.id)<0) STATE.order.unshift(g.id);   /* LIBRE_EN_TETE_V58 */
       sauverEtat(); fullRender(); renderEditeur();
     });
     var sb=document.getElementById("edSeedBtn");

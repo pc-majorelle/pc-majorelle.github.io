@@ -1,3 +1,6 @@
 
 # jamais : sauvegardes de carnet, elles portent des noms d eleves
 gestion_*_20*.json
+
+# sauvegardes de greffe deposees par les splice_*.py
+*.avant_*
