@@ -304,6 +304,11 @@ window.BASE_EDT = {
      "groupe": null,
      "type_origine": "regle : ens. scientifique, 1 h/classe, cours"
     },
+    "periode": {
+     "au": "2027-01-18",
+     "du": "2026-09-07",
+     "groupe": "1G3"
+    },
     "pp": false,
     "quinzaine": null,
     "relais": [
@@ -582,6 +587,11 @@ window.BASE_EDT = {
      "fin": "11:00",
      "groupe": null,
      "type_origine": "regle : ens. scientifique, 1 h/classe, cours"
+    },
+    "periode": {
+     "au": "2027-04-05",
+     "du": "2027-01-18",
+     "groupe": "1G3"
     },
     "pp": false,
     "quinzaine": null,
@@ -1539,6 +1549,11 @@ window.BASE_EDT = {
      "fin": "11:00",
      "groupe": null,
      "type_origine": "regle : ens. scientifique, 1 h/classe, cours"
+    },
+    "periode": {
+     "au": "2027-06-12",
+     "du": "2027-04-05",
+     "groupe": "1G3"
     },
     "pp": false,
     "quinzaine": null,
