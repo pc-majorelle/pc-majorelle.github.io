@@ -245,6 +245,7 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 </head>
 <body>
 <script src="base_edt.js"></script><!--BASE_DANS_CONSTRUCTEUR_V53-->
+<script src="base_dates.js"></script><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
 <script src="classes_annee.js"></script>
 <script src="store.js"></script>
 <script src="pcmajo_ui.js"></script>
@@ -1579,8 +1580,41 @@ function ferieNom(isoStr){ return {"11-11":"11 Nov.","05-01":"1er Mai","05-08":"
    ÉTAT CALENDRIER COURANT (mutable : dépend de l'ANNÉE scolaire choisie)
    ---------------------------------------------------------------------------- */
 let VACANCES=[], FERIES=[], DATE_RENTREE=null, DATE_FIN=null, TOTAL_DAYS=0, CRENEAUX_REELS=[], NB_PERDUES=0;
+/* ===== DATES_DEPUIS_BASE_V58 =====
+   Le calendrier etait ecrit en dur ci-dessus. Les dates OFFICIELLES (vacances,
+   feries) se defendent en dur : elles sont exterieures et verifiables. Le DEBUT
+   et la FIN DES COURS, non : ce sont les decisions de Laurent, elles changent,
+   et elles sont PAR NIVEAU. Elles vivent dans _BASE\dates_cours.json, que
+   exporter_dates_seules_v58.py porte dans base_dates.js.
+   La table embarquee reste le REPLI : sans base_dates.js, rien ne change. */
+var NIV_BASE_V58 = {"2nde":"2de", "1spe":"1re", "1sti":"1re", "1ens":"1re",
+                    "Tspe":"Tale", "Tsti":"Tale", "Tens":"Tale"};
+var CAL_SOURCE_V58 = "page";
+function niveauBase_V58(){
+  var l=""; try{ l=level; }catch(e){}      /* `level` est un let : typeof leve aussi en TDZ */
+  return NIV_BASE_V58[l] || "_";
+}
+function calDepuisBase_V58(annee){
+  var B=null;
+  try{ B = window.BASE_DATES ? window.BASE_DATES[annee] : null; }catch(e){}
+  if(!B) return null;
+  var n   = niveauBase_V58();
+  var deb = (B.debut_cours && (B.debut_cours[n] || B.debut_cours["_"])) || B.rentree_eleves;
+  var fin = (B.fin_cours   && (B.fin_cours[n]   || B.fin_cours["_"]))   || null;
+  if(!deb || !fin) return null;            /* base incomplete -> on garde la page */
+  /* PIEGE 1 : la page veut [nom, debut, DERNIER JOUR de vacances] ; la base porte
+     la REPRISE (1er jour de classe). Un jour d'ecart decale toute la frise. */
+  var vac = (B.vacances||[]).filter(function(v){ return v.debut && v.reprise; })
+             .map(function(v){ return [v.nom, v.debut, iso(addDays(d(v.reprise),-1))]; });
+  /* PIEGE 2 : bloque un jour de classe = ferie EN CLASSE + pont. Les feries hors
+     classe tombent un jour sans cours (1er et 8 mai 2027 = des samedis). */
+  var fer = (B.feries_en_classe||[]).concat(B.ponts||[]);
+  return {rentree:deb, fin_cours:fin, vacances:vac, feries:fer};
+}
 function chargerCalendrier(annee){
-  const cy = CAL[annee] || CAL["2025-2026"];
+  var _b = calDepuisBase_V58(annee);
+  CAL_SOURCE_V58 = _b ? "base" : "page";
+  const cy = _b || CAL[annee] || CAL["2025-2026"];
   DATE_RENTREE=d(cy.rentree); DATE_FIN=d(cy.fin_cours); TOTAL_DAYS=daysBetween(DATE_RENTREE,DATE_FIN);
   VACANCES=cy.vacances.map(v=>({nom:v[0], a:v[1], b:v[2]}));    // [nom,debut,fin] -> objet
   FERIES=cy.feries.map(x=>({d:x, nom:ferieNom(x)}));
@@ -4282,7 +4316,12 @@ function renderEditeur(){
   var note=document.getElementById("edNote");
   if(note){
     var e=appliquerEDT_V33();
+    /* DATES_DEPUIS_BASE_V58 : la page DIT d'ou vient son calendrier. Anne a vu
+       juillet pendant six tours parce qu'aucune page ne nommait sa source. */
     note.innerHTML="Modèle unique : ce que vous éditez ici pilote AUSSI la frise et l'arbre. "
+      +"<b>Calendrier :</b> "+(CAL_SOURCE_V58==="base"?"base (dates_cours.json)":"table de la page")
+      +" — début des cours <b>"+(DATE_RENTREE?iso(DATE_RENTREE):"?")+"</b>, fin "
+      +(DATE_FIN?iso(DATE_FIN):"?")+". "
       +"Créneaux : <b>"+esc_V33(e.src)+"</b> — "
       +e.cren.map(function(c){ return (JOURLIB_V33[+c.j]||"?")+" "+c.deb+" ("+fmtMin_V33(c.dur)+(c.rep?", dédoublé":"")+")"; }).join(" · ")
       +" &nbsp;·&nbsp; glisser ⠿ pour réordonner · curseur = durée (pas de 10 min) · ⏳ = temps libre remplissable.";
