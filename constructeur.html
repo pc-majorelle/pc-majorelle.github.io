@@ -87,8 +87,11 @@ svg.timeline{display:block;height:210px;user-select:none;touch-action:pan-x}
 /* date du curseur : largeur FIXE pour que le texte suivant démarre toujours au même endroit */
 .cursor-date-fix{display:inline-block;min-width:118px;font-weight:700;font-variant-numeric:tabular-nums}
 /* bloc de STATUT : largeur fixe + ellipse -> longueur du texte sans effet sur la mise en page */
-#cursorSeance{display:inline-block;width:300px;max-width:100%;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;vertical-align:middle;line-height:20px}
+/* CURSEUR_LISIBLE_V57 : le libelle de seance a sa PROPRE LIGNE, pleine largeur. Hauteur FIXE
+   (min-height) : la contrainte « rien ne bouge quand on deplace le curseur » est preservee. */
+.cursor-seance-row{min-height:22px;margin-top:2px}
+#cursorSeance{display:block;width:100%;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;line-height:22px}
 #vuCount{display:inline-block;min-width:150px}
 .cursor-date{font-weight:700;font-variant-numeric:tabular-nums}
 .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:var(--ink-soft)}
@@ -405,10 +408,11 @@ details.seq-int>summary::-webkit-details-marker{display:none}
       <button id="cursorPrev" class="move-btn" title="Séance précédente" aria-label="Séance précédente">←</button>
       <button id="cursorNext" class="move-btn" title="Séance suivante" aria-label="Séance suivante">→</button>
       <span class="cursor-date-fix" id="cursorDate">—</span>
-      <span class="muted" id="cursorSeance" style="font-variant-numeric:tabular-nums">—</span>
       <input type="range" id="cursorRange" min="0" max="100" value="40" step="1" aria-label="Position du curseur : séance par séance">
       <span class="cursor-date" id="vuCount" style="color:var(--accent)">— / 102 capacités vues</span>
     </div>
+    <!-- CURSEUR_LISIBLE_V57 : le libelle de seance, sorti de la barre, sur sa propre ligne -->
+    <div class="cursor-seance-row"><span class="muted" id="cursorSeance" style="font-variant-numeric:tabular-nums">—</span></div>
     <div class="legend" style="font-weight:600">
       <span style="color:var(--ink)">Types de séance :</span>
       <span><span class="sw" style="background:var(--t-activite)"></span>Activité</span>
@@ -3511,7 +3515,12 @@ function renderCursorReadout(){
     const ch = s ? (CHAP_BY_ID[s.chap]||(s.parent?CHAP_BY_ID[s.parent]:null)) : chapForDate(dt);
     if(ch){
       const typ = s? partsOf(s).map(p=>p.type).join("+") : null;
-      cs.textContent = ch.themeLabel+" › "+ch.code+(typ? " · "+typ : "")+(s&&s.suite?" (suite)":"");
+      /* CURSEUR_LISIBLE_V57 : le libelle prend le TITRE du chapitre, pas seulement son code.
+         Le nom du theme sort du texte (sa COULEUR est deja portee par cs.style.color, l. suivante)
+         et passe en infobulle. Le libelle a desormais sa propre ligne, pleine largeur : plus
+         d ellipse a 300px, et « (suite) » — qui etait avale le premier — reste visible. */
+      cs.textContent = ch.code+(ch.titre? " · "+ch.titre : "")+(typ? " · "+typ : "")+(s&&s.suite?" (suite)":"");
+      cs.title       = ch.themeLabel+" › "+ch.code;
       cs.style.color = `var(${themeVar[ch.theme]})`; cs.style.fontWeight="700";
     } else {
       cs.textContent = s? "jour de cours" : "jour de cours (créneau libre)";
