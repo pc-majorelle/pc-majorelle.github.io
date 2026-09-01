@@ -467,6 +467,8 @@ details.seq-int>summary::-webkit-details-marker{display:none}
       <span class="spacer" style="flex:1"></span>
       <button type="button" id="edEdtBtn" title="Régler les créneaux réels de la classe (jour · heure · durée)">🗓 Mon EDT</button>
       <button type="button" id="edFoldBtn" title="Replier / déplier tous les chapitres">⊟ Tout replier</button>
+      <!-- GROUPE_LIBRE_V58 -->
+      <button type="button" id="edLibreBtn" title="Ajouter un groupe hors programme (révisions bac, intervention libre) : aucune capacité imposée, il se remplit à la main">＋ Groupe libre</button>
       <button type="button" id="edSeedBtn" title="Refabriquer toutes les séances à partir de la proposition courante (B.O. / source réelle) — remplace vos réglages">↻ Régénérer les séances</button>
       <button type="button" id="edAutoBtn" title="Revenir au découpage automatique : la frise et l'arbre repassent en génération heuristique">↩ Revenir à l'auto</button>
     </div>
@@ -2194,6 +2196,11 @@ function etatVide(){
        ne le lit, aucun contrat touché. chargerEtat() fait Object.assign(base,o), donc un état
        déjà enregistré sans ce champ reçoit {} sans rien perdre. */
     fold:{},
+    /* GROUPE_LIBRE_V58 : [{id,titre}] — une unite de planning SANS chapitre B.O.
+       (revisions bac, intervention hors programme, sortie...). Champ NEUF : aucun
+       lecteur existant ne le lit. Object.assign(base,o) donne [] a un etat deja
+       enregistre : rien a migrer, aucun contrat touche. */
+    groupesLibres:[],
   };
 }
 function chargerEtat(){
@@ -2266,6 +2273,22 @@ function reporteesParChapitre(){
 const SUITE_SUFFIX = "::suite";
 function estSuiteId(id){ return typeof id==="string" && id.endsWith(SUITE_SUFFIX); }
 function parentDeSuite(id){ return estSuiteId(id) ? id.slice(0,-SUITE_SUFFIX.length) : null; }
+/* ===== GROUPE_LIBRE_V58 =====
+   Une unite libre porte un chapitre SYNTHETIQUE plutot que rien. Motif : faire
+   apprendre une 3e espece a tous les lecteurs de u.chap coute cher et se paie en
+   oublis silencieux ; un chapitre a zero capacite traverse le code existant sans
+   qu'aucun lecteur ait a changer. themeColor("__LIBRE") retombe sur --t-tampon,
+   la couleur neutre : pas de crash, pas de couleur de theme usurpee. */
+const LIBRE_PREFIX = "libre::";
+function estLibreId(id){ return typeof id==="string" && id.indexOf(LIBRE_PREFIX)===0; }
+function groupesLibres(){ if(!STATE.groupesLibres) STATE.groupesLibres=[]; return STATE.groupesLibres; }
+function libreById(id){ var a=groupesLibres(); for(var i=0;i<a.length;i++) if(a[i].id===id) return a[i]; return null; }
+function chapLibre(id){
+  var g=libreById(id);
+  return {id:id, theme:"__LIBRE", themeLabel:"Hors programme",
+          code:(g&&g.titre)?g.titre:"Groupe libre", titre:"",
+          caps:[], section:null, _libre:true};
+}
 
 // UNITÉS DE PLANNING ORDONNÉES : chapitres normaux ET « X (suite) », TOUS réordonnables ensemble.
 // Un « (suite) » n'existe que si son chapitre parent a des capacités décochées ; s'il n'est pas
@@ -2275,6 +2298,7 @@ function unitesOrdonnees(order){
   const rep = reporteesParChapitre();                    // {chapId:[caps décochées]}
   const wanted = new Set(DEFAULT_ORDER);                  // les 13 chapitres
   Object.keys(rep).forEach(pid=>wanted.add(pid+SUITE_SUFFIX));  // + les suites existantes
+  groupesLibres().forEach(g=>wanted.add(g.id));           // GROUPE_LIBRE_V58 : + les groupes libres
   const seen=new Set(); const out=[];
   (order||[]).forEach(id=>{ if(wanted.has(id)&&!seen.has(id)){out.push(id);seen.add(id);} });
   DEFAULT_ORDER.forEach(id=>{ if(!seen.has(id)){ out.push(id); seen.add(id);} });            // chapitres manquants
@@ -2282,7 +2306,13 @@ function unitesOrdonnees(order){
     const sid=pid+SUITE_SUFFIX;
     if(!seen.has(sid)){ const pi=out.indexOf(pid); out.splice(pi<0?out.length:pi+1,0,sid); seen.add(sid); }
   });
-  return out.map(id=> estSuiteId(id)
+  /* GROUPE_LIBRE_V58 : les libres absents de l'ordre sont ajoutes A LA FIN — un
+     groupe hors programme n'a pas de place naturelle dans la sequence B.O. ; c'est
+     ensuite a la poignee de glisser de decider. */
+  groupesLibres().forEach(g=>{ if(!seen.has(g.id)){ out.push(g.id); seen.add(g.id); } });
+  return out.map(id=> estLibreId(id)
+    ? {id, kind:"libre", chap:chapLibre(id)}
+    : estSuiteId(id)
     ? {id, kind:"suite", parent:parentDeSuite(id), chap:CHAP_BY_ID[parentDeSuite(id)], caps:rep[parentDeSuite(id)]}
     : {id, kind:"chap",  chap:CHAP_BY_ID[id]});
 }
@@ -2325,6 +2355,10 @@ function construirePlan(orderIds, opts){
 
   const sessions=[]; // liste ORDONNEE et CONTIGUE : les unités se succèdent sans trou
   units.forEach((u,pos)=>{
+    /* GROUPE_LIBRE_V58 : AUCUNE seance auto pour un groupe libre. Il n'a pas de
+       capacite a repartir, donc rien a deduire : il se remplit a la main, avec les
+       boutons « + Cours / + TP / ... » du pied de groupe qui existent deja. */
+    if(u.kind==="libre") return;
     if(u.kind==="suite"){
       // DUPLICATA « X (suite) » : capacités DÉCOCHÉES, replanifiées à CETTE position (réordonnable).
       const ch=u.chap, r=u.caps||[];
@@ -3985,7 +4019,16 @@ function dureeCreneauType_V33(){
 }
 /* Seed : fabrique les séances manquantes à partir de la génération heuristique existante. */
 function planEnsure(force){
-  if(force || !STATE.plan) STATE.plan={};
+  /* GROUPE_LIBRE_V58 : « Regenerer les seances » refabrique le plan DU PROGRAMME.
+     Les groupes libres ne sont pas generes : les vider ici les ferait revenir vides,
+     en silence, alors que ce sont les SEULES seances du plan qui ne se reconstruisent
+     pas. On les reporte tels quels. (Lecon des 89 seances orphelines du 01/09.) */
+  if(force || !STATE.plan){
+    var _garde={};
+    if(force && STATE.plan) groupesLibres().forEach(function(x){
+      if(STATE.plan[x.id]) _garde[x.id]=STATE.plan[x.id]; });
+    STATE.plan=_garde;
+  }
   planSyncUid();
   var units=unitesOrdonnees();
   var manquants=units.filter(function(u){ return !STATE.plan[u.id]; });
@@ -4246,7 +4289,17 @@ function renderEditeur(){
     return;
   }
   units.forEach(function(u){
-    var ch=u.chap; if(!ch) return;
+    var ch=u.chap;
+    /* GROUPE_LIBRE_V58 : ce garde ignorait l'unite EN ENTIER, sans rien dire. Il n'a
+       jamais mordu (mesure du 01/09 : 23 unites, aucune sans chapitre) mais il aurait
+       fait disparaitre le groupe libre en silence. Desormais il MONTRE ce qu'il ne sait
+       pas afficher, au lieu de l'effacer : on ne perd pas ce qu'on voit. */
+    if(!ch){
+      html+='<div class="ed-group ed-gorph" data-id="'+esc_V33(u.id)+'"><div class="ed-ghead">'
+        +'<span class="ed-gcode">?</span><span class="ed-gtitle">unite sans chapitre — '
+        +esc_V33(u.id)+' · '+planSeances(u.id).length+' seance(s) non affichees</span></div></div>';
+      return;
+    }
     var refs=(u.kind==="suite")?(u.caps||[]):(ch.caps||[]);
     var ses=planSeances(u.id);
     var cnt={}; ses.forEach(function(s){ (s.caps||[]).forEach(function(r){ cnt[r]=(cnt[r]||0)+1; }); });
@@ -4292,10 +4345,15 @@ function renderEditeur(){
     }
     html+='<div class="ed-group" data-id="'+esc_V33(u.id)+'" style="--gc:var('+themeColor(ch.theme)+')">'
       +'<div class="ed-ghead"><span class="g-handle" title="Glisser pour réordonner le chapitre">⠿</span>'
-      +'<span class="ed-gcode">'+esc_V33(ch.code)+(u.kind==="suite"?" (suite)":"")+'</span>'
+      /* GROUPE_LIBRE_V58 : le nom d'un groupe libre est saisi la ou il s'affiche.
+         Pas de prompt() : une boite modale bloque la page et ne se teste pas au banc. */
+      +((u.kind==="libre")
+        ? '<input class="ed-gcode ed-gname" data-libre="'+esc_V33(u.id)+'" value="'+esc_V33(ch.code)+'" title="Nom de ce groupe libre">'
+        : '<span class="ed-gcode">'+esc_V33(ch.code)+(u.kind==="suite"?" (suite)":"")+'</span>')
       +'<span class="ed-gtitle">'+esc_V33(ch.titre||ch.themeLabel||"")+'</span>'
       +'<span class="ed-gmeta">'+ses.length+' séances'+(refs.length?(' · '+placees+'/'+refs.length+' cap.'):'')
         +'<br>'+(d1?frShort(d1):"—")+' → '+(d2?frShort(d2):"—")+'</span>'
+      +((u.kind==="libre")?('<button class="ed-glibredel" data-libredel="'+esc_V33(u.id)+'" title="Retirer ce groupe libre et ses seances">\u2715 groupe</button>'):"")
       +'<button class="ed-fold" data-fold="'+esc_V33(u.id)+'">'+(_edFoldSet_V33_()[u.id]?"▸":"▾")+'</button></div>'
       +(_edFoldSet_V33_()[u.id]?"":('<ul class="ed-seances" data-id="'+esc_V33(u.id)+'">'+seHTML+'</ul>'
         +'<div class="ed-foot">'+TYPES_V33.map(function(x){ return '<button data-add="'+esc_V33(u.id)+'" data-t="'+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')+'</div>'
@@ -4331,6 +4389,27 @@ function edWire_V33(board){
     STATE.plan[f.uid].splice(f.i+1,0,
       {id:nextSeId_V33(), type:tk, durMin:Math.max(10,Math.round(libre/10)*10), caps:[], note:"", capsOpen:false});
     commit(); }; });
+  /* GROUPE_LIBRE_V58 : renommer. On ecrit a la sortie du champ, pas a chaque frappe :
+     un renderEditeur() par caractere reprendrait le focus a Laurent au premier appui. */
+  board.querySelectorAll("[data-libre]").forEach(function(inp){
+    inp.onchange=function(){
+      var g=libreById(inp.getAttribute("data-libre")); if(!g) return;
+      g.titre=(inp.value||"").trim()||"Groupe libre";
+      sauverEtat(); majPlan_V33(); };
+    inp.onkeydown=function(ev){ if(ev.key==="Enter") inp.blur(); };
+  });
+  /* GROUPE_LIBRE_V58 : retirer. Le groupe ET ses seances partent ENSEMBLE — laisser
+     STATE.plan[id] derriere, c'est fabriquer une orpheline de plus, invisible pour
+     toujours (les 89 mesurees le 01/09). Et on annonce le nombre avant d'agir. */
+  board.querySelectorAll("[data-libredel]").forEach(function(b){ b.onclick=function(){
+    var uid=b.getAttribute("data-libredel"), g=libreById(uid); if(!g) return;
+    var n=planSeances(uid).length;
+    if(!confirm("Retirer le groupe « "+g.titre+" »"+(n?(" et ses "+n+" séance(s)"):"")+" ?")) return;
+    var a=groupesLibres(), i=a.indexOf(g); if(i>=0) a.splice(i,1);
+    if(STATE.plan) delete STATE.plan[uid];
+    var j=STATE.order.indexOf(uid); if(j>=0) STATE.order.splice(j,1);
+    var _F=_edFoldSet_V33_(); delete _F[uid];
+    sauverEtat(); fullRender(); renderEditeur(); }; });
   board.querySelectorAll("[data-fold]").forEach(function(b){ b.onclick=function(){
     var uid=b.getAttribute("data-fold");
     var _F=_edFoldSet_V33_(); _F[uid]=!_F[uid];
@@ -4503,6 +4582,19 @@ function bootEditeur_V33(){
       sauverEtat();   /* REPLI_MEMORISE_V57 */
       fb.textContent=_edFolded_V33?"⊞ Tout déplier":"⊟ Tout replier";
       renderEditeur(); });
+    /* GROUPE_LIBRE_V58 : creation. On ne touche PAS a STATE.planOn — basculer le mode
+       du constructeur au dos de Laurent serait exactement la faute de la v52 (une cle
+       deplacee sans prevenir les lecteurs). Le groupe apparait dans l'editeur dans les
+       deux modes ; c'est lui qui decide du reste. */
+    var lb=document.getElementById("edLibreBtn");
+    if(lb) lb.addEventListener("click", function(){
+      var g={id:LIBRE_PREFIX+Date.now().toString(36), titre:"Révisions bac"};
+      groupesLibres().push(g);
+      if(!STATE.plan) STATE.plan={};
+      STATE.plan[g.id]=[];
+      if(STATE.order.indexOf(g.id)<0) STATE.order.push(g.id);
+      sauverEtat(); fullRender(); renderEditeur();
+    });
     var sb=document.getElementById("edSeedBtn");
     if(sb) sb.addEventListener("click", function(){
       if(!confirm("Refabriquer toutes les séances depuis la proposition courante ? Vos réglages de séances seront remplacés.")) return;
