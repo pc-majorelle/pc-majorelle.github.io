@@ -121,6 +121,11 @@ window.BASE_EDT = {
     "jour": "vendredi",
     "niveau": "Tale",
     "nom": "Tale ens.sci. TG5",
+    "periode": {
+     "au": "2027-04-02",
+     "du": "2026-11-13",
+     "groupe": "TG5"
+    },
     "pp": true,
     "quinzaine": null,
     "relais": [
@@ -945,6 +950,11 @@ window.BASE_EDT = {
      "groupe": null,
      "type_origine": "regle : ens. scientifique, 1 h/classe, cours"
     },
+    "periode": {
+     "au": "2027-06-12",
+     "du": "2027-04-02",
+     "groupe": "TG5"
+    },
     "pp": false,
     "quinzaine": null,
     "relais": [
@@ -1289,6 +1299,11 @@ window.BASE_EDT = {
      "fin": "09:00",
      "groupe": null,
      "type_origine": "regle : ens. scientifique, 1 h/classe, cours"
+    },
+    "periode": {
+     "au": "2026-11-13",
+     "du": "2026-09-04",
+     "groupe": "TG5"
     },
     "pp": false,
     "quinzaine": null,

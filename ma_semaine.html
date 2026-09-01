@@ -465,10 +465,18 @@ if(GEST){
       /*EDT_OFFICIEL_V53*/ var offi=(cr.source==="officiel");
       var brouillon=(cr.source!=="carnet"&&!offi); if(brouillon) anyProv=true; if(offi) anyOff=true;
       var lib=cr.nom||cr.code;
+      /* PART_DEPUIS_BASE_V56 : ce que le carnet de Laurent porte dans `du`/`au`, la base
+         le porte dans `periode` pour les collegues qui n'ont pas de carnet. Meme fonction,
+         meme phrase a l'ecran, meme mise en retrait — on ne fabrique pas un second langage.
+         `_maPart` rend null si l'objet n'a ni `du` ni `au` : une classe sans periode ne
+         change pas d'un cheveu. */
+      var _pb=_maPart(cr.periode, cr.jour);
       S.push({j:cr.jour, s:s, d:cr.duree||55, code:lib,
-              full:lib+(cr.groupe?(" \u00b7 groupe "+cr.groupe):"")+(cr.quinzaine?(" \u00b7 sem. "+cr.quinzaine):""),
+              full:lib+(cr.groupe?(" \u00b7 groupe "+cr.groupe):"")+(cr.quinzaine?(" \u00b7 sem. "+cr.quinzaine):"")
+                   +(_pb?(" \u2014 "+_pb.txt+(_pb.dedans?"":" ; pas ma part cette semaine")):""),
               prov:brouillon, offi:offi, grp:(cr.groupe||""), qz:(cr.quinzaine||""),
               tp:(cr.type==="TP"), fam:(cr.famille||""), past:"", pp:!!cr.pp,
+              pasmapart:!!(_pb&&!_pb.dedans), parttxt:(_pb?_pb.txt:""),
               typ:(cr.type==="TP"?"TP":"")});
     });
   }else{
