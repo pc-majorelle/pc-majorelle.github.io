@@ -482,6 +482,35 @@ if(GEST){
   (prof.classes||[]).forEach(function(c){ var byJ={};(c.creneaux||[]).forEach(function(cr){if(cr.jour)(byJ[cr.jour]=byJ[cr.jour]||[]).push(cr);});
     (c.creneaux||[]).forEach(function(cr){ var s=toMin(cr.debut); if(s===null)return; if(JOURS.indexOf(cr.jour)<0)return; var g=effGrp(c,cr,byJ[cr.jour]||[]); S.push({j:cr.jour,s:s,d:cr.duree_min||90,code:c.id,full:c.libelle||c.id,prov:false,grp:g,typ:g?'TP':''}); }); });
 }
+/* ------------------------------------------------------- SEMAINE_AB_BASE_V56
+   Laurent, 01/09 : en regardant la page d'un collegue, « je n'ai plus le bouton qui
+   permet de visualiser les semaines A et B ». Le bouton ET la mise en retrait de
+   l'autre quinzaine ne vivaient que dans le chemin CARNET. Le chemin BASE portait
+   deja `qz` sur chaque creneau (base_edt.js) sans jamais s'en servir. On ne calcule
+   rien de neuf : on applique au chemin base exactement la regle du chemin carnet. */
+if(!GEST && YEAR==="2026-2027"){
+  S.forEach(function(x){ x.hors = !!x.qz && x.qz !== _AB.courante; });
+}
+if(YEAR==="2026-2027" && !document.getElementById("basculeAB")){
+  try{
+    var _b2=document.createElement("button");
+    _b2.id="basculeAB"; _b2.type="button";
+    _b2.textContent = _AB.forcee ? "revenir \u00e0 la semaine en cours"
+                                 : "voir la semaine " + (_AB.courante==="A"?"B":"A");
+    _b2.style.cssText="margin:6px 8px 0 0;font:inherit;font-size:12px;padding:2px 9px;"+
+      "border-radius:999px;border:1px solid currentColor;background:transparent;"+
+      "color:inherit;opacity:.7;cursor:pointer";
+    _b2.addEventListener("click",function(){
+      try{
+        var u=new URL(location.href);
+        if(_AB.forcee) u.searchParams.delete("sem");
+        else u.searchParams.set("sem", _AB.courante==="A"?"B":"A");
+        location.href=u.toString();
+      }catch(e){}
+    });
+    subEl.parentNode.insertBefore(_b2, subEl.nextSibling);
+  }catch(e){}
+}
 /* ------------------------------------------------------------------ COULEURS_V50
    Douze teintes bien ecartees. Chaque classe vise la case donnee par le hachage de
    son libelle — stable d'une semaine a l'autre — et prend la premiere case LIBRE a
