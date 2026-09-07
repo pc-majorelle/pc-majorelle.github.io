@@ -2415,6 +2415,22 @@ function construirePlan(orderIds, opts){
   groups.forEach(g=>{ finDeGroupe[g[g.length-1]]=g; });
 
   const sessions=[]; // liste ORDONNEE et CONTIGUE : les unités se succèdent sans trou
+  /* ===== QUATRE_TYPES_V60 — Laurent, 07/09 : « ne mets que des cours, des TP, des TP notes
+     et des DS, je ferai le tri s'il faut mettre autre chose ».
+     Combien de seances de contenu par capacite ? On divise la place REELLEMENT disponible
+     dans l'annee — les jours de classe, moins un jour par DS — par le nombre total de
+     capacites a traiter. L'ancienne division fixe (caps/5 ou caps/3.5) ne connaissait pas le
+     calendrier : elle produisait le meme nombre de seances pour une annee pleine et pour une
+     annee amputee. Sans calendrier lisible, on retombe sur elle et rien ne change. */
+  var _partCap_V60 = 0;
+  try{
+    var _jours = 0;
+    try{ _jours = slotsAnnee_V33().length; }catch(e){}
+    if(!_jours) _jours = (CRENEAUX_REELS||[]).length;
+    var _capTot = 0;
+    units.forEach(function(u){ if(u.kind==="chap" && u.chap) _capTot += (u.chap.caps||[]).length; });
+    if(_jours>0 && _capTot>0) _partCap_V60 = Math.max(0.05, (_jours - groups.length) / _capTot);
+  }catch(e){}
   units.forEach((u,pos)=>{
     /* GROUPE_LIBRE_V58 : AUCUNE seance auto pour un groupe libre. Il n'a pas de
        capacite a repartir, donc rien a deduire : il se remplit a la main, avec les
@@ -2433,15 +2449,16 @@ function construirePlan(orderIds, opts){
     // nb de créneaux de contenu ~ proportionnel au nb de capacités (min 2). Les caps sont réparties
     // plus bas, une fois les creneaux connus. Le TYPE vient du CRENEAU : un creneau marque
     // « salle de TP » donne une seance de TP, tout le reste donne un Cours.
-    // ACTIVITÉ d'ouverture (phase de découverte avant le cours/TP) — une par partie
-    sessions.push({id:P+ch.id+":ACT", chap:ch.id, slot:"activite", caps:[], note:"découverte"});
-    // bundle plus léger quand l'unité est une PARTIE (grain fin) que pour un chapitre B.O.
+    /* QUATRE_TYPES_V60 : l'activite d'ouverture et le TD d'entrainement etaient poses
+       d'office, un de chaque par chapitre — 40 seances sur 64 en Seconde, decidees par un
+       gabarit et pas par lui. Ils disparaissent. Restent le CONTENU, type Cours ou TP par
+       son creneau, et le DS. Le temps libere retourne au contenu. */
     const isPartie = !!ch.section;
-    const nbContenu = isPartie ? Math.max(1, Math.round(ch.caps.length/5)) : Math.max(2, Math.round(ch.caps.length/3.5));
+    const nbContenu = _partCap_V60 ? Math.max(1, Math.round(ch.caps.length * _partCap_V60))
+                    : (isPartie ? Math.max(1, Math.round(ch.caps.length/5))
+                                : Math.max(2, Math.round(ch.caps.length/3.5)));
     for(let k=0;k<nbContenu;k++)
       sessions.push({id:P+ch.id+":S"+(k+1), chap:ch.id, slot:"contenu", caps:[]});
-    if(!isPartie || ch.caps.length>=5)
-      sessions.push({id:P+ch.id+":TD", chap:ch.id, slot:"TD", caps:[], note:"entraînement"});
 
     // DS a la fin du groupe (place juste apres le dernier chapitre du groupe -> aucun trou)
     if(finDeGroupe[ch.id]){
@@ -2454,17 +2471,9 @@ function construirePlan(orderIds, opts){
     }
   });
 
-  // Insertion de 3 seances TAMPON reparties (~25/50/75 %) — seulement si le plan a du contenu.
-  if(opts.tampons!==false && sessions.length){
-    const tampons=[];
-    [0.25,0.5,0.75].forEach((f,k)=>{
-      tampons.push({pos:Math.round(sessions.length*f)+k, id:P+"Tampon:"+(k+1),
-                    chap:null, slot:"Tampon", baseType:"Tampon", caps:[], note:"rattrapage / marge"});
-    });
-    tampons.sort((a,b)=>a.pos-b.pos).forEach((t,k)=>{
-      sessions.splice(t.pos, 0, t); // pos deja decalees par +k a la generation
-    });
-  }
+  /* QUATRE_TYPES_V60 : plus de seances TAMPON posees d'office. Elles n'etaient pas dans les
+     quatre types qu'il a nommes, et une marge decidee par le gabarit occupait trois creneaux
+     sans qu'il l'ait demandee. Il ajoute la sienne a la main s'il la veut. */
 
   // Affectation aux creneaux reels dans l'ordre
   sessions.forEach((s,i)=>{
@@ -4120,7 +4129,14 @@ function slotsAnnee_V33(){
     var k=iso(cr.date), s=byIso[k];
     if(!s){ s=byIso[k]={date:new Date(cr.date), min:0, horaires:[], jourLib:cr.jourLib}; out.push(s); }
     s.horaires.push(cr.horaire+(cr.rep?" (dédoublé)":""));
-    if(!cr.rep) s.min += (cr.min||120);
+    /* SLOT_DEDOUBLE_V60 : un creneau dedouble compte UNE FOIS, pas ZERO.
+       « ne compte pas » retirait toute sa duree au jour ; un jour dont les SEULS creneaux
+       sont dedoubles tombait alors a 0 minute, et le `filter(min>0)` ci-dessous le retirait
+       de l'annee. C'est ce qui faisait disparaitre les vendredis de quinzaine B de la
+       Seconde — deux demi-groupes de TP et rien d'autre — et envoyait seize seances
+       « hors annee ». On ajoute la plus longue duree dedoublee du jour, une seule fois. */
+    if(!cr.rep){ s.min += (cr.min||120); }
+    else { var _d=(cr.min||120); if(_d>(s._rep||0)){ s.min += _d-(s._rep||0); s._rep=_d; } }
   });
   out.sort(function(a,b){ return a.date-b.date; });
   out.forEach(function(s){ s.horaire=s.horaires.join(" + "); });
