@@ -409,13 +409,17 @@ if(GEST){
       var hors = !!q && q !== _AB.courante;
       /* COULEURS_V50 : le TP vient du carnet — `type:"TP"` sur le creneau, ou un
          groupe, puisqu'un dedoublement est un TP par construction. */
-      var estTP = (String(cr.type||cr.tp||"").toUpperCase()==="TP") || cr.tp===true || !!g;
+      /* SALLE_DE_TP_V60 : le carnet dit desormais EXPLICITEMENT si le creneau est en
+         salle de TP. Quand il le dit, il fait foi — y compris pour dire « Cours » sur un
+         creneau dedouble. Le groupe n'est plus qu'un REPLI, quand le champ ne dit rien. */
+      var _ty=String(cr.type||cr.tp||"").toUpperCase();
+      var estTP = (_ty==="TP") || cr.tp===true || (!_ty && !!g);
       /* META_DEPUIS_BASE_V52 : le carnet dit QUAND, la base dit QUOI. Le gestionnaire
          n'a pas de case « famille » ni « TP » ; on va les chercher dans base_edt.js,
          sans jamais contredire le carnet. */
       var _fam=c.famille||"";
       if(!_fam) _fam=_famBase(c.id)||_famBase(c.libelle)||"";
-      if(!estTP && !g){ var _t=_typeBase(c.id,cr.jour)||_typeBase(c.libelle,cr.jour); if(_t==="TP") estTP=true; }
+      if(!estTP && !g && !_ty){ var _t=_typeBase(c.id,cr.jour)||_typeBase(c.libelle,cr.jour); if(_t==="TP") estTP=true; }   /* SALLE_DE_TP_V60 : ne rattrape plus un « Cours » ecrit a la main */
       /* PART_DANS_SEMAINE_V54 : cette classe est-elle a moi CETTE semaine ? */
       var _part=_maPart(c,cr.jour);
       S.push({ j:cr.jour, s:s, d:cr.duree||cr.duree_min||60,
@@ -425,7 +429,7 @@ if(GEST){
                pasmapart:!!(_part&&!_part.dedans), parttxt:(_part?_part.txt:""),
                prov:false, grp:g, qz:q, hors:hors, tp:estTP,
                fam:_fam, past:(c.pastille==null?"":String(c.pastille)), pp:!!c.pp,
-               typ:(g||estTP)?"TP":(q?("sem. "+q):"") });
+               typ:estTP?"TP":(q?("sem. "+q):"") });   /* SALLE_DE_TP_V60 : le groupe ne decide plus seul */
     });
   });
   if(!S.length) missing=true;

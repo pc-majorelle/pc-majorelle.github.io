@@ -65,7 +65,7 @@ window.BASE_EDT = {
     "quinzaine": null,
     "relais": null,
     "source": "carnet",
-    "type": "TP"
+    "type": "Cours"
    },
    {
     "code": "TSPE-PHY1",
@@ -110,7 +110,7 @@ window.BASE_EDT = {
     "quinzaine": null,
     "relais": null,
     "source": "carnet",
-    "type": "Cours"
+    "type": "TP"
    },
    {
     "code": "TENS-4",
@@ -192,8 +192,8 @@ window.BASE_EDT = {
    },
    {
     "code": "2NDE",
-    "debut": "13:30",
-    "duree": 82,
+    "debut": "13:00",
+    "duree": 85,
     "famille": "PC2de",
     "groupe": "G1",
     "jour": "vendredi",
@@ -207,8 +207,8 @@ window.BASE_EDT = {
    },
    {
     "code": "2NDE",
-    "debut": "15:08",
-    "duree": 82,
+    "debut": "14:35",
+    "duree": 85,
     "famille": "PC2de",
     "groupe": "G2",
     "jour": "vendredi",

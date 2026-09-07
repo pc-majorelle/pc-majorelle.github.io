@@ -1078,12 +1078,16 @@ function creneauRow(idx,ci,cr){
     <label class="small muted">durée</label><input type="number" min="10" step="5" value="${cr.duree}" onchange="setCreneau(${idx},${ci},'duree',+this.value)" style="width:70px"> min
     <select onchange="setCreneau(${idx},${ci},'quinzaine',this.value)"><option value="" ${!cr.quinzaine?"selected":""}>hebdo</option><option value="A" ${cr.quinzaine==="A"?"selected":""}>quinz. A</option><option value="B" ${cr.quinzaine==="B"?"selected":""}>quinz. B</option></select>
     <select onchange="setCreneau(${idx},${ci},'groupe',this.value)" title="Groupe (TP dédoublé de Seconde)"><option value="auto" ${(!cr.groupe||cr.groupe==='auto')?"selected":""}>groupe auto</option><option value="entiere" ${cr.groupe==='entiere'?"selected":""}>classe entière</option><option value="G1" ${cr.groupe==='G1'?"selected":""}>Groupe 1</option><option value="G2" ${cr.groupe==='G2'?"selected":""}>Groupe 2</option></select>
+    <label class="small muted" style="display:inline-flex;align-items:center;gap:4px" title="Ce créneau est-il réservé en salle de TP ? C'est la SALLE qui est dite, pas le contenu de la séance : vous gardez le droit d'y faire cours."><input type="checkbox" ${cr.type==='TP'?"checked":""} onchange="setCreneau(${idx},${ci},'type',this.checked?'TP':'Cours')"> salle de TP</label>
     <button class="mini del ghost" onclick="delCreneau(${idx},${ci})">✕</button>
   </div>`;
 }
 function setClass(i,k,v){state.classes[i][k]=v; if(k==='programme'){/* garder prev/suivi mais ils pointent d'autres caps */} save(); renderClasses(); refreshClassSelector();}
 function setCreneau(i,ci,k,v){state.classes[i].creneaux[ci][k]=v; save(); renderClasses();}
-function addCreneau(i){state.classes[i].creneaux.push({jour:"",debut:"",duree:90,quinzaine:""}); save(); renderClasses();}
+/* SALLE_DE_TP_V60 : le champ est pose des la creation, a null. Sans lui, un creneau
+   neuf n'aurait JAMAIS de salle de TP et ressortirait « Cours » a l'export, en silence.
+   null (et non "Cours") : un creneau qui ne dit rien doit se lire comme avant. */
+function addCreneau(i){state.classes[i].creneaux.push({jour:"",debut:"",duree:90,quinzaine:"",type:null}); save(); renderClasses();}
 function delCreneau(i,ci){state.classes[i].creneaux.splice(ci,1); save(); renderClasses();}
 function addClass(){
   let n=1; while(state.classes.some(c=>c.id==="C"+n)) n++;
