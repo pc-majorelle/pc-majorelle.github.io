@@ -2527,15 +2527,19 @@ function construirePlan(orderIds, opts){
     const suite=estSuiteId(cid);
     const chap = suite ? CHAP_BY_ID[parentDeSuite(cid)] : CHAP_BY_ID[cid];
     const expCount = chap ? chap.caps.filter(estExp).length : 0;
-    // Un chapitre à >= 2 capacités expérimentales : garantir 1 TP + 1 TP évalué.
+    /* TYPE_DEPUIS_CRENEAU_V60 — Laurent, 07/09 : « les TP ne peuvent avoir lieu que sur les
+       creneaux indiques. Il peut y avoir un cours a la place. »
+       Le code GARANTISSAIT 1 TP + 1 TP evalue des qu'un chapitre portait 2 capacites
+       experimentales, en transformant AU BESOIN un creneau qui n'est pas en salle de TP
+       (`arr[0].baseType="TP"`, puis un Cours converti en « TP evalue »). Cette garantie est
+       supprimee : la SALLE commande, pas le besoin pedagogique.
+       Un TP evalue reste possible, mais seulement sur un SECOND creneau de salle de TP.
+       Un chapitre experimental sans creneau de TP n'a donc plus de seance de TP : ses
+       capacites experimentales se repartissent sur les seances ordinaires (repli deja
+       present dans `distribuer`), et cela SE VOIT au lieu de se maquiller. */
     if(!suite && expCount>=2){
-      let tps=arr.filter(s=>s.baseType==="TP");
-      if(tps.length===0){ if(arr[0]) arr[0].baseType="TP"; tps=arr.filter(s=>s.baseType==="TP"); }
+      const tps=arr.filter(s=>s.baseType==="TP");
       if(tps.length>=2){ tps[tps.length-1].baseType="TP évalué"; }
-      else { // 1 seul TP -> convertir un créneau Cours (ou le 2e créneau) en TP évalué
-        const cand=arr.find(s=>s.baseType==="Cours") || arr[1] || tps[0];
-        if(cand) cand.baseType="TP évalué";
-      }
     }
     // Répartition des capacités : exp -> créneaux TP/TP évalué ; le reste -> créneaux Cours.
     const caps = suite ? ((reporteesParChapitre()[parentDeSuite(cid)])||[]) : chap.caps;
@@ -3754,7 +3758,15 @@ function attacherEcouteurs(){
   });
   on("resetBtn","click",()=>{
     if(confirm("Réinitialiser vers la progression stricte auto-générée ? Tous les ajustements seront perdus.")){
-      const an=STATE.annee; STATE=etatVide(); STATE.annee=an; chargerCalendrier(an); sauverEtat(); fullRender();
+      /* RESET_GARDE_LE_PLAN_V60 — Laurent, 07/09 : « a chaque reinitialiser j'ai hors annee ».
+         `etatVide()` remettait AUSSI `planOn` a faux. Or `construirePlan` ne date le plan que
+         si `planActif()` : sans ce drapeau, les seances neuves n'etaient jamais datees et
+         s'affichaient toutes « hors annee » — jusqu'au prochain rechargement de page, qui le
+         remettait a vrai. « Reinitialiser » remet la progression a zero, PAS la facon de
+         travailler : on lui rend son drapeau. */
+      const an=STATE.annee, _planOn=!!STATE.planOn;
+      STATE=etatVide(); STATE.annee=an; STATE.planOn=_planOn;
+      chargerCalendrier(an); sauverEtat(); fullRender();
     }
   });
 }
