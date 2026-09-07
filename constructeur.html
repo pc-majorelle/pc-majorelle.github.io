@@ -1640,7 +1640,7 @@ function genererCreneauxReels(){
           if(c.q==="A" && occ[k]%2===0) continue;
           if(c.q==="B" && occ[k]%2===1) continue;
         }
-        out.push({date:new Date(cur), horaire:c.h, jourLib:c.lib, min:c.min, rep:c.rep});
+        out.push({date:new Date(cur), horaire:c.h, jourLib:c.lib, min:c.min, rep:c.rep, tp:!!c.tp});   /* TYPE_DEPUIS_CRENEAU_V60 */
       }
     }
     cur=addDays(cur,1);
@@ -2409,8 +2409,8 @@ function construirePlan(orderIds, opts){
     }
     const ch=u.chap;
     // nb de créneaux de contenu ~ proportionnel au nb de capacités (min 2). Les caps sont réparties
-    // plus bas, une fois les jours (donc les types) connus. Le TYPE par défaut vient du JOUR :
-    //  JEUDI = TP, VENDREDI = Cours (la classe n'a que ces 2 jours) -> beaucoup de TP.
+    // plus bas, une fois les creneaux connus. Le TYPE vient du CRENEAU : un creneau marque
+    // « salle de TP » donne une seance de TP, tout le reste donne un Cours.
     // ACTIVITÉ d'ouverture (phase de découverte avant le cours/TP) — une par partie
     sessions.push({id:P+ch.id+":ACT", chap:ch.id, slot:"activite", caps:[], note:"découverte"});
     // bundle plus léger quand l'unité est une PARTIE (grain fin) que pour un chapitre B.O.
@@ -2450,6 +2450,7 @@ function construirePlan(orderIds, opts){
     s.date = cr ? cr.date : null;
     s.horaire = cr ? cr.horaire : null;
     s.jourLib = cr ? cr.jourLib : null;
+    s._cr = cr;   /* TYPE_DEPUIS_CRENEAU_V60 : la seance garde son creneau, qui sait s'il est en salle de TP */
     s.index = i+1;
   });
 
@@ -2459,7 +2460,10 @@ function construirePlan(orderIds, opts){
     else if(s.slot==="TD") s.baseType="TD";
     else if(s.slot==="DS") s.baseType="DS";
     else if(s.slot==="Tampon") s.baseType="Tampon";
-    else { const day=s.date? s.date.getUTCDay():5; s.baseType=(day===4)?"TP":"Cours"; } // 4=jeu, 5=ven
+    /* TYPE_DEPUIS_CRENEAU_V60 : le type vient du CRENEAU, plus du jour de la semaine.
+       La regle « jeudi = TP » est EFFACEE, pas neutralisee : elle tombait juste tant que
+       le TP etait le jeudi, et devenait fausse des qu'il bougeait. */
+    else { s.baseType = (s._cr && s._cr.tp) ? "TP" : "Cours"; }
   });
 
   // DÉDOUBLEMENT DES TP + RÉPARTITION DES CAPACITÉS, par chapitre (une fois les jours connus).
@@ -3969,7 +3973,32 @@ function edtKey_V33(){
   var cl=null; try{ cl=(__MENUCTX&&__MENUCTX.classe)||null; }catch(e){}
   return "constructeur_edt_"+STATE.annee+"_"+(cl||level);
 }
+/* ===== TYPE_DEPUIS_CRENEAU_V60 =====
+   L'emploi du temps REEL de la classe, pris dans la base (carnet du professeur) par le
+   pont Store deja en place. Les tables en dur ci-dessus deviennent le REPLI : sans base,
+   sans classe choisie, ou base incomplete, rien ne change.
+   Le champ `tp` qui en sort est ce qui remplace la regle « jeudi = TP ». */
+function edtBase_V60(){
+  var cl=null;
+  try{ cl=(__MENUCTX&&__MENUCTX.classe)||Store.classeActive(); }catch(e){}
+  if(!cl) return null;
+  var c=null; try{ c=Store.classeById(cl); }catch(e){}
+  if(!c || !c.creneaux || !c.creneaux.length) return null;
+  var J={"dimanche":0,"lundi":1,"mardi":2,"mercredi":3,"jeudi":4,"vendredi":5,"samedi":6};
+  var cren=[];
+  for(var i=0;i<c.creneaux.length;i++){
+    var x=c.creneaux[i], j=J[String(x.jour||"").toLowerCase()];
+    /* un seul creneau illisible et on rend la main au repli : mieux vaut l'ancien
+       emploi du temps en entier qu'un emploi du temps a trous. */
+    if(j===undefined || !x.debut) return null;
+    cren.push({ j:j, deb:x.debut, dur:(+x.duree_min||120), rep:!!x.groupe,
+                q:(x.quinzaine||""), tp:(String(x.type||"").toUpperCase()==="TP") });
+  }
+  return { src:"emploi du temps r\u00e9el (carnet) \u2014 "+(c.libelle||cl), cren:cren };
+}
 function edtDefaut_V33(){
+  var _b=null; try{ _b=edtBase_V60(); }catch(e){}
+  if(_b) return _b;                                   /* TYPE_DEPUIS_CRENEAU_V60 */
   var cl=null; try{ cl=(__MENUCTX&&__MENUCTX.classe)||null; }catch(e){}
   var tc=EDT_CLASSE_V33[STATE.annee]||{};
   if(cl && tc[cl]) return {src:tc[cl].src, cren:tc[cl].cren.map(function(c){return Object.assign({},c);})};
@@ -4000,6 +4029,12 @@ chargerCalendrier = function(annee){ _chargerCalendrier_L33(annee); try{ crAnnot
 var CRENEAUX_ORIG_V33 = CRENEAUX.map(function(c){ return {jour:c.jour, h:c.h, lib:c.lib, min:(c.min||120), rep:false}; });
 var _edtSig_V33 = null;
 function edtEngage_V33(){
+  /* TYPE_DEPUIS_CRENEAU_V60 : la base EST un emploi du temps reel. Sans cette ligne,
+     `edtDefaut_V33` lisait bien le carnet mais `appliquerEDT_V33` ne l'appliquait pas :
+     il retombait sur les creneaux d'origine (jeu. 10-12 / ven. 8-10), et le champ `tp`
+     n'arrivait jamais jusqu'aux seances. Le carnet lu et non applique, c'est le pire
+     des deux mondes : la page dit la bonne source et dessine la mauvaise. */
+  try{ if(edtBase_V60()) return true; }catch(e){}
   try{ if(planActif()) return true; return !!localStorage.getItem(edtKey_V33()); }
   catch(e){ return planActif(); }
 }
@@ -4016,7 +4051,7 @@ function appliquerEDT_V33(force){
   cible.cren.slice().sort(function(a,b){ return (a.j-b.j) || (a.deb<b.deb?-1:1); }).forEach(function(c){
     CRENEAUX.push({jour:+c.j, h:c.deb+"–"+finHeure_V33(c.deb,c.dur),
                    lib:JOURLIB_V33[+c.j]||"?", min:(+c.dur||120), rep:!!c.rep,
-                   q:c.q||""});   /* QUINZAINE_V37 */
+                   q:c.q||"", tp:!!c.tp});   /* QUINZAINE_V37 ; tp : TYPE_DEPUIS_CRENEAU_V60 */
   });
   chargerCalendrier(STATE.annee);
   return cible;

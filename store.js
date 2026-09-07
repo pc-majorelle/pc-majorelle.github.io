@@ -37,7 +37,9 @@ window.Store = (function(){
         if(!par[id]){ par[id]={ id:id, libelle:(x.nom||id), niveau:(x.niveau||""), creneaux:[], _source:x.source }; ordre.push(id); }
         /* un seul creneau de brouillon suffit a marquer la classe comme provisoire */
         if(x.source === "brouillon") par[id]._source = "brouillon";
-        par[id].creneaux.push({ jour:x.jour, debut:x.debut, duree_min:x.duree, groupe:(x.groupe||null), type:(x.type||null) });
+        /* TYPE_DEPUIS_CRENEAU_V60 : la quinzaine aussi. Sans elle, un creneau une semaine
+           sur deux se dessinerait toutes les semaines chez qui lit ce pont. */
+        par[id].creneaux.push({ jour:x.jour, debut:x.debut, duree_min:x.duree, groupe:(x.groupe||null), type:(x.type||null), quinzaine:(x.quinzaine||null) });
       });
       return ordre.map(function(k){ return par[k]; });
     }catch(e){ return null; }
