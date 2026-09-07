@@ -489,6 +489,8 @@ details.seq-int>summary::-webkit-details-marker{display:none}
       <h2 style="font-size:16px;margin:0">Éditeur de séances — la progression, séance par séance</h2>
       <span class="spacer" style="flex:1"></span>
       <button type="button" id="edEdtBtn" title="Régler les créneaux réels de la classe (jour · heure · durée)">🗓 Mon EDT</button>
+      <!-- VERROU_TP_V61 -->
+      <button type="button" id="edVerrouTP" title="Un TP ne peut être posé que sur un créneau en salle de TP. Cliquer pour ouvrir ou refermer ce verrou.">🔒 TP verrouillés</button>
       <button type="button" id="edFoldBtn" title="Replier / déplier tous les chapitres">⊟ Tout replier</button>
       <!-- GROUPE_LIBRE_V58 -->
       <button type="button" id="edLibreBtn" title="Ajouter un groupe hors programme (révisions bac, intervention libre) : aucune capacité imposée, il se remplit à la main">＋ Groupe libre</button>
@@ -4248,6 +4250,33 @@ function planFindSe(seId){
   return null;
 }
 
+/* ===== VERROU_TP_V61 — l'etat du verrou =====
+   Memorise PAR ANNEE, PAR NIVEAU ET PAR CLASSE : ouvrir le verrou pour la Seconde ne
+   l'ouvre pas pour la Tale spe. Ferme par defaut — l'absence de cle VAUT « ferme ». */
+var TP_HORS_SALLE_V61=0, JOURS_SANS_SEANCE_V61=0;
+function _verrouTPCle_V61(){
+  var cl="_"; try{ cl=(__MENUCTX&&__MENUCTX.classe)||Store.classeActive()||"_"; }catch(e){}
+  var an="_", lv="_"; try{ an=STATE.annee; }catch(e){} try{ lv=level; }catch(e){}
+  return "constructeur_tp_verrou__"+an+"__"+lv+"__"+cl;
+}
+function verrouTPOuvert_V61(){
+  try{ return localStorage.getItem(_verrouTPCle_V61())==="1"; }catch(e){ return false; }
+}
+function verrouTPPoser_V61(ouvert){
+  try{ if(ouvert) localStorage.setItem(_verrouTPCle_V61(),"1");
+       else localStorage.removeItem(_verrouTPCle_V61()); }catch(e){}
+}
+function verrouTPMajBouton_V61(){
+  var b=document.getElementById("edVerrouTP"); if(!b) return;
+  var o=verrouTPOuvert_V61();
+  b.textContent = o ? "\ud83d\udd13 TP d\u00e9verrouill\u00e9s" : "\ud83d\udd12 TP verrouill\u00e9s";
+  b.style.borderColor = o ? "var(--bad,#c33)" : "";
+  b.style.color = o ? "var(--bad,#c33)" : "";
+  b.title = o
+    ? "Verrou OUVERT : le constructeur peut poser un TP sur un cr\u00e9neau qui n'est pas en salle de TP. Cliquer pour refermer."
+    : "Verrou ferm\u00e9 : un TP ne peut \u00eatre pos\u00e9 que sur un cr\u00e9neau en salle de TP. Cliquer pour ouvrir.";
+}
+
 /* ---------- construirePlan en mode PLAN : packing par minutes ---------- */
 var SEANCES_V33 = [];
 function construirePlanFromPlan(orderIds, opts){
@@ -4279,11 +4308,17 @@ function construirePlanFromPlan(orderIds, opts){
       if(j<0) j=0;
       out.push(file.splice(j,1)[0]);
     });
-    flat = out.concat(file);
+    /* VERROU_TP_V61 : ce pre-rangement est NEUTRALISE. Il rangeait UNE seance par jour,
+       alors que le remplissage en case DEUX les jours a deux creneaux : des la deuxieme
+       semaine tout etait decale d'un cran. Et sa ligne de repli `if(j<0) j=0` prenait la
+       premiere seance de la file quand elle ne trouvait pas de cours — c'est-a-dire un TP,
+       le cas meme qu'il fallait interdire. Le choix se fait desormais au moment du
+       placement, creneau par creneau, dans la boucle ci-dessous. */
+    /* flat = out.concat(file); */
   })();
 
   var ci=0;
-  flat.forEach(function(f){
+  function _poser_V61(f){
     var se=f.se;
     se._date=null; se._span=1; se._hors=false; se._free=0; se._reste=0;
     if(ci>=buckets.length){ se._hors=true; return; }
@@ -4302,7 +4337,62 @@ function construirePlanFromPlan(orderIds, opts){
       if(buckets[ci].used>0){ ci++; if(ci>=buckets.length){ se._hors=true; return; } }
       etaler(f, se);
     }
-  });
+  }
+  /* ===== VERROU_TP_V61 — le pilote de placement =====
+     On ne range plus la file a l'avance : pour CHAQUE creneau qu'on s'apprete a remplir, on
+     va chercher dans la file une seance COMPATIBLE avec ce creneau-la. C'est ce qui manquait :
+     le type etait decide d'un cote, la date de l'autre, et un jour a deux creneaux (ou un
+     ferie) suffisait a decaler les deux d'un cran pour toute l'annee.
+
+     LA REGLE, dans ses mots : « les creneaux cours ne peuvent pas accepter des TP ».
+       - jour SANS salle de TP : on cherche un cours dans la fenetre de 8 ; si la fenetre n'en
+         offre pas, on ELARGIT a toute la file plutot que de violer la regle ; s'il ne reste
+         que des TP, le jour est LAISSE VIDE (et compte) — le verrou seul peut en decider autrement.
+       - jour AVEC salle de TP : un TP en priorite, sinon un cours (« il peut y avoir un cours
+         a la place », 07/09).
+     La fenetre de 8 existe pour ne pas faire remonter un chapitre de juin au mois de septembre. */
+  var _tpHorsSalle_V61=0, _joursVides_V61=0;
+  (function(){
+    var estTP=function(f){ var t=f&&f.se&&f.se.type; return t==="TP"||t==="TP \u00e9valu\u00e9"; };
+    var file=flat.slice(), FEN=8, garde=0;
+    flat=[];
+    /* On choisit pour le creneau REELLEMENT en cours de remplissage, et on tient compte de
+       la place qui y RESTE. C'est le point ou la premiere version fuyait encore : le corps de
+       boucle pouvait, apres mon choix, passer la seance au creneau suivant faute de place —
+       et ce creneau-la n'etait pas forcement en salle de TP. */
+    function trouver(jourTP, libre){
+      var n=file.length, i, lim=Math.min(FEN,n);
+      for(i=0;i<lim;i++) if(estTP(file[i])===jourTP && file[i].se.durMin<=libre) return i;
+      for(i=lim;i<n;i++) if(estTP(file[i])===jourTP && file[i].se.durMin<=libre) return i;
+      return -1;
+    }
+    while(file.length && garde++ < 40000){
+      if(ci>=buckets.length){                        // plus de creneau : le reste est hors annee
+        var g=file.shift(); flat.push(g); _poser_V61(g); continue;
+      }
+      var b=buckets[ci], libre=b.slot.min-b.used;
+      if(libre<=0){ ci++; continue; }
+      var jourTP=!!b.slot.tp;
+      var j=trouver(jourTP, libre);                  // 1. compatible ET qui tient dans la place restante
+      if(j<0 && jourTP) j=trouver(false, libre);     // 2. un cours sur un creneau de TP : autorise
+      if(j<0 && b.used>0){ ci++; continue; }         // 3. creneau entame et rien n'y tient : on le ferme
+      if(j<0){                                        // 4. creneau VIDE : on accepte l'etalement
+        var k=-1, n2=file.length, i2;
+        for(i2=0;i2<n2;i2++) if(estTP(file[i2])===jourTP){ k=i2; break; }
+        if(k<0 && jourTP) for(i2=0;i2<n2;i2++) if(!estTP(file[i2])){ k=i2; break; }
+        if(k<0){
+          /* Il ne reste que des TP et ce creneau n'est pas en salle de TP.
+             VERROU FERME : on laisse le creneau VIDE plutot que d'y poser un TP.
+             VERROU OUVERT : il l'a explicitement autorise, on pose et on compte. */
+          if(!verrouTPOuvert_V61()){ _joursVides_V61++; ci++; continue; }
+          _tpHorsSalle_V61++; k=0;
+        }
+        j=k;
+      }
+      var f=file.splice(j,1)[0]; flat.push(f); _poser_V61(f);
+    }
+  })();
+  try{ TP_HORS_SALLE_V61=_tpHorsSalle_V61; JOURS_SANS_SEANCE_V61=_joursVides_V61; }catch(e){}
   function etaler(f, se){                       // séance > durée d'un créneau : plusieurs créneaux
     var reste=se.durMin, k=0, start=ci;
     while(reste>0 && ci<buckets.length){
@@ -4477,7 +4567,13 @@ function edStatsHTML_V33(){
    +'<div class="ed-stat">Temps &nbsp;<b>'+fmtMin_V33(used)+'</b> <small>/ '+fmtMin_V33(dispo)+' disponibles</small></div>'
    +'<div class="ed-stat '+(manque?"warn":"good")+'">Couverture &nbsp;<b>'+placN+'</b> / '+totN
      +' <small>capacités'+(manque?(" · "+manque+" à placer"):" · complète")+'</small></div>'
-   +'<div class="ed-stat">Séances &nbsp;<b>'+nse+'</b> <small>· '+ngr+' chapitres</small></div>';
+   +'<div class="ed-stat">Séances &nbsp;<b>'+nse+'</b> <small>· '+ngr+' chapitres</small></div>'
+   /* VERROU_TP_V61 : ce que le verrou a empeche, ou ce qu'il a laisse passer. */
+   +(verrouTPOuvert_V61()
+      ? ('<div class="ed-stat '+(TP_HORS_SALLE_V61?"bad":"warn")+'">\ud83d\udd13 Verrou TP &nbsp;<b>ouvert</b> <small>· '
+         +(TP_HORS_SALLE_V61?(TP_HORS_SALLE_V61+' TP hors salle de TP'):'aucun TP hors salle de TP à ce stade')+'</small></div>')
+      : ('<div class="ed-stat good">\ud83d\udd12 Verrou TP &nbsp;<b>fermé</b> <small>· aucun TP hors salle de TP'
+         +(JOURS_SANS_SEANCE_V61?(' · '+JOURS_SANS_SEANCE_V61+' jour(s) laissé(s) vide(s)'):'')+'</small></div>'));
 }
 function renderEditeur(){
   var board=document.getElementById("edBoard"); if(!board) return;
@@ -4817,6 +4913,21 @@ function bootEditeur_V33(){
     var ab=document.getElementById("edAutoBtn");
     if(ab) ab.addEventListener("click", function(){
       STATE.planOn=false; sauverEtat(); fullRender(); renderEditeur(); });
+    /* VERROU_TP_V61 : l'avertissement dit ce qu'on autorise, pas « etes-vous sur ». */
+    var vt=document.getElementById("edVerrouTP");
+    if(vt){ verrouTPMajBouton_V61();
+      vt.addEventListener("click", function(){
+        if(verrouTPOuvert_V61()){ verrouTPPoser_V61(false); }
+        else{
+          if(!confirm("Ouvrir le verrou autorise le constructeur \u00e0 poser un TP sur un cr\u00e9neau qui n'est PAS en salle de TP.\n\n"
+            +"C'est ce qui produisait des TP le jeudi en Seconde, sur un cr\u00e9neau de cours de 55 minutes.\n\n"
+            +"Verrou ferm\u00e9, un jour sans salle de TP est laiss\u00e9 vide plut\u00f4t que de recevoir un TP.\n\n"
+            +"Ouvrir le verrou pour cette classe ?")) return;
+          verrouTPPoser_V61(true);
+        }
+        verrouTPMajBouton_V61(); fullRender(); renderEditeur();
+      });
+    }
     var eb=document.getElementById("edEdtBtn");
     if(eb) eb.addEventListener("click", function(){
       var h=document.getElementById("edEdtPanel"); if(!h) return;
