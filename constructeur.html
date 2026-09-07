@@ -2427,7 +2427,7 @@ function construirePlan(orderIds, opts){
   var _partCap_V60 = 0;
   try{
     var _jours = 0;
-    try{ _jours = slotsAnnee_V33().length; }catch(e){}
+    try{ _jours = creneauxAnnee_V61().length; }catch(e){}   /* GRAIN_CRENEAU_V61 */
     if(!_jours) _jours = (CRENEAUX_REELS||[]).length;
     var _capTot = 0;
     units.forEach(function(u){ if(u.kind==="chap" && u.chap) _capTot += (u.chap.caps||[]).length; });
@@ -2479,7 +2479,7 @@ function construirePlan(orderIds, opts){
      surplus au chapitre qui en a le plus, jamais en dessous d'une seance. */
   try{
     var _capJours = 0;
-    try{ _capJours = slotsAnnee_V33().length; }catch(e){}
+    try{ _capJours = creneauxAnnee_V61().length; }catch(e){}   /* GRAIN_CRENEAU_V61 : des CRENEAUX, plus des jours */
     if(_capJours>0){
       var _garde=0;
       while(sessions.length > _capJours && _garde++ < 200){
@@ -2500,8 +2500,13 @@ function construirePlan(orderIds, opts){
      sans qu'il l'ait demandee. Il ajoute la sienne a la main s'il la veut. */
 
   // Affectation aux creneaux reels dans l'ordre
+  const _CRENEAUX_ANNEE_V61 = creneauxAnnee_V61();   /* GRAIN_CRENEAU_V61 */
   sessions.forEach((s,i)=>{
-    const cr = CRENEAUX_REELS[i] || null;
+    /* GRAIN_CRENEAU_V61 : c'est ICI que naissait le decalage. `CRENEAUX_REELS` est un
+       index sur les CRENEAUX ; la date, elle, venait d'un index sur les JOURS. En lisant le
+       MEME tableau que le placement, les deux index deviennent le meme et la desynchronisation
+       ne peut plus se produire. */
+    const cr = _CRENEAUX_ANNEE_V61[i] || null;
     s.date = cr ? cr.date : null;
     s.horaire = cr ? cr.horaire : null;
     s.jourLib = cr ? cr.jourLib : null;
@@ -4180,6 +4185,36 @@ function slotsAnnee_V33(){
   return out.filter(function(s){ return s.min>0; });
 }
 
+/* ===== GRAIN_CRENEAU_V61 — Laurent, 07/09 : « ce n'est pas le jour, c'est bien le creneau
+   qui est defini comme TP ».
+   `slotsAnnee_V33` agrege par JOUR : c'est ce qu'il faut a la frise, qui a une case par jour,
+   et c'est ce qu'il ne faut PAS au plan. Son vendredi de Seconde y vaut 140 minutes — le cours
+   de 11h05 plus le TP dedouble — et le plan n'avait aucun moyen de dire lequel des deux
+   recevait quoi : sa regle « pas de cours sur un creneau de TP » etait INEXPRIMABLE, et
+   seize seances de l'annee etaient perdues dans l'agregation.
+   Ici : UN PANIER PAR CRENEAU. Les creneaux DEDOUBLES d'une meme journee fusionnent en un
+   seul panier — sa regle : « un TP pour un groupe puis LE MEME TP pour l'autre groupe » est
+   UNE seance, enseignee deux fois. La frise n'est pas touchee. */
+function creneauxAnnee_V61(){
+  var out=[], fus={};
+  (CRENEAUX_REELS||[]).forEach(function(cr){
+    var jour=cr.date.toISOString().slice(0,10);
+    if(cr.rep){
+      var k=jour+"|dedouble|"+(cr.tp?"TP":"CO"), b=fus[k];
+      if(!b){ b=fus[k]={date:new Date(cr.date), min:(cr.min||120), tp:!!cr.tp,
+                        jourLib:cr.jourLib, horaires:[cr.horaire], dedouble:true};
+              out.push(b); }
+      else { if((cr.min||120)>b.min) b.min=(cr.min||120); b.horaires.push(cr.horaire); }
+    } else {
+      out.push({date:new Date(cr.date), min:(cr.min||120), tp:!!cr.tp,
+                jourLib:cr.jourLib, horaires:[cr.horaire], dedouble:false});
+    }
+  });
+  out.sort(function(a,b){ return (a.date-b.date) || (a.horaires[0]<b.horaires[0]?-1:1); });
+  out.forEach(function(s){ s.horaire=s.horaires.join(" + ")+(s.dedouble?" (d\u00e9doubl\u00e9)":""); });
+  return out.filter(function(s){ return s.min>0; });
+}
+
 /* ============================================================================
    LE PLAN (modèle unique)
    ============================================================================ */
@@ -4201,7 +4236,31 @@ function dureeCreneauType_V33(){
   return best||120;
 }
 /* Seed : fabrique les séances manquantes à partir de la génération heuristique existante. */
+/* ===== TYPES_HERITES_V61 — Laurent, 07/09 : « j'ai encore (...) des activite alors que je
+   ne voulais que des cours des TP, des tp note et des ds ».
+   Le code n'en produit plus depuis QUATRE_TYPES_V60 — mesure sur les SEPT niveaux : aucun
+   type interdit genere. Les siennes viennent de son PLAN ENREGISTRE, fabrique avant cette
+   correction : `planEnsure(false)` reporte le plan tel quel, il ne le refabrique pas. Un
+   plan plus vieux que le code garde ses Activites pour toujours.
+   On les convertit, une fois, sans rien supprimer : la seance garde son creneau, ses
+   capacites et sa note. Le TD n'est pas touche — il le veut pour un chapitre sans TP. */
+var TYPES_MIGRES_V61 = 0;
+var MIGRATION_TYPES_V61 = { "Activité":"Cours", "Activite":"Cours", "Tampon":"Cours" };
+function migrerTypesHerites_V61(){
+  if(!STATE || !STATE.plan) return 0;
+  var n=0;
+  for(var k in STATE.plan){
+    var a=STATE.plan[k]||[];
+    for(var i=0;i<a.length;i++){
+      var t=a[i] && a[i].type, r=t && MIGRATION_TYPES_V61[t];
+      if(r){ a[i].type=r; n++; }
+    }
+  }
+  if(n){ TYPES_MIGRES_V61 += n; try{ sauverEtat(); }catch(e){} }
+  return n;
+}
 function planEnsure(force){
+  try{ migrerTypesHerites_V61(); }catch(e){}   /* TYPES_HERITES_V61 */
   /* GROUPE_LIBRE_V58 : « Regenerer les seances » refabrique le plan DU PROGRAMME.
      Les groupes libres ne sont pas generes : les vider ici les ferait revenir vides,
      en silence, alors que ce sont les SEULES seances du plan qui ne se reconstruisent
@@ -4283,7 +4342,7 @@ function construirePlanFromPlan(orderIds, opts){
   opts = opts||{};
   planEnsure(false);
   var units = unitesOrdonnees(orderIds);
-  var slots = slotsAnnee_V33();
+  var slots = creneauxAnnee_V61();   /* GRAIN_CRENEAU_V61 : un panier par CRENEAU, plus par jour */
   var buckets = slots.map(function(s){ return {slot:s, used:0, parts:[]}; });
 
   var flat=[];
@@ -4332,6 +4391,7 @@ function construirePlanFromPlan(orderIds, opts){
       }
       buckets[ci].parts.push({se:se, unit:f.unit, min:se.durMin});
       buckets[ci].used += se.durMin; se._date=buckets[ci].slot.date;
+      se._slotTP=!!buckets[ci].slot.tp; se._slotHoraire=buckets[ci].slot.horaire;   /* GRAIN_CRENEAU_V61 */
       if(buckets[ci].used>=cap) ci++;
     } else {
       if(buckets[ci].used>0){ ci++; if(ci>=buckets.length){ se._hors=true; return; } }
@@ -4366,6 +4426,12 @@ function construirePlanFromPlan(orderIds, opts){
       for(i=lim;i<n;i++) if(estTP(file[i])===jourTP && file[i].se.durMin<=libre) return i;
       return -1;
     }
+    /* GRAIN_CRENEAU_V61 : chercher un type precis (DS, TD) qui tienne dans la place restante. */
+    function trouverType(types, libre){
+      var n=file.length, i;
+      for(i=0;i<n;i++) if(types.indexOf(file[i].se.type)>=0 && file[i].se.durMin<=libre) return i;
+      return -1;
+    }
     while(file.length && garde++ < 40000){
       if(ci>=buckets.length){                        // plus de creneau : le reste est hors annee
         var g=file.shift(); flat.push(g); _poser_V61(g); continue;
@@ -4374,12 +4440,24 @@ function construirePlanFromPlan(orderIds, opts){
       if(libre<=0){ ci++; continue; }
       var jourTP=!!b.slot.tp;
       var j=trouver(jourTP, libre);                  // 1. compatible ET qui tient dans la place restante
-      if(j<0 && jourTP) j=trouver(false, libre);     // 2. un cours sur un creneau de TP : autorise
+      /* GRAIN_CRENEAU_V61 — R3, Laurent 07/09 : « on ne place pas un COURS sur un creneau de
+         TP sauf exception ». Le 07/09 au matin il disait l'inverse ; c'est SA correction, et
+         elle rend la regle symetrique. Ce qu'il interdit est le COURS, mot pour mot : un DS
+         doit bien tomber quelque part, et un TD est ce qu'il propose lui-meme pour un chapitre
+         sans TP (« la radioactivite (...) on peut prevoir un TD »). Un COURS sur un creneau de
+         salle de TP ne passe QUE par le verrou ; sans TP ni DS ni TD a placer, le creneau est
+         LAISSE VIDE, et compte. */
+      if(j<0 && jourTP) j=trouverType(["DS","TD"], libre);
+      if(j<0 && jourTP && verrouTPOuvert_V61()) j=trouver(false, libre);
       if(j<0 && b.used>0){ ci++; continue; }         // 3. creneau entame et rien n'y tient : on le ferme
       if(j<0){                                        // 4. creneau VIDE : on accepte l'etalement
         var k=-1, n2=file.length, i2;
         for(i2=0;i2<n2;i2++) if(estTP(file[i2])===jourTP){ k=i2; break; }
-        if(k<0 && jourTP) for(i2=0;i2<n2;i2++) if(!estTP(file[i2])){ k=i2; break; }
+        /* GRAIN_CRENEAU_V61 — R3 : meme sur un creneau vide, un creneau de salle de TP
+           n'accepte un COURS que si le verrou est ouvert. DS et TD y restent admis. */
+        if(k<0 && jourTP) for(i2=0;i2<n2;i2++){ var _t=file[i2].se.type; if(_t==="DS"||_t==="TD"){ k=i2; break; } }
+        if(k<0 && jourTP && verrouTPOuvert_V61()) for(i2=0;i2<n2;i2++) if(!estTP(file[i2])){ k=i2; break; }
+        if(k<0 && jourTP){ _joursVides_V61++; ci++; continue; }
         if(k<0){
           /* Il ne reste que des TP et ce creneau n'est pas en salle de TP.
              VERROU FERME : on laisse le creneau VIDE plutot que d'y poser un TP.
@@ -4405,6 +4483,7 @@ function construirePlanFromPlan(orderIds, opts){
     }
     if(k===0){ se._hors=true; return; }
     se._date=buckets[start].slot.date; se._span=k; se._reste=reste;
+    se._slotTP=!!buckets[start].slot.tp; se._slotHoraire=buckets[start].slot.horaire;   /* GRAIN_CRENEAU_V61 */
   }
   // temps libre restant dans chaque créneau -> porté par la DERNIÈRE séance du créneau
   buckets.forEach(function(b){
@@ -4544,7 +4623,7 @@ var _edFolded_V33=false;
    quand cette ligne est evaluee. */
 function _edFoldSet_V33_(){ if(!STATE.fold) STATE.fold={}; return STATE.fold; }
 function edStatsHTML_V33(){
-  var slots=slotsAnnee_V33();
+  var slots=creneauxAnnee_V61();   /* GRAIN_CRENEAU_V61 */
   var dispo=slots.reduce(function(a,s){return a+s.min;},0);
   var used=0, hors=0, nse=0, ngr=0;
   var placeesParRef={}, totalRefs={};
@@ -4569,6 +4648,10 @@ function edStatsHTML_V33(){
      +' <small>capacités'+(manque?(" · "+manque+" à placer"):" · complète")+'</small></div>'
    +'<div class="ed-stat">Séances &nbsp;<b>'+nse+'</b> <small>· '+ngr+' chapitres</small></div>'
    /* VERROU_TP_V61 : ce que le verrou a empeche, ou ce qu'il a laisse passer. */
+   /* TYPES_HERITES_V61 : une migration silencieuse serait la faute de la v52. */
+   +(TYPES_MIGRES_V61
+      ? ('<div class="ed-stat warn">Types hérités &nbsp;<b>'+TYPES_MIGRES_V61+'</b> <small>· séance(s) « Activité » ou « Tampon » d\'un ancien plan, converties en Cours</small></div>')
+      : '')
    +(verrouTPOuvert_V61()
       ? ('<div class="ed-stat '+(TP_HORS_SALLE_V61?"bad":"warn")+'">\ud83d\udd13 Verrou TP &nbsp;<b>ouvert</b> <small>· '
          +(TP_HORS_SALLE_V61?(TP_HORS_SALLE_V61+' TP hors salle de TP'):'aucun TP hors salle de TP à ce stade')+'</small></div>')
