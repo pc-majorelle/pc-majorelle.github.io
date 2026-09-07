@@ -2471,6 +2471,28 @@ function construirePlan(orderIds, opts){
     }
   });
 
+  /* AJUSTER_AU_CALENDRIER_V60 : ne JAMAIS produire plus de seances que l'annee n'a de jours
+     de classe. L'arrondi par chapitre pouvait depasser de deux ou trois, et le surplus
+     s'affichait « hors annee » — un defaut qui a coute une soiree a Laurent. On retire le
+     surplus au chapitre qui en a le plus, jamais en dessous d'une seance. */
+  try{
+    var _capJours = 0;
+    try{ _capJours = slotsAnnee_V33().length; }catch(e){}
+    if(_capJours>0){
+      var _garde=0;
+      while(sessions.length > _capJours && _garde++ < 200){
+        var _cnt={};
+        sessions.forEach(function(x){ if(x.slot==="contenu") _cnt[x.chap]=(_cnt[x.chap]||0)+1; });
+        var _gros=null;
+        Object.keys(_cnt).forEach(function(k){ if(_cnt[k]>1 && (!_gros||_cnt[k]>_cnt[_gros])) _gros=k; });
+        if(_gros==null) break;
+        for(var _i=sessions.length-1;_i>=0;_i--){
+          if(sessions[_i].slot==="contenu" && String(sessions[_i].chap)===String(_gros)){ sessions.splice(_i,1); break; }
+        }
+      }
+    }
+  }catch(e){}
+
   /* QUATRE_TYPES_V60 : plus de seances TAMPON posees d'office. Elles n'etaient pas dans les
      quatre types qu'il a nommes, et une marge decidee par le gabarit occupait trois creneaux
      sans qu'il l'ait demandee. Il ajoute la sienne a la main s'il la veut. */
@@ -4129,6 +4151,7 @@ function slotsAnnee_V33(){
     var k=iso(cr.date), s=byIso[k];
     if(!s){ s=byIso[k]={date:new Date(cr.date), min:0, horaires:[], jourLib:cr.jourLib}; out.push(s); }
     s.horaires.push(cr.horaire+(cr.rep?" (dédoublé)":""));
+    if(cr.tp) s.tp=true;   /* TP_SUR_JOUR_DE_TP_V60 : le jour porte-t-il une salle de TP ? */
     /* SLOT_DEDOUBLE_V60 : un creneau dedouble compte UNE FOIS, pas ZERO.
        « ne compte pas » retirait toute sa duree au jour ; un jour dont les SEULS creneaux
        sont dedoubles tombait alors a 0 minute, et le `filter(min>0)` ci-dessous le retirait
@@ -4189,7 +4212,14 @@ function planEnsure(force){
     if(s.chap!=null) last=s.chap;
     var dur;
     try{ dur=Math.round(_dureeSeance_L33(s)*60); }catch(e){ dur=120; }
-    dur=Math.min(dur||120, crType);          // jamais plus long que le créneau réel de la classe
+    /* DUREE_DU_CRENEAU_V60 — Laurent, 07/09 : « ne laisse pas de temps libre, pourquoi
+       mets-tu parfois 30 mn libre ? ». Parce que la duree d'une seance venait d'une table
+       fixe (Cours 120, TP 120, TD 60...) rabotee a UNE valeur de creneau pour toute la
+       classe. Chez lui les creneaux font 55 ET 85 minutes : une journee de 140 minutes
+       recevait deux seances de 55, et il restait 30 minutes orphelines.
+       La duree d'une seance est desormais celle de SON creneau. */
+    if(s._cr && s._cr.min) dur = s._cr.min;
+    else dur = Math.min(dur||120, crType);
     (byUnit[uid]=byUnit[uid]||[]).push({
       id: nextSeId_V33(), type: s.baseType||"Cours", durMin: dur||120,
       caps: (s.caps||[]).slice(), note: s.note||"",
@@ -4217,6 +4247,28 @@ function construirePlanFromPlan(orderIds, opts){
 
   var flat=[];
   units.forEach(function(u){ planSeances(u.id).forEach(function(se){ flat.push({se:se, unit:u}); }); });
+
+  /* ===== TP_SUR_JOUR_DE_TP_V60 — Laurent, 07/09 : « il n'y a pas de TP sur les seances
+     d'une heure ; toutes les seances de TP tombent forcement sur les creneaux TP ».
+     Le TYPE etait decide a la generation, d'apres le creneau ; la DATE etait decidee ici,
+     par un rangement au fil des jours. Les deux ne se parlaient pas : une seance typee TP
+     pouvait atterrir un jeudi, qui n'a pas de salle. On reordonne la file AVANT le placement :
+     un jour de salle prend en priorite une seance de TP, un jour ordinaire n'en prend jamais.
+     La recherche est bornee a huit seances d'avance, pour ne pas faire remonter un chapitre
+     de juin au mois de septembre. */
+  (function(){
+    var estTP=function(f){ var t=f.se&&f.se.type; return t==="TP"||t==="TP évalué"; };
+    var file=flat.slice(), out=[], FEN=8;
+    buckets.forEach(function(b){
+      if(!file.length) return;
+      var n=Math.min(FEN,file.length), j=-1, i;
+      if(b.slot.tp){ for(i=0;i<n;i++){ if(estTP(file[i])){ j=i; break; } } }
+      else         { for(i=0;i<n;i++){ if(!estTP(file[i])){ j=i; break; } } }
+      if(j<0) j=0;
+      out.push(file.splice(j,1)[0]);
+    });
+    flat = out.concat(file);
+  })();
 
   var ci=0;
   flat.forEach(function(f){
