@@ -2749,11 +2749,15 @@ function ncToggleBo(evId){
   if(box.innerHTML){ box.innerHTML=""; return; }
   const c=activeClass(); const p=progOf(c); if(!p){ box.innerHTML='<p class="hint">Programme introuvable pour cette classe.</p>'; return; }
   let h='<div class="nc-bopick"><p class="small muted" style="margin:0 0 6px">Choisir une capacité B.O. (elle devient un critère ; ajustez sa catégorie) :</p>';
-  p.themes.forEach(t=>{ h+='<details class="tree"><summary>'+esc(t.label)+'</summary>';
-    t.chapters.forEach(ch=>ch.caps.forEach(id=>{
-      h+='<div class="cap"><span style="flex:1"><span class="code">'+esc(id.split(".").slice(-2).join("."))+'</span> '+esc((NODES[id]&&NODES[id].t)||id)+'</span>'+
+  /*BO_CHAPITRES_V65 : theme > chapitre > capacites (le chapitre est omis quand le theme n'en a qu'un)*/
+  const _capBO=id=>'<div class="cap"><span style="flex:1"><span class="code">'+esc(id.split(".").slice(-2).join("."))+'</span> '+esc((NODES[id]&&NODES[id].t)||id)+'</span>'+
          '<button class="mini" onclick="addCritereBO(\''+evId+'\',\''+id+'\')">＋</button></div>';
-    }));
+  const _nb=n=>' <span class="small muted">· '+n+' capacité'+(n>1?'s':'')+'</span>';
+  p.themes.forEach(t=>{ const nt=t.chapters.reduce((n,ch)=>n+ch.caps.length,0);
+    h+='<details class="tree"><summary>'+esc(t.label)+_nb(nt)+'</summary>';
+    if(t.chapters.length<=1){ t.chapters.forEach(ch=>ch.caps.forEach(id=>{ h+=_capBO(id); })); }
+    else t.chapters.forEach(ch=>{ h+='<details class="tree"><summary><span class="code">'+esc(ch.label||ch.code)+'</span>'+_nb(ch.caps.length)+'</summary>';
+      ch.caps.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
     h+='</details>'; });
   h+='</div>'; box.innerHTML=h;
 }
