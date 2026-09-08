@@ -5,10 +5,10 @@
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
 <script src="pcmajo_test.js"></script>
 <!-- DATES_DEPUIS_BASE_V52 : les dates cles, ecrites par _BASE. Absent = repli en dur. -->
-<script src="base_dates.js"></script>
+<script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache-->
 <!-- BASE_DANS_GESTION_V55a : l'emploi du temps de la base (carnet du prof, sinon EDT
      officiel de l'etablissement). Absent = repli sur la copie en dur CLASSES_2026_PAR_PROF. -->
-<script src="base_edt.js"></script>
+<script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache-->
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestion — Classes & progression · Plateforme PC</title>

@@ -124,3 +124,120 @@ window.PCTheme = (function(){
   return {THEMES:THEMES,ORDER:ORDER,cur:cur,set:set,apply:apply,swatches:swatches,
           surFond:surFond,lisible:lisible};
 })();
+
+/* =============================================================================
+   PIED_VERSION_V63 — « chaque page dit son âge ». MAÎTRE v63, 08/09/2026.
+   -----------------------------------------------------------------------------
+   Demande de Laurent (07-08/09) : en une journée il a regardé le site en ligne, un
+   plan enregistré plus vieux que le code, une page publiée plus vieille que son
+   disque — trois copies, aucune qui dise son âge. Ce bloc ajoute, sur TOUTE page
+   qui charge pcmajo_ui.js, un bouton ⓘ au-dessus du bouton 🎨. Il ouvre un panneau :
+
+     · la page : son nom, sa date de publication (document.lastModified) ;
+     · d'où elle vient : le site en ligne, ou une copie locale (file://) ;
+     · les données qu'elle exécute : date de base_edt.js et base_dates.js, relue
+       sur le serveur (en-tête Last-Modified) — donc la date de la DERNIÈRE
+       version publiée, pas d'une copie de cache ;
+     · qui est connecté (élève / enseignant / personne), et si c'est une session
+       de test ; l'année de travail.
+
+   Une page peut compléter le panneau (ce qu'on y modifie, où ça s'enregistre) :
+       PCAide.page({ titre:"…", html:"…" })      — AIDE_PAGE_V63, à venir.
+   Le bloc ne touche à aucune donnée, n'écrit rien dans le stockage.
+   ============================================================================= */
+window.PCAide = (function(){
+  "use strict";
+  var MOIS=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  function fr(d){
+    if(!d || isNaN(d.getTime())) return "date inconnue";
+    var h=String(d.getHours()).padStart(2,"0"), m=String(d.getMinutes()).padStart(2,"0");
+    return d.getDate()+" "+MOIS[d.getMonth()]+" "+d.getFullYear()+" à "+h+":"+m;
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function nomPage(){ var p=location.pathname.split("/").pop(); return p||"index.html"; }
+  function datePage(){
+    /* document.lastModified : en ligne = en-tête Last-Modified (le push) ; en local = le fichier. */
+    var d=new Date(document.lastModified); return fr(d);
+  }
+  function origine(){
+    if(location.protocol==="file:") return {t:"une COPIE LOCALE sur cet appareil (fichier)", local:true};
+    if(/github\.io$/.test(location.hostname)) return {t:"le site en ligne ("+location.hostname+")", local:false};
+    return {t:"une adresse autre que le site ("+location.host+")", local:false};
+  }
+  function session(){
+    var a=null;
+    try{ a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); }catch(e){}
+    if(!a){ try{ a=JSON.parse(localStorage.getItem("pcmajo_acces")); }catch(e){} }
+    return a||null;
+  }
+  function quiEstLa(){
+    var a=session(); if(!a||!a.role) return "personne n'est connecté";
+    var t = a.role==="prof" ? ((a.prenom||"un enseignant")+" — espace enseignant")
+                            : ("un élève de la classe "+(a.code||"?"));
+    if(a.test===true) t+=" (session fabriquée par le MODE TEST, pas un vrai code)";
+    return t;
+  }
+  function annee(){ try{ return localStorage.getItem("gestion_majorelle_annee")||"(pas encore choisie — les pages prof prennent 2025-2026 par défaut)"; }catch(e){ return "?"; } }
+
+  var PAGE=null;            /* renseigné par PCAide.page({...}) — AIDE_PAGE_V63 */
+  var DONNEES={};           /* fichier -> date lue sur le serveur */
+
+  function ligneDonnees(nom, present){
+    if(!present) return "";
+    var d=DONNEES[nom];
+    var txt = d===undefined ? "lecture en cours…" : (d===null ? "date non lisible ici (copie locale)" : fr(d));
+    return '<li>'+esc(nom)+' : <b>'+esc(txt)+'</b></li>';
+  }
+  function html(){
+    var o=origine();
+    var s='<h4>Cette page</h4><ul>'
+      +'<li>'+esc(nomPage())+' — publiée le <b>'+esc(datePage())+'</b></li>'
+      +'<li>tu regardes <b>'+esc(o.t)+'</b></li></ul>';
+    if(window.BASE_EDT || window.BASE_DATES){
+      s+='<h4>Les données qu\'elle exécute</h4><ul>'
+        +ligneDonnees("base_edt.js (emplois du temps)", !!window.BASE_EDT)
+        +ligneDonnees("base_dates.js (calendrier)", !!window.BASE_DATES)
+        +'</ul><p class="pcAideNote">Ces dates sont relues sur le serveur à chaque ouverture : si elles sont plus récentes que ce que tu attendais, c\'est qu\'une publication a eu lieu.</p>';
+    }
+    s+='<h4>Qui est connecté</h4><ul><li>'+esc(quiEstLa())+'</li>'
+      +'<li>année de travail : <b>'+esc(annee())+'</b></li></ul>';
+    if(PAGE && PAGE.html){ s+='<h4>'+esc(PAGE.titre||"Enregistrer sur cette page")+'</h4>'+PAGE.html; }
+    return s;
+  }
+  function lireDates(){
+    if(location.protocol==="file:"){ DONNEES["base_edt.js (emplois du temps)"]=null; DONNEES["base_dates.js (calendrier)"]=null; return; }
+    [["base_edt.js","base_edt.js (emplois du temps)",!!window.BASE_EDT],
+     ["base_dates.js","base_dates.js (calendrier)",!!window.BASE_DATES]].forEach(function(t){
+      if(!t[2]) return;
+      try{
+        fetch(t[0],{method:"HEAD",cache:"no-store"}).then(function(r){
+          var lm=r.headers.get("last-modified");
+          DONNEES[t[1]] = lm ? new Date(lm) : null; render();
+        }).catch(function(){ DONNEES[t[1]]=null; render(); });
+      }catch(e){ DONNEES[t[1]]=null; }
+    });
+  }
+  function render(){ var p=document.getElementById("pcAidePop"); if(p) p.innerHTML=html(); }
+
+  function inject(){
+    if(document.getElementById("pcAideBtn")) return;
+    var css=document.createElement("style"); css.id="pcAideCss"; css.textContent=
+      "#pcAideBtn{position:fixed;right:14px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:9000;width:46px;height:46px;border-radius:50%;border:1px solid var(--line,#ccc);background:var(--card,#fff);color:var(--ink,#222);font:600 20px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18)}"
+      +"#pcAidePop{position:fixed;right:14px;bottom:calc(120px + env(safe-area-inset-bottom));z-index:9001;background:var(--card,#fff);color:var(--ink,#222);border:1px solid var(--line,#ccc);border-radius:14px;padding:12px 14px;width:min(92vw,360px);max-height:min(70vh,520px);overflow:auto;box-shadow:0 8px 28px rgba(0,0,0,.22);display:none;font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}"
+      +"#pcAidePop.open{display:block}#pcAidePop h4{margin:8px 0 4px;font-size:12px;color:var(--muted,#666);font-weight:600;text-transform:uppercase;letter-spacing:.03em}#pcAidePop h4:first-child{margin-top:0}"
+      +"#pcAidePop ul{margin:0;padding-left:18px}#pcAidePop li{margin:2px 0}#pcAidePop .pcAideNote{margin:6px 0 0;color:var(--muted,#666);font-size:12px}"
+      +"#pcAidePop p{margin:6px 0}#pcAidePop code{background:var(--card2,#f2f2f2);padding:0 4px;border-radius:4px}";
+    document.head.appendChild(css);
+    var btn=document.createElement("button"); btn.id="pcAideBtn"; btn.type="button";
+    btn.title="Version de la page, données, aide"; btn.setAttribute("aria-label","Version et aide"); btn.textContent="?";
+    var pop=document.createElement("div"); pop.id="pcAidePop"; pop.setAttribute("role","dialog");
+    document.body.appendChild(btn); document.body.appendChild(pop);
+    btn.addEventListener("click",function(e){ e.stopPropagation(); render(); pop.classList.toggle("open"); });
+    document.addEventListener("click",function(e){ if(pop.classList.contains("open")&&!pop.contains(e.target)&&e.target!==btn) pop.classList.remove("open"); });
+    lireDates();
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",inject); else inject();
+
+  return { page:function(p){ PAGE=p||null; render(); }, session:session, origine:origine, datePage:datePage, rafraichir:render };
+})();
+/* ============================== fin PIED_VERSION_V63 ============================== */
