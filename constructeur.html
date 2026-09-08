@@ -2033,6 +2033,9 @@ var CTM2_CAPS_V30=[{"ref":"GEN-T-CTM.2.01.CE01","bo":"Déterminer une vitesse vo
       type_bo:c.type_bo,maths_bo:c.maths_bo||"",comp:c.comp||"",hors_ecrit:!!c.hors_ecrit}; }); }
 }catch(e){ try{console.warn("CTM2_FILL_V30",e);}catch(_){}} })();
 
+/* TITRES_SECTIONS_V63 : le titre d'une section, tel que ses propres donnees le portent (parties[].section.titre).
+   FINECHAP_ALL[niveau] peut n'etre defini qu'apres la premiere construction : d'ou le second repli, a l'affichage. */
+function _titreSection_V63(lv, id){ try{ var P=((typeof FINECHAP_ALL!=="undefined"&&FINECHAP_ALL[lv])||{}).parties||[]; for(var i=0;i<P.length;i++){ var s=P[i].section; if(s&&typeof s==="object"&&s.code===id&&s.titre) return s.titre; } }catch(e){} return ""; }
 const LEVELS = [
   {key:"Tsti", label:"Tale STI2D"},
   {key:"2nde", label:"Seconde générale"},
@@ -2091,7 +2094,7 @@ function rebuildDerived(lv){
       const shortCode = (ch.label && ch.label.length<=10) ? ch.label : ch.code;
       CHAPITRES.push({
         id: tc+"."+ch.code, theme: tc, themeLabel: th.label,
-        code: shortCode, titre: (ch.titre && ch.titre!==shortCode)? ch.titre : "",
+        code: shortCode, titre: (ch.titre && ch.titre!==shortCode)? ch.titre : (_titreSection_V63(lv, tc+"."+ch.code)||""),   /* TITRES_SECTIONS_V63 */
         caps: ch.caps.slice(),
       });
     });
@@ -3799,7 +3802,7 @@ function attacherEcouteurs(){
         (PONT_CAHIER_V63). Le bouton « ⬇ Exporter » reste pour changer d'appareil. */
 function _libelleUnite_V63(uid){
   try{
-    if(typeof CHAP_BY_ID!=="undefined" && CHAP_BY_ID[uid]){ var c=CHAP_BY_ID[uid]; return {code:c.code||uid, titre:c.titre||"", theme:c.theme||"", themeLabel:c.themeLabel||""}; }
+    if(typeof CHAP_BY_ID!=="undefined" && CHAP_BY_ID[uid]){ var c=CHAP_BY_ID[uid]; return {code:c.code||uid, titre:c.titre||((typeof _titreSection_V63==="function")?_titreSection_V63(level, uid):"")||"", theme:c.theme||"", themeLabel:c.themeLabel||""}; }
     if(typeof estSuiteId==="function" && estSuiteId(uid)){ var p=parentDeSuite(uid), pc=(CHAP_BY_ID&&CHAP_BY_ID[p])||{}; return {code:(pc.code||p)+" (suite)", titre:pc.titre||"", theme:pc.theme||"", themeLabel:pc.themeLabel||""}; }
     if(typeof estLibreId==="function" && estLibreId(uid)){ var g=chapLibre(uid)||{}; return {code:g.code||g.label||"libre", titre:g.titre||g.label||"", theme:"", themeLabel:"hors programme"}; }
   }catch(e){}
@@ -4815,7 +4818,7 @@ function renderEditeur(){
       +((u.kind==="libre")
         ? '<input class="ed-gcode ed-gname" data-libre="'+esc_V33(u.id)+'" value="'+esc_V33(ch.code)+'" title="Nom de ce groupe libre">'
         : '<span class="ed-gcode">'+esc_V33(ch.code)+(u.kind==="suite"?" (suite)":"")+'</span>')
-      +'<span class="ed-gtitle">'+esc_V33(ch.titre||ch.themeLabel||"")+'</span>'
+      +'<span class="ed-gtitle">'+esc_V33(ch.titre||_titreSection_V63(level, ch.id)||ch.themeLabel||"")+'</span>'   /* TITRES_SECTIONS_V63 */
       +'<span class="ed-gmeta">'+ses.length+' séances'+(refs.length?(' · '+placees+'/'+refs.length+' cap.'):'')
         +'<br>'+(d1?frShort(d1):"—")+' → '+(d2?frShort(d2):"—")+'</span>'
       +((u.kind==="libre")?('<button class="ed-glibredel" data-libredel="'+esc_V33(u.id)+'" title="Retirer ce groupe libre et ses seances">\u2715 groupe</button>'):"")
