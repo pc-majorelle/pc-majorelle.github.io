@@ -2749,16 +2749,33 @@ function ncToggleBo(evId){
   if(box.innerHTML){ box.innerHTML=""; return; }
   const c=activeClass(); const p=progOf(c); if(!p){ box.innerHTML='<p class="hint">Programme introuvable pour cette classe.</p>'; return; }
   let h='<div class="nc-bopick"><p class="small muted" style="margin:0 0 6px">Choisir une capacité B.O. (elle devient un critère ; ajustez sa catégorie) :</p>';
-  /*BO_CHAPITRES_V65 : theme > chapitre > capacites (le chapitre est omis quand le theme n'en a qu'un)*/
+  /*BO_PARTIES_V65 : theme > chapitre de cours (parties du constructeur, parties_cours.js) > capacites ;
+    sans parties pour ce programme : theme > chapitre B.O. > capacites (BO_CHAPITRES_V65)*/
   const _capBO=id=>'<div class="cap"><span style="flex:1"><span class="code">'+esc(id.split(".").slice(-2).join("."))+'</span> '+esc((NODES[id]&&NODES[id].t)||id)+'</span>'+
          '<button class="mini" onclick="addCritereBO(\''+evId+'\',\''+id+'\')">＋</button></div>';
   const _nb=n=>' <span class="small muted">· '+n+' capacité'+(n>1?'s':'')+'</span>';
+  const _pc=(window.PARTIES_COURS||{})[p.key];
+  if(_pc && _pc.parties && _pc.parties.length){
+    const txt2id=_constrTxtIndex(); const place={}; const parThm={};
+    _pc.parties.forEach(pa=>{ const ids=[]; pa.caps.forEach(c=>{ const id=NODES[c.ref]?c.ref:txt2id[_constrNorm(c.bo)];
+        if(id&&!place[id]&&PROGPOS[id]&&PROGPOS[id].p===p.key){ place[id]=pa.code; ids.push(id); } });
+      if(!ids.length) return; const th=PROGPOS[ids[0]].theme; (parThm[th]=parThm[th]||[]).push({pa:pa,ids:ids}); });
+    p.themes.forEach(t=>{ const tous=[]; t.chapters.forEach(ch=>ch.caps.forEach(id=>tous.push(id)));
+      h+='<details class="tree"><summary>'+esc(t.label)+_nb(tous.length)+'</summary>';
+      const pts=parThm[t.label]||[];
+      pts.forEach(x=>{ h+='<details class="tree"><summary>'+esc((x.pa.chap?x.pa.chap+' ':'')+x.pa.titre)+_nb(x.ids.length)+'</summary>'; x.ids.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
+      const reste=tous.filter(id=>!place[id]);
+      if(reste.length){ if(pts.length) h+='<details class="tree"><summary><span class="muted">Autres capacités du thème</span>'+_nb(reste.length)+'</summary>';
+        reste.forEach(id=>{ h+=_capBO(id); }); if(pts.length) h+='</details>'; }
+      h+='</details>'; });
+  } else {
   p.themes.forEach(t=>{ const nt=t.chapters.reduce((n,ch)=>n+ch.caps.length,0);
     h+='<details class="tree"><summary>'+esc(t.label)+_nb(nt)+'</summary>';
     if(t.chapters.length<=1){ t.chapters.forEach(ch=>ch.caps.forEach(id=>{ h+=_capBO(id); })); }
     else t.chapters.forEach(ch=>{ h+='<details class="tree"><summary><span class="code">'+esc(ch.label||ch.code)+'</span>'+_nb(ch.caps.length)+'</summary>';
       ch.caps.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
     h+='</details>'; });
+  }
   h+='</div>'; box.innerHTML=h;
 }
 
