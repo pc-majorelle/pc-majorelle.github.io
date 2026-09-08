@@ -2766,6 +2766,7 @@ function ncEvalCard(ev,c,eleves){
      '<div class="row" style="gap:6px">'+
        '<button class="mini" onclick="printEvalGrid(\''+ev.id+'\')">🖨️ Grille</button>'+
        '<button class="mini ghost" onclick="exportEvalMobile(\''+ev.id+'\')">⇄ mobile</button>'+
+       '<button class="mini ghost" onclick="qrEvalMobile(\''+ev.id+'\')" title="Afficher la grille en QR code : le téléphone la scanne, la page de saisie s\'ouvre déjà remplie">📱 QR</button>'+   /*QR_GRILLE_V66*/
        '<button class="mini ghost" onclick="delEvalComp(\''+ev.id+'\')">🗑 Supprimer</button>'+
      '</div></div>';
   // Éditeur de critères
@@ -2915,6 +2916,41 @@ function exportEvalMobile(evId){ const c=activeClass(); const ev=getEvalComp(c.i
   ncDownload({_type:"gestion_notation_competences",version:"v19-grille",_classeLabel:c.libelle,_eleves:eleves,baremeComp:bareme(),evalComp:{"__ACTIVE__":[ev]}},
     "grille_"+ncSlug(c.libelle)+"_"+ncSlug(ev.titre||"tp")+".json"); }
 
+/*QR_GRILLE_V66 : la grille dans un QR code (aller PC -> telephone). Meme contenu que l'export fichier « ⇄ mobile »,
+  JSON compact -> deflate (fflate, deja dans ce fichier) -> base64url -> #g= de la page de saisie mobile. Le retour
+  (telephone -> PC) reste « Exporter » sur le telephone puis « Importer » ici.*/
+function _payloadGrilleMobile_V66(evId){
+  const c=activeClass(); if(!c) return null; const ev=getEvalComp(c.id,evId); if(!ev) return null;
+  const eleves=elevesOf(c).map(e=>({nom:e.nom,prenom:e.prenom}));
+  return {_type:"gestion_notation_competences",version:"v19-grille",_classeLabel:c.libelle,_eleves:eleves,baremeComp:bareme(),evalComp:{"__ACTIVE__":[ev]}};
+}
+function _b64url_V66(u8){ let s=""; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function qrEvalMobile(evId){
+  try{
+    const p=_payloadGrilleMobile_V66(evId); if(!p){ alert("Choisis d’abord une classe."); return; }
+    if(typeof fflate==="undefined"||typeof qrcode==="undefined"){ alert("QR indisponible sur cette page (qrcode.js manque)."); return; }
+    const b=_b64url_V66(fflate.deflateSync(fflate.strToU8(JSON.stringify(p)),{level:9}));
+    const url=new URL("saisie_competences_mobile.html#g="+b, location.href).href;
+    if(b.length>2300){ alert("Cette grille est trop grande pour un QR code ("+b.length+" caractères). Passe par « ⇄ mobile » (fichier)."); return; }
+    const q=qrcode(0,"M"); q.addData(url,"Byte"); q.make();
+    let z=document.getElementById("qrGrilleZone");
+    if(!z){ z=document.createElement("div"); z.id="qrGrilleZone"; document.body.appendChild(z); }
+    z.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+    z.innerHTML='<div style="background:#fff;color:#111;border-radius:14px;padding:18px 20px;max-width:560px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.35);font-size:.92rem">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-size:1.05rem">📱 '+esc((p.evalComp.__ACTIVE__[0].titre||"Grille")+" — "+p._classeLabel)+'</b>'
+      +'<button class="mini" onclick="document.getElementById(\'qrGrilleZone\').remove()">✕ Fermer</button></div>'
+      +'<div style="display:flex;gap:18px;align-items:flex-start;margin-top:12px;flex-wrap:wrap">'
+      +'<div style="flex:0 0 auto;background:#fff;padding:6px;border:1px solid #ddd;border-radius:8px">'+q.createSvgTag({cellSize:3,margin:2,scalable:true}).replace("<svg ","<svg style=\"width:300px;height:300px;display:block\" ")+'</div>'
+      +'<ol style="margin:0;padding-left:18px;line-height:1.45;flex:1 1 200px">'
+      +'<li>Sur le téléphone, ouvre l’<b>appareil photo</b> et vise le code.</li>'
+      +'<li>Touche le lien : la <b>page de saisie</b> s’ouvre <b>déjà remplie</b> ('+p._eleves.length+' élèves, '+p.evalComp.__ACTIVE__[0].criteres.length+' critères). Rien ne transite par un serveur : tout est dans le code.</li>'
+      +'<li>Après la saisie : <b>Exporter</b> sur le téléphone, envoie-toi le fichier, puis ici <b>Importer</b> (classe '+esc(p._classeLabel)+' sélectionnée).</li>'
+      +'</ol></div>'
+      +'<div class="small muted" style="margin-top:10px">'+b.length+' caractères · QR '+q.getModuleCount()+' modules · <a href="'+url.replace(/"/g,"&quot;")+'" target="_blank" rel="noopener">ouvrir le même lien ici</a> (pour vérifier)</div>'
+      +'</div>';
+    z.onclick=function(e){ if(e.target===z) z.remove(); };
+  }catch(e){ alert("QR impossible : "+(e&&e.message?e.message:e)); }
+}
 function ncImportFile(e){
   const f=e.target.files[0]; if(!f) return; const r=new FileReader();
   r.onload=()=>{ try{

@@ -306,6 +306,22 @@ function doExport(){
 
 load(); renderHead(); renderAll();
 </script>
+<script src="fflate.min.js"></script>
+<script>/*QR_GRILLE_V66 : la grille arrive par l'adresse (#g=deflate+base64url), posee par le QR code du gestionnaire.
+  fflate.min.js est charge juste avant (la meme bibliotheque que dans gestion_core.js).*/
+(function(){
+  try{
+    var m=/[#&]g=([A-Za-z0-9_\-]+)/.exec(location.hash||""); if(!m) return;
+    if(typeof fflate==="undefined"){ flash("Grille reçue mais fflate.min.js manque : impossible de la lire."); return; }
+    var b=m[1].replace(/-/g,"+").replace(/_/g,"/"); while(b.length%4) b+="=";
+    var bin=atob(b), u8=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    var o=JSON.parse(fflate.strFromU8(fflate.inflateSync(u8)));
+    importState(o);
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+    flash("Grille <b>reçue du gestionnaire</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce téléphone.");
+  }catch(e){ flash("Grille reçue illisible : "+(e&&e.message?e.message:e)); }
+})();
+</script>
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ (source unique pcmajo_ui.js). -->
 <script src="pcmajo_ui.js"></script>
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
