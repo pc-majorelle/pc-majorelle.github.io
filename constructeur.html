@@ -2229,7 +2229,7 @@ function setLevel(newLevel){
   const rv=document.querySelector('input[name="chapView"][value="'+STATE.chapView+'"]'); if(rv) rv.checked=true;
   majVueBtn();
   /*PARTIES_V31 : niveau à parties -> ré-applique le jeu (sinon on retombe sur la vue B.O. de base)*/
-  try{ if(typeof FINECHAP_ALL!=="undefined" && FINECHAP_ALL[level]){ applyProposition(STATE.proposition||"bo"); return; } }catch(e){}
+  try{ if(typeof FINECHAP_ALL!=="undefined" && FINECHAP_ALL[level]){ applyPropositionBoot_V66(STATE.proposition||"bo"); return; } }catch(e){}   /*ORDRE_CONSERVE_V66*/
   try{ if(typeof isEns==="function" && isEns(level)){ applyEnsFilter(ensFilterMode); return; } }catch(e){}/*ENSSCI_V32*/
   fullRender();
 }
@@ -4063,6 +4063,24 @@ function applyProposition(pid){
   sauverEtat();
   fullRender();
 }
+/*ORDRE_CONSERVE_V66 : au demarrage et au changement de niveau, applyProposition remettait STATE.order a l'ordre
+  canonique de la proposition et l'enregistrait : tout deplacement de chapitre fait par le prof etait perdu a la
+  prochaine ouverture (mesure au banc). Meme parade qu'ENSSCI_FILTRE_BOOT_V33 : pour un etat deja enregistre, on garde
+  l'ordre enregistre — ce qui n'existe plus est retire, ce qui manque est ajoute a la fin. Un etat neuf et le selecteur
+  de proposition gardent le comportement d'avant. */
+function applyPropositionBoot_V66(pid){
+  var enregistre=null; try{ enregistre=localStorage.getItem(lsKey()); }catch(e){}
+  var ordreSauve=(enregistre&&STATE&&Array.isArray(STATE.order)&&STATE.order.length)?STATE.order.slice():null;
+  var curseur=(STATE&&STATE.cursorIdx!=null)?STATE.cursorIdx:-1;
+  applyProposition(pid);
+  if(!ordreSauve) return;
+  try{
+    var ok=ordreSauve.filter(function(id){ return !!CHAP_BY_ID[id] || (typeof estSuiteId==="function"&&estSuiteId(id)) || (typeof estLibreId==="function"&&estLibreId(id)); });
+    (STATE.order||[]).forEach(function(id){ if(ok.indexOf(id)<0) ok.push(id); });
+    if(!ok.length || ok.join("|")===(STATE.order||[]).join("|")) return;
+    STATE.order=ok; STATE.cursorIdx=curseur; sauverEtat(); fullRender();
+  }catch(e){ try{ console.error("[ORDRE_CONSERVE_V66]",e); }catch(_){} }
+}
 /* ============================================================================
    EDITEUR_SEANCES_V33 — l'éditeur de progression « à la séance » comme 3e VUE
    d'un modèle UNIQUE (exigence MVC de Laurent, SPEC_PRODUCTION_editeur_seances_v1).
@@ -5185,7 +5203,7 @@ function boot(){
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
-    try{ if(FINECHAP_ALL[level]) applyProposition(STATE.proposition||"bo"); }catch(e){}   /*PARTIES_V31 : niveau à parties -> applique le jeu (bo=parties par défaut)*/
+    try{ if(FINECHAP_ALL[level]) applyPropositionBoot_V66(STATE.proposition||"bo"); }catch(e){}   /*PARTIES_V31 : niveau à parties -> applique le jeu (bo=parties par défaut) ; ORDRE_CONSERVE_V66 : sans perdre l'ordre du prof*/
     try{ bootEditeur_V33(); }catch(e){}   /*EDITEUR_SEANCES_V33*/
     console.log("[boKeys] OK — année",STATE.annee,"| créneaux",CRENEAUX_REELS.length,"| séances",PLAN.length);
   }catch(e){
