@@ -1433,7 +1433,51 @@ function wkBuildIndex(cls,aid){var out={byDate:{},windows:[]};var p=getProg(cls,
 function wkProgIndex(cls){var aid=activeProgId(cls);var key=(typeof ANNEE!=='undefined'?ANNEE:'')+'|'+aid;var e=_WKPROG[cls.id];if(e&&e.key===key)return e.val;var val=wkBuildIndex(cls,aid);_WKPROG[cls.id]={key:key,val:val};return val;}
 function wkChapAt(windows,d){for(var i=0;i<windows.length;i++){if(d>=windows[i].start&&d<windows[i].end)return windows[i].ch;}return null;}
 function wkSeanceLine(s,conf){var t=wkCleanTitre(s.titre);var ty=(s.type||'').toLowerCase();var chip=ty?('<span class="wktype '+ty+'">'+esc(wkTypeLbl(ty))+'</span> '):'';var dot=conf?confDot(conf):'';var trav=(s._travail&&s._travail.trim())?('<div class="wktrav">📌 '+esc(s._travail.trim())+'</div>'):'';return '<div class="wkw wkreel">'+dot+chip+esc(t||'(séance)')+trav+'</div>';}
-function wkSlotContent(cls,d){try{var idx=wkProgIndex(cls);if(idx){var ss=idx.byDate[d];if(ss&&ss.length)return ss.map(function(x){return wkSeanceLine(x.s,x.conf);}).join('');var ch=wkChapAt(idx.windows,d);if(ch)return '<div class="wkw wkreel wkchap">'+confDot(ch.confiance)+esc(chapDisplayTitle(ch))+' <span class="wkcen">· en cours</span></div>';}}catch(e){console.warn('wkSlot',e);}return '<div class="wkw wknone">à programmer</div>';}
+/*SEMAINE_CONSTRUCTEUR_V66 : la grille lit d'abord le plan du constructeur (le meme que Mon plan et le cahier de textes),
+  puis l'ancienne progression en repli. Lecture seule : l'export pose sur cet appareil s'il est plus recent que ce que le
+  carnet a pris, sinon le carnet ; rien n'est ecrit ici (constrApply n'ecrit que pour la classe active).*/
+var _WKCS_V66={};
+function _seancesConstr_V66(c){
+  try{
+    var carnet=(state.constrSeances&&state.constrSeances[c.id])||null;
+    var deja=(state.constrGenere&&state.constrGenere[c.id])||"";
+    var tok=(typeof constrLevelToken==="function")?constrLevelToken(c):null; var js=null;
+    if(tok){ try{ js=localStorage.getItem("boKeys_export_"+tok+"__"+c.id)||localStorage.getItem("boKeys_export_"+tok); }catch(e){} }
+    if(js){
+      var e=_WKCS_V66[c.id]; if(e&&e.js===js) return e.val||carnet;
+      var data=null; try{ data=JSON.parse(js); }catch(x){}
+      var val=null;
+      if(data&&data.genere_le&&Array.isArray(data.seances)&&(!data.classe||data.classe===c.id)&&(!deja||data.genere_le>=deja)) val=data.seances;
+      _WKCS_V66[c.id]={js:js,val:val}; return val||carnet;
+    }
+    return carnet;
+  }catch(e){ return null; }
+}
+function _wkLigneConstr_V66(cs){
+  var ty=String(cs.type||"Cours").toLowerCase(); if(cs.ds) ty="ds";
+  var chip='<span class="wktype '+esc(ty)+'">'+esc(wkTypeLbl(ty)||cs.type||"")+'</span> ';
+  var lib=esc(cs.chapitre||"")+(cs.chapitre_titre?" — "+esc(cs.chapitre_titre):"");
+  var caps=(cs.caps_texte||[]).map(function(x){return x.bo||x.ref;}).filter(Boolean);
+  var titre=caps.length?(' title="'+esc(caps.slice(0,4).join(" · "))+(caps.length>4?" · …":"")+'"'):"";
+  return '<div class="wkw wkreel wkconstr"'+titre+'>'+chip+lib+(cs.dedouble?' <span class="wkgrp">dédoublé</span>':'')
+       +(cs.note?'<div class="wktrav">'+esc(cs.note)+'</div>':'')+'</div>';
+}
+function wkSlotContent(cls,d,cr){
+  try{
+    var L=_seancesConstr_V66(cls);
+    if(L&&L.length){
+      var jour=L.filter(function(s){ return s&&s.date_iso===d; });
+      if(jour.length){
+        var deb=(cr&&cr.debut)?String(cr.debut):null; var hit=null;
+        if(deb){ hit=jour.filter(function(s){ return String(s.horaire||"").indexOf(deb)===0; })[0]||null; }
+        if(!hit&&(jour.length===1||!deb)) hit=jour[0];
+        if(hit) return _wkLigneConstr_V66(hit);
+      }
+    }
+  }catch(e){ console.warn('wkSlot constructeur',e); }
+  return _wkSlotContentProg_V25(cls,d);
+}
+function _wkSlotContentProg_V25(cls,d){try{var idx=wkProgIndex(cls);if(idx){var ss=idx.byDate[d];if(ss&&ss.length)return ss.map(function(x){return wkSeanceLine(x.s,x.conf);}).join('');var ch=wkChapAt(idx.windows,d);if(ch)return '<div class="wkw wkreel wkchap">'+confDot(ch.confiance)+esc(chapDisplayTitle(ch))+' <span class="wkcen">· en cours</span></div>';}}catch(e){console.warn('wkSlot',e);}return '<div class="wkw wknone">à programmer</div>';}
 function wkEffGroupe(c,cr,dayList){
   var g=cr.groupe;
   if(g==='G1'||g==='G2')return g;
@@ -1484,7 +1528,7 @@ function renderSemaine(){
       return '<div class="wkblk '+nc+'" style="top:'+top.toFixed(1)+'px;height:'+hh2.toFixed(1)+'px" title="'+esc(c.libelle+' — '+minLbl(s.s)+'–'+minLbl(s.s+s.d))+'">'
         +'<div class="wkt"><span class="wkc">'+esc(c.libelle)+'</span><span class="wktag">'+esc(nivLabel(c))+'</span></div>'
         +'<div class="wkh2">'+typChip+grpChip+qz+'<span class="wkpl">'+minLbl(s.s)+'–'+minLbl(s.s+s.d)+' · '+durLbl(s.d)+'</span></div>'
-        +wkSlotContent(c,DAYISO[s.j])+'</div>';
+        +wkSlotContent(c,DAYISO[s.j],s.cr)+'</div>';   /*SEMAINE_CONSTRUCTEUR_V66 : le creneau, pour apparier l'horaire*/
     }
     var axis='';for(var hA=startH;hA<=endH;hA++){axis+='<div class="wkhr" style="top:'+(((hA*60)-RS)*PX).toFixed(1)+'px">'+hA+'h</div>';}
     function gridlines(){var g='';for(var hL=startH;hL<=endH;hL++){g+='<div class="wkgl" style="top:'+(((hL*60)-RS)*PX).toFixed(1)+'px"></div>';if(hL<endH)g+='<div class="wkgl half" style="top:'+(((hL*60+30)-RS)*PX).toFixed(1)+'px"></div>';}return g;}
@@ -2155,8 +2199,21 @@ function gestePropager(quoi){
   if(quoi==="plan"){ if(typeof publierPlan==="function") publierPlan(); }
   if(quoi==="dates"){ if(typeof exporterDatesCours==="function") exporterDatesCours(); }
 }
+/*SORTIE_V66 : un lien du site n'est pas une sortie du site — on ne demande plus. La question ne reste que pour fermer
+  l'onglet ou sortir du site, pour l'admin, quand quelque chose est encore a publier — et elle se tait si le rappel est
+  desactive (case dans la zone Publier de gestion.html). Le navigateur ne laisse ni changer le texte de sa boite ni y
+  ajouter une case : la case est dans la page.*/
+var _lienInterne_V66=false;
+document.addEventListener("click",function(ev){
+  try{ var a=ev.target&&ev.target.closest?ev.target.closest("a[href]"):null; if(!a) return;
+       var h=a.getAttribute("href")||""; if(a.target==="_blank"||/^(mailto|tel|javascript):/i.test(h)) return;
+       if(a.origin===location.origin){ _lienInterne_V66=true; setTimeout(function(){ _lienInterne_V66=false; },3000); } }catch(x){}
+},true);
+function rappelPublierActif(){ try{ return localStorage.getItem("gestion_rappel_publier")!=="non"; }catch(x){ return true; } }
+function setRappelPublier(v){ try{ localStorage.setItem("gestion_rappel_publier", v?"oui":"non"); }catch(x){} }
 window.addEventListener("beforeunload", function(ev){
-  try{ if(!_estAdmin_V64()) return; var e=etatPropagation(); if(e.base||e.plan||e.dates){ ev.preventDefault(); ev.returnValue=""; } }catch(x){}   /* VERSIONS_V64 */
+  try{ if(_lienInterne_V66) return; if(!rappelPublierActif()) return;   /* SORTIE_V66 */
+       if(!_estAdmin_V64()) return; var e=etatPropagation(); if(e.base||e.plan||e.dates){ ev.preventDefault(); ev.returnValue=""; } }catch(x){}   /* VERSIONS_V64 */
 });
 /* Amorcage : `save()` ne part qu'a la premiere modification. Sans ceci la bande reste
    vide tant qu'on n'a rien touche — c'est-a-dire au moment ou on en a le plus besoin. */

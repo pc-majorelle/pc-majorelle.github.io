@@ -28,6 +28,7 @@
   #publier.on{display:flex}
   #publier .lab{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
   #publier #propage{margin:0}
+  #rappelPublier{display:inline-flex;align-items:center;gap:5px;margin-left:auto;cursor:pointer;white-space:nowrap}/*SORTIE_V66*/
   #tabs{display:none!important}
   .coque{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;min-height:calc(100vh - 60px)}
   nav.parcours{border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:58px;align-self:start;max-height:calc(100vh - 58px);overflow:auto}
@@ -89,6 +90,7 @@
   <div id="publier">
     <span class="lab">Publier</span>
     <div class="row" id="propage" style="gap:8px;align-items:center;flex-wrap:wrap"></div>
+    <label class="small muted" id="rappelPublier" title="Quand il reste quelque chose à publier, le navigateur demande confirmation avant de fermer l'onglet ou de sortir du site. Les liens du site ne demandent jamais rien."><input type="checkbox" id="ckRappel"> me rappeler de publier quand je ferme l'onglet</label><!--SORTIE_V66-->
   </div>
   <!-- Les onglets d'origine restent dans la page, invisibles : switchTab() s'en sert. -->
   <div class="tabs" id="tabs">
@@ -282,6 +284,8 @@
 
   /* 5. La zone « Publier » : les gestes d'admin, visibles de l'admin seulement. */
   function admin(){ try{ return _estAdmin_V64(); }catch(e){ return false; } }
+  /*SORTIE_V66 : la case « me rappeler de publier » (la donnee est dans gestion_core.js : rappelPublierActif / setRappelPublier)*/
+  try{ var ckR=$("ckRappel"); ckR.checked=rappelPublierActif(); ckR.addEventListener("change",function(){ setRappelPublier(this.checked); }); }catch(e){}
   function rangerPublier(){
     var z=$("publier"); var ok=admin(); z.classList.toggle("on",ok);
     var bp=$("btnPlan"); if(bp){ if(ok){ if(bp.parentNode!==z) z.appendChild(bp); } else { bp.style.display="none"; } }
