@@ -3784,31 +3784,80 @@ function attacherEcouteurs(){
    ============================================================================ */
 
 /* ===================== EXPORT_BOKEYS_V29 ===================== */
-function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29*/
+/* ===== EXPORT_SEANCES_V63 — le plan de seances part vers le cahier de textes. MAITRE v63, 08/09/2026.
+   Laurent, 08/09 : « le cahier de textes n'est pas rempli, peux-tu le faire ». Sa demande d'origine
+   du 02/09 (F5 de la spec v57) : « le constructeur attribuant a chaque seance un contenu, ce contenu
+   doit se retrouver dans le cahier de textes ».
+   EXPORT_BOKEYS_V29 n'exportait qu'UNE date par capacite (la premiere occurrence), jamais les seances.
+   Deux ajouts, tous deux ADDITIFS (aucun lecteur existant n'est change — regle A verifiee : gestion
+   ne lit que `capacites`) :
+     1. le payload porte `seances` : une ligne par creneau occupe — date, horaire, type, chapitre
+        (code + titre), theme, capacites, note, dedouble, DS — et `genere_le`.
+     2. l'export est aussi AUTOMATIQUE : a chaque enregistrement du constructeur (sauverEtat), le
+        payload est reecrit dans localStorage (boKeys_export_<niveau> et __<classe>), sans
+        telecharger de fichier. Le gestionnaire, sur le meme appareil, le relit tout seul
+        (PONT_CAHIER_V63). Le bouton « ⬇ Exporter » reste pour changer d'appareil. */
+function _libelleUnite_V63(uid){
   try{
-    var plan=construirePlan(STATE.order);
-    var rows=[], seen={};
-    plan.sessions.forEach(function(s){
-      if(!s.date||!s.caps||!s.caps.length) return;
-      var chap=(typeof CHAP_BY_ID!=="undefined"&&CHAP_BY_ID[s.chap])?CHAP_BY_ID[s.chap]:null;
-      var themeRef=chap?chap.theme:"";
-      var themeLbl=(typeof THEME_LABEL!=="undefined"&&THEME_LABEL[themeRef])?THEME_LABEL[themeRef]:themeRef;
-      var chapLbl=chap?chap.code:String(s.chap);
-      s.caps.forEach(function(capId){
-        if(seen[capId]) return; seen[capId]=1;   // 1re occurrence datée = date d'introduction
-        var c=(typeof CAPS!=="undefined"&&CAPS[capId])?CAPS[capId]:{};
-        rows.push({ref:capId, bo:(c.bo||c.titre||""), date_iso:iso(s.date),
-                   seance_type:s.baseType, chapitre:chapLbl, theme:themeLbl});
-      });
+    if(typeof CHAP_BY_ID!=="undefined" && CHAP_BY_ID[uid]){ var c=CHAP_BY_ID[uid]; return {code:c.code||uid, titre:c.titre||"", theme:c.theme||"", themeLabel:c.themeLabel||""}; }
+    if(typeof estSuiteId==="function" && estSuiteId(uid)){ var p=parentDeSuite(uid), pc=(CHAP_BY_ID&&CHAP_BY_ID[p])||{}; return {code:(pc.code||p)+" (suite)", titre:pc.titre||"", theme:pc.theme||"", themeLabel:pc.themeLabel||""}; }
+    if(typeof estLibreId==="function" && estLibreId(uid)){ var g=chapLibre(uid)||{}; return {code:g.code||g.label||"libre", titre:g.titre||g.label||"", theme:"", themeLabel:"hors programme"}; }
+  }catch(e){}
+  return {code:String(uid), titre:"", theme:"", themeLabel:""};
+}
+function _payloadBoKeys_V63(){
+  var plan=construirePlan(STATE.order);
+  var rows=[], seen={}, seances=[];
+  plan.sessions.forEach(function(s){
+    if(!s.date) return;
+    var lib=_libelleUnite_V63(s.chap);
+    var themeLbl=lib.themeLabel||((typeof THEME_LABEL!=="undefined"&&THEME_LABEL[lib.theme])?THEME_LABEL[lib.theme]:lib.theme);
+    var capsTxt=(s.caps||[]).map(function(capId){ var c=(typeof CAPS!=="undefined"&&CAPS[capId])?CAPS[capId]:{}; return {ref:capId, bo:(c.bo||c.titre||"")}; });
+    seances.push({date_iso:iso(s.date), horaire:s.horaire||"", jour:s.jourLib||"",
+                  type:s.baseType||s.slot||"Cours", ds:!!s.ds,
+                  dedouble:/dédoubl/i.test(s.horaire||""),
+                  chapitre:lib.code, chapitre_titre:lib.titre, theme:themeLbl,
+                  caps:(s.caps||[]).slice(), caps_texte:capsTxt, note:s.note||""});
+    if(!s.caps||!s.caps.length) return;
+    s.caps.forEach(function(capId){
+      if(seen[capId]) return; seen[capId]=1;   // 1re occurrence datee = date d'introduction (contrat V29)
+      var c=(typeof CAPS!=="undefined"&&CAPS[capId])?CAPS[capId]:{};
+      rows.push({ref:capId, bo:(c.bo||c.titre||""), date_iso:iso(s.date),
+                 seance_type:s.baseType, chapitre:lib.code, theme:themeLbl});
     });
-    rows.sort(function(a,b){return a.date_iso<b.date_iso?-1:(a.date_iso>b.date_iso?1:0);});
-    var payload={niveau:level,
-                 niveau_label:(typeof LEVELS!=="undefined"&&LEVELS[level]&&LEVELS[level].label)?LEVELS[level].label:level,
-                 classe:(__MENUCTX&&__MENUCTX.classe)||null,   /*MENU_CTX_V30*/
-                 annee:STATE.annee, genere:"constructeur_frise EXPORT_BOKEYS_V29", n:rows.length, capacites:rows};
+  });
+  rows.sort(function(a,b){return a.date_iso<b.date_iso?-1:(a.date_iso>b.date_iso?1:0);});
+  return {niveau:level,
+          niveau_label:(typeof LEVELS!=="undefined"&&LEVELS.filter)?((LEVELS.filter(function(l){return l.key===level;})[0]||{}).label||level):level,
+          classe:(__MENUCTX&&__MENUCTX.classe)||null,
+          annee:STATE.annee, genere:"constructeur EXPORT_SEANCES_V63", genere_le:new Date().toISOString(),
+          n:rows.length, capacites:rows, n_seances:seances.length, seances:seances};
+}
+function _ecrireExportLocal_V63(js){
+  try{ localStorage.setItem("boKeys_export_"+level, js);
+       if(__MENUCTX&&__MENUCTX.classe){ localStorage.setItem("boKeys_export_"+level+"__"+__MENUCTX.classe, js); } }catch(e){}
+}
+var _exportAutoTimer_V63=null;
+function exporterBoKeysAuto_V63(){
+  /* appele par sauverEtat : on attend que la rafale d'enregistrements retombe, puis on exporte
+     une fois. Toute erreur reste silencieuse : l'export automatique ne doit jamais casser une
+     sauvegarde. */
+  try{ if(_exportAutoTimer_V63) clearTimeout(_exportAutoTimer_V63); }catch(e){}
+  _exportAutoTimer_V63=setTimeout(function(){
+    try{ if(!STATE||!STATE.order||!STATE.order.length) return;
+         _ecrireExportLocal_V63(JSON.stringify(_payloadBoKeys_V63())); }catch(e){}
+  }, 900);
+}
+/* a l'ouverture aussi : le plan deja enregistre part vers le gestionnaire sans qu'on touche a rien
+   (le constructeur a fini de se construire bien avant trois secondes ; sinon le prochain
+   enregistrement l'enverra). */
+setTimeout(function(){ try{ exporterBoKeysAuto_V63(); }catch(e){} }, 3000);
+/* ===== fin EXPORT_SEANCES_V63 ===== */
+function exporterBoKeysDates(){ /*EXPORT_BOKEYS_V29 -> EXPORT_SEANCES_V63*/
+  try{
+    var payload=_payloadBoKeys_V63(); var rows=payload.capacites;   /* EXPORT_SEANCES_V63 : memes `capacites`, plus `seances` */
     var js=JSON.stringify(payload,null,2);
-    try{ localStorage.setItem("boKeys_export_"+level, js);
-         if(__MENUCTX&&__MENUCTX.classe){ localStorage.setItem("boKeys_export_"+level+"__"+__MENUCTX.classe, js); } }catch(e){}   /*MENU_CTX_V30 : passerelle niveau + par classe*/
+    _ecrireExportLocal_V63(js);   /*MENU_CTX_V30 : passerelle niveau + par classe*/
     var blob=new Blob([js],{type:"application/json"});
     var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
     a.download="boKeys_dates_"+level+"_"+STATE.annee+".json"; document.body.appendChild(a); a.click(); a.remove();
@@ -4919,6 +4968,7 @@ sauverEtat = function(){
     localStorage.setItem(lsKey(), JSON.stringify(STATE, function(k,v){ return (String(k).charAt(0)==="_")?undefined:v; }));
     localStorage.setItem("constructeur_level", level);
   }catch(e){}
+  try{ exporterBoKeysAuto_V63(); }catch(e){}   /* EXPORT_SEANCES_V63 : l'export part vers le gestionnaire a chaque enregistrement */
 };
 
 /* ---------- 3e mode : bascule Frise / Arbre / Éditeur ---------- */

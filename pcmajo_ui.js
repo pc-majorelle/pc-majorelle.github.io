@@ -241,3 +241,97 @@ window.PCAide = (function(){
   return { page:function(p){ PAGE=p||null; render(); }, session:session, origine:origine, datePage:datePage, rafraichir:render };
 })();
 /* ============================== fin PIED_VERSION_V63 ============================== */
+
+/* =============================================================================
+   AIDE_PAGE_V63 — l'aide contextuelle, par page et par rôle. MAÎTRE v63, 08/09/2026.
+   -----------------------------------------------------------------------------
+   Demande de Laurent (07-08/09) : « sur chaque page où on peut faire des modifications,
+   un menu contextuel qui aide à la faire, et surtout à enregistrer de façon pérenne et
+   claire », « que ce soit élève, prof ou admin (moi qui change le programme) », « comment
+   enregistrer, ce que ça fait de le faire ici ou là ».
+   Chaque texte ci-dessous vient du relevé du 08/09 (clé par clé, bouton par bouton) : il
+   ne décrit que ce que la page FAIT. Le rôle vient de la session (pcmajo_acces) ; l'admin
+   est l'enseignant qui change le programme, reconnu par son prénom. Le panneau s'ouvre
+   par le bouton « ? » (PIED_VERSION_V63).
+   ============================================================================= */
+(function(){
+  "use strict";
+  if(!window.PCAide) return;
+  var s=PCAide.session()||{};
+  var role = s.role==="prof" ? "prof" : (s.role==="eleve" ? "eleve" : "aucun");
+  var admin = role==="prof" && /^laurent$/i.test(String(s.prenom||""));
+  var page=(location.pathname.split("/").pop()||"index.html").toLowerCase();
+
+  var NAV = "<p class='pcAideNote'>Tout ce que tu enregistres vit dans <b>ce navigateur, sur cet appareil</b>. Un autre téléphone, un autre ordinateur, un autre navigateur, une navigation privée ou un historique vidé : il repart de zéro. Rien n'est envoyé sur un serveur.</p>";
+  var ANNEE = "<li>L'<b>année de travail</b> choisie en haut de page vaut pour <b>toutes</b> les pages enseignant : la changer ici, c'est changer de carnet partout.</li>";
+  var ADMIN_BASE = "<h4>Admin — faire descendre dans le site</h4><ul>"
+    +"<li>Un emploi du temps ou une période corrigés dans le gestionnaire ne sont vus par les <b>autres appareils et les collègues</b> qu'après régénération de <code>base_edt.js</code> (<code>_BASE\\exporter_edt_site_v53.py</code>) puis <b>commit / push</b> du dépôt.</li>"
+    +"<li>« 📅 publier le plan » écrit <code>progression_dates.js</code> : à déposer à la racine du dépôt et à pousser — c'est ce que lisent les élèves (test du soir, révision).</li>"
+    +"<li>« ⬇︎ exporter les dates » écrit <code>dates_cours.json</code> : à déposer dans <code>_BASE\\</code>, puis régénérer et pousser.</li>"
+    +"<li>Le panneau « ? » dit la date de la base que chaque page exécute : si elle est plus vieille que ta correction, le geste ci-dessus manque.</li></ul>";
+
+  var AIDES = {
+    "index.html": function(){
+      return "<ul><li>Tape ton code (ou scanne ta carte) : la connexion vaut pour <b>cet onglet</b>.</li>"
+        +"<li>Case <b>« Se souvenir de moi sur cet appareil »</b> cochée : tu restes connecté après fermeture du navigateur. Décochée : tout est oublié à la fermeture.</li>"
+        +"<li><b>« Ce n'est pas moi — changer de profil »</b> efface la connexion mémorisée.</li>"
+        +"<li>Rien d'autre ne s'enregistre ici.</li></ul>";
+    },
+    "prof.html": function(){
+      return "<ul><li>L'<b>année</b>, la <b>classe active</b> et les blocs du menu ouverts/fermés s'enregistrent <b>automatiquement</b>, sans bouton.</li>"+ANNEE+"</ul>"+NAV;
+    },
+    "app.html": function(){ return AIDES["prof.html"](); },
+    "eleve.html": function(){
+      return "<ul><li>Cette page ne modifie rien : c'est ton menu.</li><li>Tes réponses se gardent dans les pages de révision (« Révision du soir », « Réviser par niveau »), automatiquement.</li></ul>"+NAV;
+    },
+    "classes.html": function(){
+      return "<ul><li>Classe active, case « dédoublée », noms des groupes : enregistrés <b>automatiquement</b> à chaque clic, dans ce navigateur (magasin de l'enseignant, par année).</li><li>Aucun fichier n'est produit ici.</li></ul>"+NAV;
+    },
+    "suivi.html": function(){
+      return "<ul><li>Chaque case cochée est enregistrée <b>automatiquement</b>, dans ce navigateur, pour l'enseignant connecté et l'année choisie.</li>"+ANNEE+"</ul>"+NAV;
+    },
+    "ma_semaine.html": function(){
+      var h="<ul><li>Page en <b>lecture seule</b> : rien ne s'y enregistre, sauf l'année choisie.</li>"
+        +"<li>Ce qu'elle affiche vient de <b>ton carnet</b> (celui du gestionnaire, sur cet appareil) s'il existe, sinon de la base publiée <code>base_edt.js</code>.</li>"
+        +"<li>Pour corriger un créneau : <b>gestionnaire → Classes & horaires</b>, puis 💾. La semaine se met à jour sur cet appareil.</li></ul>"+NAV;
+      if(admin) h+=ADMIN_BASE;
+      return h;
+    },
+    "gestion_v0.1.html": function(){
+      var h="<ul><li>Tout ce que tu modifies (classes, horaires, calendrier, suivi, prévisionnel, élèves, matériel, progressions, compétences) est enregistré <b>automatiquement</b> dans ce navigateur : c'est ton <b>carnet</b>, un par enseignant et par année.</li>"
+        +"<li><b>💾 Enregistrer</b> = télécharger une <b>copie fichier</b> du carnet (<code>gestion_&lt;prénom&gt;_&lt;année&gt;_&lt;date&gt;.json</code>). Elle porte des <b>noms d'élèves</b> : garde-la hors du site et hors du dépôt (par exemple <code>de_laurent\\</code>). Elle sert à changer d'appareil ou à archiver.</li>"
+        +"<li><b>📂 Importer</b> recharge une copie fichier et <b>remplace tout</b> ce qui est à l'écran.</li>"
+        +"<li>Le <b>cahier de textes prévisionnel</b> (onglet Suivi) et la colonne « Séance (constructeur) » se remplissent <b>tout seuls</b> depuis le constructeur, sur le même appareil. Une affectation faite à la main (onglet Prévisionnel) prime toujours. Le bouton « 📋 copier » donne le texte d'une séance, prêt à coller dans le cahier de textes de l'ENT.</li>"
+        +"<li><b>📥 Importer un relevé Skolengo</b> ajoute les élèves à la classe active. <b>⇄ mobile</b> échange une grille de compétences avec la saisie mobile.</li>"
+        +ANNEE+"</ul>"+NAV;
+      if(admin) h+=ADMIN_BASE;
+      return h;
+    },
+    "constructeur.html": function(){
+      var h="<ul><li>Ordre des chapitres, découpage, séances, capacités cochées, notes : enregistrés <b>automatiquement</b> dans ce navigateur (par niveau).</li>"
+        +"<li>Le plan part <b>tout seul</b> vers le gestionnaire (cahier de textes, prévisionnel) sur cet appareil, à chaque enregistrement.</li>"
+        +"<li><b>⬇ Exporter les boKeys datés</b> = un fichier pour porter le plan sur un <b>autre appareil</b> (gestionnaire → Prévisionnel → « Importer un fichier boKeys »).</li>"
+        +"<li>Panneau EDT : <b>Enregistrer</b> garde ton emploi du temps personnalisé pour ce niveau et cette classe ; <b>Réinitialiser</b> l'efface et revient à la base.</li>"
+        +"<li>⚠ <b>↻ Régénérer les séances</b> remplace tes réglages de séances du niveau.</li>"+ANNEE+"</ul>"+NAV;
+      if(admin) h+="<h4>Admin</h4><ul><li>Le plan des élèves (test du soir) ne change qu'avec « 📅 publier le plan » dans le gestionnaire, puis push de <code>progression_dates.js</code>.</li></ul>";
+      return h;
+    },
+    "revision.html": function(){
+      return "<ul><li>Tes réponses et tes boîtes de révision se gardent <b>automatiquement</b>, dans ce navigateur, sur cet appareil.</li><li>Ton niveau, s'il t'a été demandé, est mémorisé de la même façon.</li><li>Rien à envoyer, pas de compte : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
+    },
+    "revision_sti2d_tale.html": function(){ return AIDES["revision.html"](); },
+    "test_du_soir_v45.html": function(){
+      var h="<ul><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage.</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
+      if(role==="prof") h+="<h4>Enseignant</h4><ul><li>En mode test, « ⚐ signaler cette question » garde une liste dans ce navigateur ; « Voir le rapport à copier » te donne le texte à coller dans la conversation du projet.</li></ul>";
+      return h;
+    },
+    "saisie_competences_mobile.html": function(){
+      return "<ul><li>Classe, critères, barème, élèves, niveaux A/B/C/D : enregistrés <b>automatiquement</b> dans ce navigateur (une grille à la fois).</li><li><b>Exporter</b> = fichier <code>grille_&lt;classe&gt;_&lt;tp&gt;.json</code>, à réimporter dans le gestionnaire → Compétences (⇄ mobile). <b>Importer</b> recharge un tel fichier ici. <b>Effacer</b> vide la grille.</li></ul>"+NAV;
+    },
+    "carte_mentale.html": function(){ return "<ul><li>Consultation seule : rien ne s'enregistre ici.</li></ul>"; }
+  };
+  var f=AIDES[page]; if(!f) return;
+  var titre = role==="eleve" ? "Enregistrer — élève" : (admin ? "Enregistrer — enseignant / admin" : (role==="prof" ? "Enregistrer — enseignant" : "Enregistrer sur cette page"));
+  try{ PCAide.page({titre:titre, html:f()}); }catch(e){}
+})();
+/* ============================== fin AIDE_PAGE_V63 ============================== */

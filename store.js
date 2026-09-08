@@ -11,7 +11,7 @@ window.Store = (function(){
   }
   function pid(){ var a=acces(); return (a && (a.pid||a.prenom)) || "anon"; }
   function prenom(){ var a=acces(); return (a && a.prenom) || ""; }
-  function annee(){ try{ return localStorage.getItem("gestion_majorelle_annee") || "2025-2026"; }catch(e){ return "2025-2026"; } }
+  function annee(){ try{ return localStorage.getItem("gestion_majorelle_annee") || (function(){var d=new Date(),y=d.getFullYear();if(d.getMonth()<7)y-=1;return y+"-"+(y+1);})(); }catch(e){ return (function(){var d=new Date(),y=d.getFullYear();if(d.getMonth()<7)y-=1;return y+"-"+(y+1);})(); } }   /* ANNEE_COURANTE_V63 */
   function key(){ return BASE + "__" + pid() + "__" + annee(); }
 
   var state = read();

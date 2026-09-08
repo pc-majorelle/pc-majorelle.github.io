@@ -588,7 +588,7 @@ function carnetEstAMoi(o){
     return p===AGENOR_PID;
   }catch(e){ return false; }
 }
-let ANNEE = (function(){try{const a=localStorage.getItem(PREF_ANNEE); return (a&&ANNEES.indexOf(a)>=0)?a:"2025-2026";}catch(e){return "2025-2026";}})();
+let ANNEE = (function(){try{const a=localStorage.getItem(PREF_ANNEE); if(a&&ANNEES.indexOf(a)>=0) return a; const z=(function(){var d=new Date(),y=d.getFullYear();if(d.getMonth()<7)y-=1;return y+"-"+(y+1);})(); return ANNEES.indexOf(z)>=0?z:"2025-2026";}catch(e){return "2025-2026";}})();   /* ANNEE_COURANTE_V63 */
 const CLASSES_PAR_ANNEE = {"2025-2026":[
  {"id":"2G3","niveau":"Seconde","libelle":"2de G3","effectif":null,"emploi_du_temps_pc":[{"jour":"mardi","debut":"09:00","duree_min":90},{"jour":"mardi","debut":"10:30","duree_min":90},{"jour":"vendredi","debut":"14:30","duree_min":90}],"note":"2de G3 (Agénor) — TP dédoublé mardi + classe vendredi. Créneaux réels EDT 2025-26."},
  {"id":"2G6","niveau":"Seconde","libelle":"2de G6","effectif":null,"emploi_du_temps_pc":[{"jour":"mercredi","debut":"09:00","duree_min":90},{"jour":"mercredi","debut":"10:30","duree_min":90},{"jour":"jeudi","debut":"14:30","duree_min":90}],"note":"2de G6 (Agénor) — TP dédoublé mercredi + classe jeudi."},
@@ -1019,7 +1019,7 @@ function violations(cls){
    n'etait meme pas conservee d'un chargement a l'autre (simple valeur de <select>).
    Elle passe par la meme cle neutre que les autres pages, par annee. */
 function _cleClassePartagee(){
-  var an="2025-2026"; try{ an=localStorage.getItem("gestion_majorelle_annee")||an; }catch(e){}
+  var an=(function(){var d=new Date(),y=d.getFullYear();if(d.getMonth()<7)y-=1;return y+"-"+(y+1);})(); try{ an=localStorage.getItem("gestion_majorelle_annee")||an; }catch(e){}   /* ANNEE_COURANTE_V63 */
   return "pcmajo_classe_active__"+an;
 }
 function classePartagee(){ try{ return localStorage.getItem(_cleClassePartagee()); }catch(e){ return null; } }
@@ -1217,16 +1217,18 @@ function renderCalendrier(){
 function renderSeances(){
   const el=document.getElementById("p-seances"); const c=activeClass();
   if(!c){el.innerHTML="<div class='card muted'>Aucune classe.</div>";return;}
-  const S=seancesOf(c);
+  constrAutoImport_V63(c);   /* PONT_CAHIER_V63 */
+  const S=seancesOf(c); const SC=_seanceConstr_V63(c,S);
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Séances réelles — ${esc(c.libelle)}</h3><span class="pill acc">${S.length} séances</span></div>
     <p class="hint">Créneaux × semaines de classe, en retirant vacances, jours fériés en classe et ponts, <b>jusqu’à la fin des cours le ${_dateFr(finDesCours(CAL_ANNEE_COURANTE||"", c.niveau))}</b> (examens) et non jusqu’à la fin officielle de l’année${SOURCE_DATES==="base"?``:SOURCE_DATES==="dur"?` <b title="base_dates.js n’a pas été chargé">`+`(dates de repli écrites dans la page — base_dates.js manque)</b>`:``}. ${(c.du||c.au)?`<b>Classe partagée : seule votre part est listée, du ${c.du?_dateFr(c.du):"début"} au ${c.au?_dateFr(c.au):"fin"} exclu.</b> `:``}${c.creneaux.filter(x=>x.jour).length?"":"⚠️ Renseignez d'abord l'emploi du temps PC dans l'onglet Classes."}</p>`;
   if(S.length){
-    h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Prévu (prévisionnel)</th></tr></thead><tbody>`;
+    h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Séance (constructeur)</th><th>Prévu (prévisionnel)</th></tr></thead><tbody>`;
     const pv=prevOf(c.id); const bySeance={}; Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
     S.forEach((s,i)=>{
       const caps=(bySeance[s.id]||[]);
       h+=`<tr><td class="muted">${i+1}</td><td>${frDate(s.date)}</td><td>${esc(s.jour)} ${s.debut?esc(s.debut):""} · ${s.duree}′ ${s.ci!=null&&c.creneaux[s.ci]&&c.creneaux[s.ci].quinzaine?("· quinz."+c.creneaux[s.ci].quinzaine):""}</td>
+        <td>${_celluleConstr_V63(SC[s.id])}</td>
         <td>${caps.length?caps.map(x=>`<span class="badge" title="${esc(NODES[x]?.t||x)}">${x.split('.').slice(-2).join('.')}</span>`).join(" "):"<span class='muted small'>—</span>"}</td></tr>`;
     });
     h+=`</tbody></table>`;
@@ -1240,13 +1242,14 @@ let selCaps=new Set();
 function renderPrev(){ fillReel();
   const el=document.getElementById("p-prev"); const c=activeClass();
   if(!c){el.innerHTML="<div class='card muted'>Aucune classe.</div>";return;}
+  constrAutoImport_V63(c);   /* PONT_CAHIER_V63 */
   const p=progOf(c); const S=seancesOf(c); const pv=prevOf(c.id);
   const allCaps=capsOfProg(p); const placed=allCaps.filter(id=>pv[id]!=null && seancesOf(c).some(s=>s.id===pv[id]));
   const pct=allCaps.length?Math.round(100*placed.length/allCaps.length):0;
   const vio=violations(c);
   let h=`<div class="card"><div class="row" style="justify-content:space-between">
     <h3 style="margin:0">Prévisionnel — ${esc(c.libelle)} <span class="pill">${esc(p.label)}</span></h3>
-    <span class="small muted">${placed.length}/${allCaps.length} capacités placées</span></div>
+    <span class="small muted">${placed.length}/${allCaps.length} capacités placées${_compteDeduit_V63(c.id,pv,placed)}</span></div>
     <div class="bar" style="margin:6px 0 10px"><i style="width:${pct}%;background:var(--accent)"></i></div>
     <div class="row noprint">
       <label class="small muted">Affecter la sélection (${selCaps.size}) à :</label>
@@ -1286,14 +1289,15 @@ function renderPrev(){ fillReel();
 }
 function toggleSel(id,on){on?selCaps.add(id):selCaps.delete(id);}
 function clearSel(){selCaps.clear();renderPrev();}
-function assignSel(){const t=document.getElementById("seanceTarget").value;const c=activeClass();const pv=prevOf(c.id);selCaps.forEach(id=>pv[id]=t);selCaps.clear();save();renderPrev();}
-function unassignSel(){const c=activeClass();const pv=prevOf(c.id);selCaps.forEach(id=>delete pv[id]);selCaps.clear();save();renderPrev();}
-function unassignOne(id){const c=activeClass();delete prevOf(c.id)[id];save();renderPrev();}
+function assignSel(){const t=document.getElementById("seanceTarget").value;const c=activeClass();const pv=prevOf(c.id);const src=_srcPrev_V63(c.id);selCaps.forEach(id=>{pv[id]=t;src[id]="main";});selCaps.clear();save();renderPrev();}   /* PONT_CAHIER_V63 */
+function unassignSel(){const c=activeClass();const pv=prevOf(c.id);const src=_srcPrev_V63(c.id);selCaps.forEach(id=>{delete pv[id];src[id]="retire";});selCaps.clear();save();renderPrev();}   /* PONT_CAHIER_V63 */
+function unassignOne(id){const c=activeClass();delete prevOf(c.id)[id];_srcPrev_V63(c.id)[id]="retire";save();renderPrev();}   /* PONT_CAHIER_V63 */
 
 /* ---------- D. SUIVI ---------- */
 function renderSuivi(){ fillReel();
   const el=document.getElementById("p-suivi"); const c=activeClass();
   if(!c){el.innerHTML="<div class='card muted'>Aucune classe.</div>";return;}
+  constrAutoImport_V63(c);   /* PONT_CAHIER_V63 */
   const p=progOf(c); const sv=suiviOf(c.id); const pv=prevOf(c.id); const S=seancesOf(c);
   const useReel=(state.annee==="2025-2026"); const rs=(useReel && typeof REEL_SUIVI!=='undefined' && REEL_SUIVI[c.programme])||{};
   /* SYNCHRO_DATE_V39 — TROISIEME COUCHE, la plus basse : la date PROPOSE, elle ne tranche pas.
@@ -1359,15 +1363,8 @@ function renderSuivi(){ fillReel();
   });
   h+=`</div>`;
 
-  // Cahier de textes (séance -> capacités prévues)
-  const bySeance={};Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
-  h+=`<div class="card"><h3>Cahier de textes prévisionnel — ${esc(c.libelle)}</h3>`;
-  const seancesWith=S.filter(s=>bySeance[s.id]);
-  if(!seancesWith.length) h+=`<p class="muted small">Aucune capacité affectée à une séance (onglet Prévisionnel).</p>`;
-  else{ h+=`<table><thead><tr><th>Séance</th><th>Capacités prévues</th></tr></thead><tbody>`;
-    seancesWith.forEach((s,i)=>{h+=`<tr><td>${frDate(s.date)}<br><span class="small muted">${esc(s.jour)}</span></td><td>${bySeance[s.id].map(cap=>{const v=sv[cap]||"todo";return `<div class="small"><span class="tag-${v}">●</span> ${esc(NODES[cap]?.t||cap)}</div>`;}).join("")}</td></tr>`;});
-    h+=`</tbody></table>`;}
-  h+=`</div>`;
+  // Cahier de textes (séance -> contenu du constructeur + capacités prévues) — PONT_CAHIER_V63
+  h+=_cahierDeTextes_V63(c,S,pv,sv);
   el.innerHTML=h;
   memoDetails(el);   /* SUIVI_COMPACT_V37 */
 }
@@ -2664,13 +2661,174 @@ function constrApply(js){
                                                 Le classement se fait desormais dans renderSuivi(). */
     else { miss++; if(missList.length<8) missList.push(r.ref); }
   });
+  var pont={deduites:0,main:0,sansCreneau:0,gardees:0};
+  try{ _memoriserSeancesConstructeur_V63(c, data); pont=deduirePrevisionnel_V63(c); }catch(e){}   /* PONT_CAHIER_V63 */
   save();
   var info=document.getElementById("constrInfo");
   if(info) info.textContent="✔ "+ok+" capacités datées — le Suivi propose comme faites celles dont la date est passée"+(viaTxt||viaEns?(" (dont "+(viaTxt?viaTxt+" via texte B.O.":"")+(viaTxt&&viaEns?", ":"")+(viaEns?viaEns+" via le socle ens. sci.":"")+")"):"")
      +(miss?(" · "+miss+" non appariées ("+missList.join(", ")+(miss>8?"…":"")+")"):" · appariement complet")
-     +" — niveau "+(data.niveau||"?")+". (Onglet « Suivi » pour voir.)";
+     +" — niveau "+(data.niveau||"?")+". (Onglet « Suivi » pour voir.)"
+     +(pont&&(pont.deduites||pont.main||pont.sansCreneau)?(" · prévisionnel : "+pont.deduites+" déduite(s), "+pont.main+" à la main conservée(s)"+(pont.sansCreneau?", "+pont.sansCreneau+" sans séance ce jour-là":"")):"");   /* PONT_CAHIER_V63 */
 }
 
+/* ===== PONT_CAHIER_V63 — le plan du constructeur remplit le cahier de textes. MAITRE v63, 08/09/2026.
+   Laurent, 08/09 : « le cahier de textes n'est pas rempli, peux-tu le faire ». C'est F5 (spec v57), sa
+   demande d'origine du 02/09. Tout existait aux deux tiers (mesure v59) : seancesOf (l'id d'une seance
+   EST sa date + #creneau), prevOf (le previsionnel : capacite -> seance), state.constrDates (la date
+   de chaque capacite, venue du constructeur, ecrite par constrApply et jamais reliee aux seances).
+   Le pont fait trois choses :
+     1. il RELIT tout seul l'export du constructeur pose sur cet appareil (boKeys_export_<niveau>__<classe>,
+        ecrit desormais a chaque enregistrement par EXPORT_SEANCES_V63), quand il est plus recent que ce
+        que le carnet a deja pris ;
+     2. il DEDUIT le previsionnel : chaque capacite datee est affectee a la seance reelle de ce jour.
+        Deux creneaux le meme jour : celui dont l'heure est la plus proche de celle du constructeur,
+        sinon le plus matinal ; un creneau dedouble (une seance enseignee deux fois) recoit le contenu
+        sur ses deux creneaux. Une affectation posee A LA MAIN n'est JAMAIS ecrasee, et une capacite
+        retiree a la main n'est pas remise. Le compte distingue « a la main » et « deduit » ;
+     3. il ECRIT le cahier de textes : pour chaque seance, le type, le chapitre, la note et les capacites,
+        avec un bouton « copier » qui donne le texte pret a coller dans le cahier de textes de l'ENT.
+   Regle A : aucune cle existante ne change de sens. state.prevSource, state.constrSeances et
+   state.constrGenere sont des champs NEUFS, sans lecteur anterieur. */
+function _srcPrev_V63(cid){ if(!state.prevSource) state.prevSource={}; return state.prevSource[cid]||(state.prevSource[cid]={}); }
+function _hm_V63(t){ var m=/(\d{1,2})[:h](\d{2})/.exec(String(t||"")); return m?(+m[1])*60+(+m[2]):null; }
+function _memoriserSeancesConstructeur_V63(c, data){
+  if(!state.constrSeances) state.constrSeances={};
+  if(!state.constrGenere) state.constrGenere={};
+  state.constrSeances[c.id]=(data&&Array.isArray(data.seances))?data.seances:null;
+  state.constrGenere[c.id]=(data&&data.genere_le)||"";
+}
+/* les seances reelles (gestion) qui recoivent une seance du constructeur datee `dateIso` */
+function _ciblesPourDate_V63(S, dateIso, horaire, dedouble){
+  var cands=S.filter(function(s){ return s.date===dateIso; });
+  if(!cands.length) return [];
+  if(cands.length===1) return cands;
+  if(dedouble) return cands;
+  var h=_hm_V63(horaire);
+  if(h==null) return [cands[0]];                     /* le plus matinal (S est trie par date puis debut) */
+  var best=cands[0], d0=Infinity;
+  cands.forEach(function(s){ var hs=_hm_V63(s.debut); var d=(hs==null)?9999:Math.abs(hs-h); if(d<d0){ d0=d; best=s; } });
+  return [best];
+}
+/* seance reelle -> seance du constructeur (contenu), pour la classe c */
+function _seanceConstr_V63(c, S){
+  var out={}; var L=(state.constrSeances&&state.constrSeances[c.id])||[];
+  L.forEach(function(cs){
+    _ciblesPourDate_V63(S, cs.date_iso, cs.horaire, cs.dedouble).forEach(function(s){ if(!out[s.id]) out[s.id]=cs; });
+  });
+  return out;
+}
+/* les capacites d'une seance du constructeur, en identifiants GESTION. La jointure est celle de
+   constrApply : meme identifiant (STI2D), sinon le socle ens. sci., sinon le texte B.O. verbatim
+   (2nde, spe) — c'est pour cela que l'export porte `caps_texte`. */
+function _idsDeSeanceConstr_V63(c, cs){
+  if(!cs) return [];
+  var K=c.id+"|"+(cs.date_iso||"")+"|"+(cs.horaire||"")+"|"+((cs.caps||[]).join(","));
+  if(window.__idsCache_V63 && window.__idsCache_V63[K]) return window.__idsCache_V63[K];
+  var p=progOf(c); var capsOk={}; if(p) capsOfProg(p).forEach(function(id){ capsOk[id]=1; });
+  var t2id=(typeof _constrTxtIndex==="function")?_constrTxtIndex():{}; var ens2id=(typeof _constrEnsIndex==="function")?_constrEnsIndex():{};
+  var liste=(cs.caps_texte&&cs.caps_texte.length)?cs.caps_texte:(cs.caps||[]).map(function(r){ return {ref:r, bo:""}; });
+  var out=[], vus={};
+  liste.forEach(function(ct){
+    var id=null;
+    if(capsOk[ct.ref]) id=ct.ref;
+    else { var ge=ens2id[ct.ref]; if(ge && capsOk[ge]) id=ge; }
+    if(!id && ct.bo && typeof _constrNorm==="function"){ var cand=t2id[_constrNorm(ct.bo)]; if(cand && capsOk[cand]) id=cand; }
+    if(id && !vus[id]){ vus[id]=1; out.push(id); }
+  });
+  if(!window.__idsCache_V63) window.__idsCache_V63={};
+  window.__idsCache_V63[K]=out;      /* cache de rendu, hors de `state` : rien n'en part dans le carnet */
+  return out;
+}
+function deduirePrevisionnel_V63(c){
+  var S=seancesOf(c), pv=prevOf(c.id), src=_srcPrev_V63(c.id);
+  var cd=(state.constrDates&&state.constrDates[c.id])||{};
+  var L=(state.constrSeances&&state.constrSeances[c.id])||[];
+  /* capacite (identifiant GESTION) -> 1re seance du constructeur qui la porte. La jointure est celle
+     de constrApply : meme identifiant (STI2D), sinon le socle ens. sci., sinon le texte B.O. verbatim
+     (2nde, spe) — c'est pour cela que l'export porte `caps_texte`. */
+  var parCap={};
+  L.forEach(function(cs){ _idsDeSeanceConstr_V63(c, cs).forEach(function(id){ if(!parCap[id]) parCap[id]=cs; }); });
+  var n={deduites:0, main:0, sansCreneau:0, gardees:0};
+  Object.keys(cd).forEach(function(cap){
+    var d=String(cd[cap]||"").slice(0,10); if(!d) return;
+    if(src[cap]==="main"){ n.main++; return; }
+    if(src[cap]==="retire") return;
+    if(pv[cap]!=null && src[cap]!=="constructeur"){ n.main++; return; }   /* pose avant le pont, a la main */
+    var cs=parCap[cap]||null;                        /* la seance du constructeur qui porte cette capacite */
+    if(!cs){ for(var i=0;i<L.length;i++){ if(L[i].date_iso===d){ cs=L[i]; break; } } }   /* sinon la premiere seance du jour */
+    var cibles=_ciblesPourDate_V63(S, d, cs?cs.horaire:"", cs?cs.dedouble:false);
+    if(!cibles.length){ n.sansCreneau++; return; }
+    var cible=cibles[0];
+    if(pv[cap]===cible.id){ n.gardees++; src[cap]="constructeur"; return; }
+    pv[cap]=cible.id; src[cap]="constructeur"; n.deduites++;
+  });
+  return n;
+}
+/* relit l'export du constructeur pose sur cet appareil, s'il est plus recent que ce que le carnet a pris */
+function constrAutoImport_V63(c){
+  try{
+    if(!c || typeof constrLevelToken!=="function") return false;
+    var tok=constrLevelToken(c); if(!tok) return false;
+    var js=null; try{ js=localStorage.getItem("boKeys_export_"+tok+"__"+c.id)||localStorage.getItem("boKeys_export_"+tok); }catch(e){}
+    if(!js) return false;
+    var data; try{ data=JSON.parse(js); }catch(e){ return false; }
+    if(!data||!data.genere_le) return false;                 /* un export ancien (V29) ne se relit pas tout seul */
+    if(data.classe && data.classe!==c.id) return false;      /* le plan d'une AUTRE classe du meme niveau ne vient pas ici tout seul */
+    var deja=(state.constrGenere&&state.constrGenere[c.id])||"";
+    if(deja && deja>=data.genere_le) return false;
+    constrApply(js);
+    return true;
+  }catch(e){ return false; }
+}
+function _celluleConstr_V63(cs){
+  if(!cs) return "<span class='muted small'>—</span>";
+  var t=esc(cs.type||"Cours"); var ch=esc(cs.chapitre||""); var ti=esc(cs.chapitre_titre||"");
+  return "<b>"+t+"</b>"+(ch?" · "+ch:"")+(ti?" <span class='small muted'>— "+ti+"</span>":"")
+       +(cs.note?"<div class='small muted'>"+esc(cs.note)+"</div>":"");
+}
+function _compteDeduit_V63(cid, pv, placed){
+  var src=(state.prevSource&&state.prevSource[cid])||{}; var d=0;
+  placed.forEach(function(id){ if(src[id]==="constructeur") d++; });
+  return d?" <span class='small muted'>(dont "+d+" déduite"+(d>1?"s":"")+" du constructeur, "+(placed.length-d)+" à la main)</span>":"";
+}
+window.__cdt_V63={};
+function copierSeance_V63(sid){
+  var txt=window.__cdt_V63[sid]||""; if(!txt) return;
+  function fait(ok){ var b=document.getElementById("cdtcp_"+sid.replace(/[^A-Za-z0-9]/g,"_")); if(b){ b.textContent=ok?"✔ copié":"✗ pas copié"; setTimeout(function(){ b.textContent="📋 copier"; },1800); } }
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){fait(true);},function(){fait(false);}); return; } }catch(e){}
+  try{ var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); var ok=document.execCommand("copy"); ta.remove(); fait(!!ok); }catch(e){ fait(false); }
+}
+function _cahierDeTextes_V63(c, S, pv, sv){
+  var bySeance={}; Object.keys(pv).forEach(function(cap){ (bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap); });
+  var SC=_seanceConstr_V63(c, S);
+  var src=(state.prevSource&&state.prevSource[c.id])||{};
+  var h="<div class='card'><div class='row' style='justify-content:space-between'><h3 style='margin:0'>Cahier de textes prévisionnel — "+esc(c.libelle)+"</h3> ";
+  var lignes=S.filter(function(s){ return bySeance[s.id]||SC[s.id]; });
+  var nd=0; Object.keys(src).forEach(function(k){ if(src[k]==="constructeur"&&pv[k]!=null) nd++; });
+  h+="<span class='small muted'>"+lignes.length+"/"+S.length+" séances avec contenu"+(nd?" · "+nd+" capacité"+(nd>1?"s":"")+" déduite"+(nd>1?"s":"")+" du constructeur":"")+"</span></div>";
+  if(!lignes.length){
+    h+="<p class='muted small'>Aucun contenu : ouvre le constructeur pour cette classe, régénère ou enregistre ton plan — il arrive ici tout seul sur cet appareil (sinon « ⤵ Importer depuis la frise » ou le fichier boKeys, onglet Prévisionnel).</p></div>";
+    return h;
+  }
+  h+="<p class='hint noprint'>Le bouton « copier » donne le texte de la séance, prêt à coller dans le cahier de textes de l'ENT. Une affectation faite à la main (onglet Prévisionnel) prime toujours sur celle du constructeur.</p>";
+  h+="<table><thead><tr><th>Séance</th><th>Contenu (constructeur)</th><th>Capacités prévues</th><th class='noprint'></th></tr></thead><tbody>";
+  lignes.forEach(function(s){
+    var cs=SC[s.id]; var caps=_idsDeSeanceConstr_V63(c, cs).slice();
+    (bySeance[s.id]||[]).forEach(function(cap){ if(caps.indexOf(cap)<0) caps.push(cap); });
+    var capsHtml=caps.map(function(cap){ var v=sv[cap]||"todo"; return "<div class='small'><span class='tag-"+v+"'>●</span> "+esc(NODES[cap]&&NODES[cap].t||cap)+(src[cap]==="main"?" <span class='muted'>(main)</span>":"")+"</div>"; }).join("");
+    var txt=frDate(s.date)+(s.debut?" "+s.debut:"")+" — "+(cs?(cs.type||"Cours"):"Séance")+(cs&&(cs.chapitre_titre||cs.chapitre)?" — "+(cs.chapitre_titre||cs.chapitre):"")
+           +(caps.length?"\n"+caps.map(function(cap){ return "• "+(NODES[cap]&&NODES[cap].t||cap); }).join("\n"):"")
+           +(cs&&cs.note?"\n"+cs.note:"");
+    window.__cdt_V63[s.id]=txt;
+    var bid="cdtcp_"+s.id.replace(/[^A-Za-z0-9]/g,"_");
+    h+="<tr><td>"+frDate(s.date)+"<br><span class='small muted'>"+esc(s.jour)+(s.debut?" "+esc(s.debut):"")+"</span></td>"
+      +"<td>"+_celluleConstr_V63(cs)+"</td><td>"+(capsHtml||"<span class='muted small'>—</span>")+"</td>"
+      +"<td class='noprint'><button class='mini' id='"+bid+"' onclick=\"copierSeance_V63('"+s.id.replace(/'/g,"")+"')\">📋 copier</button></td></tr>";
+  });
+  h+="</tbody></table></div>";
+  return h;
+}
+/* ===== fin PONT_CAHIER_V63 ===== */
 /* ===================== BOOT ===================== */
 migrateOldLS();
 tryLoadLS();

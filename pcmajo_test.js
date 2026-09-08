@@ -57,7 +57,15 @@
         if(ses2 && ses2.test === true) sessionStorage.removeItem(LS);
       }catch(e){}
     }
-    else set(K_ON,"1");
+    else if(profReel()) set(K_ON,"1");   /* TEST_RESERVE_V63 : reserve aux enseignants connectes */
+    else { try{ console.warn("mode test : connecte-toi d'abord avec ton code d'enseignant"); }catch(e){} }
+  }
+  /* TEST_RESERVE_V63 — une vraie session enseignant : role prof, et PAS fabriquee par l'outillage */
+  function profReel(){
+    try{
+      var a=JSON.parse(sessionStorage.getItem(LS)||"null") || JSON.parse(localStorage.getItem(LS)||"null");
+      return !!(a && a.role==="prof" && a.test!==true);
+    }catch(e){ return false; }
   }
   var ARME = get(K_ON)==="1";
 
@@ -225,6 +233,6 @@
     roles: roles,
     entrer: entrer,
     poser: function(iso){ set(K_DATE, iso||null); location.reload(); },
-    armer: function(on){ set(K_ON, on?"1":null); if(!on) set(K_DATE,null); location.reload(); }
+    armer: function(on){ if(on && !profReel()) return; set(K_ON, on?"1":null); if(!on) set(K_DATE,null); location.reload(); }   /* TEST_RESERVE_V63 */
   };
 })();

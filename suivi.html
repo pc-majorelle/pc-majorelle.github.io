@@ -75,7 +75,7 @@
   var annees; try{annees=JSON.parse(localStorage.getItem(ANNEES_KEY));}catch(e){}
   if(!Array.isArray(annees)||!annees.length) annees=["2025-2026","2026-2027"];
   var an; try{an=localStorage.getItem(PREF);}catch(e){}
-  if(annees.indexOf(an)<0) an=annees[0];
+  if(annees.indexOf(an)<0){ an=(function(){var d=new Date(),y=d.getFullYear();if(d.getMonth()<7)y-=1;return y+"-"+(y+1);})(); if(annees.indexOf(an)<0) an=annees[0]; }   /* ANNEE_COURANTE_V63 */
   try{localStorage.setItem(PREF,an);}catch(e){}
   selA.innerHTML=annees.map(function(x){return '<option'+(x===an?' selected':'')+'>'+x+'</option>';}).join("");
 
