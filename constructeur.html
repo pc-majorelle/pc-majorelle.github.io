@@ -2291,6 +2291,12 @@ if(__MENUCTX.niveau){ initialLevel=__MENUCTX.niveau; }   /*MENU_CTX_V30*/
 rebuildDerived(initialLevel);
 let STATE = chargerEtat();
 if(__MENUCTX.annee){ STATE.annee=__MENUCTX.annee; }   /*MENU_CTX_V30*/
+else { /*ANNEE_CONSTRUCTEUR_V66 : sans annee dans l'adresse, celle du gestionnaire (verite partagee), a defaut l'annee du jour —
+         jamais le « 2025-2026 » fige, qui laissait le constructeur sans classe et ecrasait l'annee du gestionnaire.*/
+  try{ var _aG=null; try{ _aG=localStorage.getItem("gestion_majorelle_annee"); }catch(e){}
+       if(!_aG||!/^\d{4}-\d{4}$/.test(_aG)){ var _d=new Date(),_y=_d.getFullYear(); if(_d.getMonth()<7)_y-=1; _aG=_y+"-"+(_y+1); }
+       STATE.annee=_aG; }catch(e){}
+}
 chargerCalendrier(STATE.annee);   // initialise le calendrier de l'année choisie
 miSeedIfEmpty();   // MESURE_INCERTITUDE_V28 : graine + pointe MI_PAR_CHAPITRE sur l'état éditable
 function sauverEtat(){ try{ localStorage.setItem(lsKey(), JSON.stringify(STATE)); localStorage.setItem("constructeur_level", level); }catch(e){} }
