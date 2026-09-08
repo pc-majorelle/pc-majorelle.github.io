@@ -214,6 +214,10 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 #secEditeur li.ed-se{border:1px solid var(--line);border-radius:8px;background:var(--panel2);margin:0 0 4px;padding:4px 6px}
 #secEditeur .ed-setop{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px}
 #secEditeur .ed-badge{color:#fff;border-radius:5px;padding:1px 7px;font-weight:700;font-size:11.5px}
+#secEditeur select.ed-type{border:0;cursor:pointer;appearance:auto}   /* TYPE_ET_SALLE_V64 */
+#secEditeur select.ed-type option{color:#222;background:#fff}
+#secEditeur .ed-salle{border:1px solid #bbb;background:#fff;border-radius:5px;padding:0 5px;font-size:11px;cursor:pointer;opacity:.55}
+#secEditeur .ed-salle.on{opacity:1;border-color:#ef6c00;background:#fff3e0;color:#b34700;font-weight:700}
 #secEditeur .ed-date{font-variant-numeric:tabular-nums;font-weight:600}
 #secEditeur .ed-day{color:var(--ink-soft)}
 #secEditeur .ed-none{color:#c62828;font-weight:600}
@@ -4386,7 +4390,7 @@ function planFindSe(seId){
 /* ===== VERROU_TP_V61 — l'etat du verrou =====
    Memorise PAR ANNEE, PAR NIVEAU ET PAR CLASSE : ouvrir le verrou pour la Seconde ne
    l'ouvre pas pour la Tale spe. Ferme par defaut — l'absence de cle VAUT « ferme ». */
-var TP_HORS_SALLE_V61=0, JOURS_SANS_SEANCE_V61=0;
+var TP_HORS_SALLE_V61=0, JOURS_SANS_SEANCE_V61=0, SALLE_LIBRE_V64=0;
 function _verrouTPCle_V61(){
   var cl="_"; try{ cl=(__MENUCTX&&__MENUCTX.classe)||Store.classeActive()||"_"; }catch(e){}
   var an="_", lv="_"; try{ an=STATE.annee; }catch(e){} try{ lv=level; }catch(e){}
@@ -4485,9 +4489,14 @@ function construirePlanFromPlan(orderIds, opts){
        - jour AVEC salle de TP : un TP en priorite, sinon un cours (« il peut y avoir un cours
          a la place », 07/09).
      La fenetre de 8 existe pour ne pas faire remonter un chapitre de juin au mois de septembre. */
-  var _tpHorsSalle_V61=0, _joursVides_V61=0;
+  var _tpHorsSalle_V61=0, _joursVides_V61=0, _salleLibre_V64=0;
   (function(){
     var estTP=function(f){ var t=f&&f.se&&f.se.type; return t==="TP"||t==="TP \u00e9valu\u00e9"; };
+    /* TYPE_ET_SALLE_V64 — R2/R3 (07/09) : l'exception est celle du professeur, seance par seance.
+       Une seance dont la porte est ouverte est compatible avec TOUT creneau : elle prend le premier
+       qui vient, a sa place dans la file — un cours flague passe donc AVANT le prochain TP sur un
+       creneau de salle de TP, ce que le verrou global ne permettait jamais. */
+    var _compat_V64=function(f,jourTP){ return (f&&f.se&&f.se.salleLibre) ? true : (estTP(f)===jourTP); };
     var file=flat.slice(), FEN=8, garde=0;
     flat=[];
     /* On choisit pour le creneau REELLEMENT en cours de remplissage, et on tient compte de
@@ -4496,8 +4505,8 @@ function construirePlanFromPlan(orderIds, opts){
        et ce creneau-la n'etait pas forcement en salle de TP. */
     function trouver(jourTP, libre){
       var n=file.length, i, lim=Math.min(FEN,n);
-      for(i=0;i<lim;i++) if(estTP(file[i])===jourTP && file[i].se.durMin<=libre) return i;
-      for(i=lim;i<n;i++) if(estTP(file[i])===jourTP && file[i].se.durMin<=libre) return i;
+      for(i=0;i<lim;i++) if(_compat_V64(file[i],jourTP) && file[i].se.durMin<=libre) return i;   /* TYPE_ET_SALLE_V64 */
+      for(i=lim;i<n;i++) if(_compat_V64(file[i],jourTP) && file[i].se.durMin<=libre) return i;
       return -1;
     }
     /* GRAIN_CRENEAU_V61 : chercher un type precis (DS, TD) qui tienne dans la place restante. */
@@ -4526,7 +4535,7 @@ function construirePlanFromPlan(orderIds, opts){
       if(j<0 && b.used>0){ ci++; continue; }         // 3. creneau entame et rien n'y tient : on le ferme
       if(j<0){                                        // 4. creneau VIDE : on accepte l'etalement
         var k=-1, n2=file.length, i2;
-        for(i2=0;i2<n2;i2++) if(estTP(file[i2])===jourTP){ k=i2; break; }
+        for(i2=0;i2<n2;i2++) if(_compat_V64(file[i2],jourTP)){ k=i2; break; }   /* TYPE_ET_SALLE_V64 */
         /* GRAIN_CRENEAU_V61 — R3 : meme sur un creneau vide, un creneau de salle de TP
            n'accepte un COURS que si le verrou est ouvert. DS et TD y restent admis. */
         if(k<0 && jourTP) for(i2=0;i2<n2;i2++){ var _t=file[i2].se.type; if(_t==="DS"||_t==="TD"){ k=i2; break; } }
@@ -4541,10 +4550,12 @@ function construirePlanFromPlan(orderIds, opts){
         }
         j=k;
       }
-      var f=file.splice(j,1)[0]; flat.push(f); _poser_V61(f);
+      var f=file.splice(j,1)[0]; flat.push(f);
+      if(f.se.salleLibre && estTP(f)!==jourTP) _salleLibre_V64++;   /* TYPE_ET_SALLE_V64 : posee hors de sa salle, par exception */
+      _poser_V61(f);
     }
   })();
-  try{ TP_HORS_SALLE_V61=_tpHorsSalle_V61; JOURS_SANS_SEANCE_V61=_joursVides_V61; }catch(e){}
+  try{ TP_HORS_SALLE_V61=_tpHorsSalle_V61; JOURS_SANS_SEANCE_V61=_joursVides_V61; SALLE_LIBRE_V64=_salleLibre_V64; }catch(e){}
   function etaler(f, se){                       // séance > durée d'un créneau : plusieurs créneaux
     var reste=se.durMin, k=0, start=ci;
     while(reste>0 && ci<buckets.length){
@@ -4721,6 +4732,10 @@ function edStatsHTML_V33(){
    +'<div class="ed-stat '+(manque?"warn":"good")+'">Couverture &nbsp;<b>'+placN+'</b> / '+totN
      +' <small>capacités'+(manque?(" · "+manque+" à placer"):" · complète")+'</small></div>'
    +'<div class="ed-stat">Séances &nbsp;<b>'+nse+'</b> <small>· '+ngr+' chapitres</small></div>'
+   /* TYPE_ET_SALLE_V64 : les exceptions qu'il a decidees lui-meme, seance par seance. */
+   +(SALLE_LIBRE_V64
+      ? ('<div class="ed-stat warn">\ud83d\udeaa Salle libre &nbsp;<b>'+SALLE_LIBRE_V64+'</b> <small>· séance(s) posée(s) hors de leur salle, par exception (porte ouverte sur la séance)</small></div>')
+      : '')
    /* VERROU_TP_V61 : ce que le verrou a empeche, ou ce qu'il a laisse passer. */
    /* TYPES_HERITES_V61 : une migration silencieuse serait la faute de la v52. */
    +(TYPES_MIGRES_V61
@@ -4789,7 +4804,16 @@ function renderEditeur(){
       }
       seHTML+='<li class="ed-se" data-id="'+esc_V33(s.id)+'"><div class="ed-setop">'
         +'<span class="s-handle" title="Glisser pour déplacer la séance">⠿</span>'
-        +'<span class="ed-badge" style="background:var('+tvar(s.type)+')">'+esc_V33(t.lab||s.type)+'</span>'
+        /* TYPE_ET_SALLE_V64 : le type se change SUR PLACE (TP -> Cours, Cours -> TP...) ; la porte
+           « salle libre » dit que CETTE seance accepte n'importe quel creneau, sans ouvrir le verrou global. */
+        +'<select class="ed-badge ed-type" data-type="'+esc_V33(s.id)+'" style="background:var('+tvar(s.type)+')" title="Type de la séance — changer ici remplace un TP par un cours, ou l\'inverse. Sans la porte 🚪, la séance ira au prochain créneau compatible avec son nouveau type.">'
+          +TYPES_V33.map(function(x){ return '<option value="'+esc_V33(x.k)+'"'+(x.k===s.type?' selected':'')+'>'+esc_V33(x.lab)+'</option>'; }).join('')
+          +(TYPEMAP_V33[s.type]?'':('<option value="'+esc_V33(s.type)+'" selected>'+esc_V33(s.type)+'</option>'))
+          +'</select>'
+        +'<button class="ed-salle'+(s.salleLibre?' on':'')+'" data-salle="'+esc_V33(s.id)+'" title="'+(s.salleLibre
+            ?'Salle libre : cette séance accepte n\'importe quel créneau (cours ou salle de TP) et garde sa place dans la progression. Exception décidée par vous. Cliquer pour la refermer.'
+            :'Fermée : cette séance ne va que sur un créneau de son type (TP → salle de TP, cours → créneau de cours). Cliquer pour l\'ouvrir : elle acceptera alors n\'importe quel créneau, à sa place dans la progression.')+'">'
+          +(s.salleLibre?'\ud83d\udeaa salle libre':'\ud83d\udeaa')+'</button>'
         +(s._date?('<span class="ed-date">'+frShort(s._date)+'</span><span class="ed-day">'+JOURS[s._date.getUTCDay()]+'</span>')
                  :'<span class="ed-none">hors année</span>')
         +(s.note?('<span class="ed-lbl" title="'+esc_V33(s.note)+'">— '+esc_V33(s.note)+'</span>'):'')
@@ -4797,7 +4821,7 @@ function renderEditeur(){
         +((s._free>0)?('<span class="ed-free">⏳ '+fmtMin_V33(s._free)+' libre</span>'
             +TYPES_V33.map(function(x){ return '<button class="ed-freeadd" data-fill="'+esc_V33(s.id)+'" data-t="'+esc_V33(x.k)+'" title="remplir ce temps avec '+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')
           ):'')
-        +'<span class="ed-dur"><input type="range" min="10" max="240" step="10" value="'+s.durMin+'" data-dur="'+esc_V33(s.id)+'" aria-label="durée de la séance">'
+        +'<span class="ed-dur"><input type="range" min="5" max="240" step="5" value="'+s.durMin+'" data-dur="'+esc_V33(s.id)+'" aria-label="durée de la séance">'   /* TYPE_ET_SALLE_V64 : ses creneaux font 55 et 85 min */
         +'<span class="val">'+fmtMin_V33(s.durMin)+'</span></span>'
         +'<button class="ed-capsbtn" data-caps="'+esc_V33(s.id)+'">'+(s.capsOpen?"▾":"▸")+' cap. <b>'+((s.caps||[]).length)+'</b></button>'
         +'<button class="ed-del" data-del="'+esc_V33(s.id)+'" title="Supprimer cette séance (les capacités restent au référentiel du chapitre)">✕</button>'
@@ -4855,7 +4879,7 @@ function edWire_V33(board){
     var tk=b.getAttribute("data-t");
     var libre=f.se._free||(TYPEMAP_V33[tk]||{dur:60}).dur;
     STATE.plan[f.uid].splice(f.i+1,0,
-      {id:nextSeId_V33(), type:tk, durMin:Math.max(10,Math.round(libre/10)*10), caps:[], note:"", capsOpen:false});
+      {id:nextSeId_V33(), type:tk, durMin:Math.max(5,Math.round(libre/5)*5), caps:[], note:"", capsOpen:false});   /* TYPE_ET_SALLE_V64 : le temps libre EXACT (55 -> 55, pas 60) */
     commit(); }; });
   /* GROUPE_LIBRE_V58 : renommer. On ecrit a la sortie du champ, pas a chaque frappe :
      un renderEditeur() par caractere reprendrait le focus a Laurent au premier appui. */
@@ -4883,10 +4907,20 @@ function edWire_V33(board){
     var _F=_edFoldSet_V33_(); _F[uid]=!_F[uid];
     sauverEtat();   /* REPLI_MEMORISE_V57 : sans ceci le repli ne survit pas au rechargement */
     renderEditeur(); }; });
+  /* TYPE_ET_SALLE_V64 : changer le type sur place ; ouvrir/fermer la porte d'une seance. */
+  board.querySelectorAll("[data-type]").forEach(function(sel){ sel.onchange=function(){
+    var f=planFindSe(sel.getAttribute("data-type")); if(!f) return;
+    var nv=sel.value; if(!nv || nv===f.se.type) return;
+    f.se.type=nv; if(nv!=="DS"){ f.se.ds=false; f.se.dsChapters=null; }
+    commit(); }; });
+  board.querySelectorAll("[data-salle]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-salle")); if(!f) return;
+    f.se.salleLibre=!f.se.salleLibre; if(!f.se.salleLibre) delete f.se.salleLibre;
+    commit(); }; });
   board.querySelectorAll("[data-dur]").forEach(function(r){
     r.oninput=function(){ var v=r.parentNode.querySelector(".val"); if(v) v.textContent=fmtMin_V33(+r.value); };
     r.onchange=function(){ var f=planFindSe(r.getAttribute("data-dur")); if(!f) return;
-      f.se.durMin=Math.max(10,+r.value||10); commit(); };
+      f.se.durMin=Math.max(5,+r.value||5); commit(); };   /* TYPE_ET_SALLE_V64 */
   });
   try{
     if(window.Sortable){
