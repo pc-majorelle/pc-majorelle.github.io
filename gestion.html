@@ -183,7 +183,7 @@
   function lienConstructeur(){
     try{
       var c=activeClass(); var tok=constrLevelToken(c);
-      var q="?annee="+encodeURIComponent(ANNEE)+(tok?"&niveau="+encodeURIComponent(tok):"")+(c?"&classe="+encodeURIComponent(c.id):"")+"&mode=editeur";
+      var q="?annee="+encodeURIComponent(ANNEE)+(tok?"&niveau="+encodeURIComponent(tok):"")+(c?"&classe="+encodeURIComponent(c.id):"")+"&mode=editeur&de=gestion";
       return '<a class="mini primary" href="constructeur.html'+q+'">🧭 Ouvrir le constructeur</a>';
     }catch(e){ return ""; }
   }
@@ -216,6 +216,8 @@
   ];
   function traduire(t){
     var p=$("p-"+t); if(!p) return;
+    /* les liens vers le constructeur disent d'ou ils viennent : son « Accueil » devient « Retour au gestionnaire » (RETOUR_GESTION_V65) */
+    p.querySelectorAll('a[href^="constructeur.html"]').forEach(function(a){ if(a.href.indexOf("de=gestion")<0) a.href+=(a.href.indexOf("?")<0?"?":"&")+"de=gestion"; });
     var w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT,null); var n;
     while((n=w.nextNode())){
       var s=n.nodeValue, s0=s;
