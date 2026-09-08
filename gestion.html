@@ -49,6 +49,12 @@
   .sousOnglets.on{display:flex}
   .sousOnglets button{font:inherit;font-size:.82rem;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
   .sousOnglets button.on{color:var(--ink);border-color:var(--accent);background:var(--card2)}
+  /*ETAT_SERVICE_V66*/
+  .service{margin:10px 18px 0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:.88rem;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .service label{display:inline-flex;gap:8px;align-items:center;cursor:pointer;font-weight:600}
+  .service input{width:16px;height:16px;margin:0}
+  .service .small{flex-basis:100%;color:var(--muted)}
+  #parcours > button[hidden], #plus button[hidden]{display:none}
   @media (max-width:900px){
     .coque{grid-template-columns:1fr}
     nav.parcours{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px;padding:8px}
@@ -113,6 +119,7 @@
     <div class="sep"></div>
     <button data-p="plus" id="btnPlus"><span class="ic">⋯</span>Plus</button>
     <div class="plus" id="plus">
+      <button data-t="classes" id="plusClasses" hidden>Mes classes</button><!--ETAT_SERVICE_V66 : quand l'etat de service est definitif-->
       <button data-t="materiel">Matériel</button>
       <button data-t="calendrier">Dates de cours</button>
       <button data-t="constr">Constructeur</button>
@@ -187,8 +194,31 @@
       return '<a class="mini primary" href="constructeur.html'+q+'">🧭 Ouvrir le constructeur</a>';
     }catch(e){ return ""; }
   }
+  /*ETAT_SERVICE_V66 : « Mes classes » en tete tant que l'etat de service n'est pas definitif, dans « Plus » ensuite.
+    La donnee (state.serviceDefinitif, serviceDefinitif(), setServiceDefinitif()) vit dans gestion_core.js. */
+  PHRASE_PLUS.classes=PARCOURS.classes.phrase+'<span class="small">Votre état de service est déclaré définitif : « Mes classes » est rangé ici. Décochez la case pour le remettre en tête.</span>';
+  function definitif(){ try{ return serviceDefinitif(); }catch(e){ return false; } }
+  function rangerClasses(){
+    var d=definitif();
+    document.querySelectorAll('#parcours > button[data-p="classes"]').forEach(function(b){ b.hidden=d; });
+    var pb=$("plusClasses"); if(pb) pb.hidden=!d;
+  }
+  function poserCaseService(){
+    var p=$("p-classes"); if(!p) return;
+    var old=p.querySelector(".service"); if(old) old.parentNode.removeChild(old);
+    var d=definitif(); var box=document.createElement("div"); box.className="service";
+    box.innerHTML='<label><input type="checkbox" id="ckService"'+(d?' checked':'')+'> Mon état de service est définitif (classes et emploi du temps)</label>'
+      +'<span class="small">'+(d?'« Mes classes » est rangé dans « Plus ». Décochez pour le remettre en tête du parcours.'
+                                :'Une fois coché, « Mes classes » quitte le parcours et se range dans « Plus » — vous pourrez toujours revenir dessus.')+'</span>';
+    p.insertBefore(box,p.firstChild);
+    box.querySelector("#ckService").addEventListener("change",function(){ try{ setServiceDefinitif(this.checked); }catch(e){} });
+  }
+  var _tabCourant="semaine";
+  document.addEventListener("pcmajo:service",function(){ rangerClasses(); poserCaseService(); majNav(_tabCourant); });
+  document.addEventListener("DOMContentLoaded",rangerClasses); rangerClasses();
   function majNav(t){
-    var p=TAB2P[t]||"semaine";
+    _tabCourant=t; rangerClasses();
+    var p=(t==="classes"&&definitif())?"plus":(TAB2P[t]||"semaine");
     document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){b.classList.toggle("on",b.dataset.p===p);});
     document.querySelectorAll("#plus button[data-t]").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
     $("plus").classList.toggle("open",p==="plus");
@@ -232,7 +262,7 @@
   ["renderSeances","renderSuivi","renderClasses","renderSemaine","renderEleves","renderConstr"].forEach(function(nom){
     var f=window[nom]; if(typeof f!=="function") return;
     var tab={renderSeances:"seances",renderSuivi:"suivi",renderClasses:"classes",renderSemaine:"semaine",renderEleves:"eleves",renderConstr:"constr"}[nom];
-    window[nom]=function(){ var r=f.apply(this,arguments); traduire(tab); return r; };
+    window[nom]=function(){ var r=f.apply(this,arguments); traduire(tab); if(tab==="classes"){ try{ poserCaseService(); rangerClasses(); }catch(e){} } return r; };
   });
 
   /* 4. Le geste unique : l'enregistrement est automatique, on le montre. */

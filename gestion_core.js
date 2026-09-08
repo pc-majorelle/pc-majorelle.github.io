@@ -597,6 +597,13 @@ function save(){
   try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
   try{ renderVoyants(); }catch(e){}   /* VOYANTS_A_PROPAGER_V52 */
 }
+/*ETAT_SERVICE_V66 : l'etat de service (classes + emploi du temps) declare definitif par l'enseignant, dans son carnet de
+  l'annee. La coque (gestion.html) s'en sert pour ranger « Mes classes » dans « Plus » ; l'ancienne page l'ignore.*/
+function serviceDefinitif(){ try{ return !!(state && state.serviceDefinitif); }catch(e){ return false; } }
+function setServiceDefinitif(v){
+  state.serviceDefinitif=!!v; save();
+  try{ document.dispatchEvent(new CustomEvent("pcmajo:service",{detail:{definitif:!!v}})); }catch(e){}
+}
 /* MAITRE v22 — migration filière/programme : corrige les états sauvegardés antérieurs
    où TG5/TG6 (enseignement scientifique) et TSTI2D/1STI2D pointaient encore vers un
    programme erroné (spé « ...|gen ») → source de la confusion ens.sci ↔ spé (Suivi/Progressions). */
