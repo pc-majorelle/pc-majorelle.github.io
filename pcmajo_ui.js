@@ -335,3 +335,101 @@ window.PCAide = (function(){
   try{ PCAide.page({titre:titre, html:f()}); }catch(e){}
 })();
 /* ============================== fin AIDE_PAGE_V63 ============================== */
+
+/* =============================================================================
+   VERSIONS_V64 — le filet de sécurité. MAÎTRE v64, 08/09/2026.
+   -----------------------------------------------------------------------------
+   Laurent : « on peut toujours craindre d'effacer des réglages qu'on avait faits sans
+   possibilité de retrouver la version précédente ». Chaque page écrasait la seule copie.
+   Ici : à chaque enregistrement d'un état de travail (constructeur, carnet du gestionnaire),
+   la version PRÉCÉDENTE est gardée dans ce navigateur — celle d'avant l'ouverture de la page,
+   toujours ; puis au plus une toutes les 10 minutes. Huit versions au plus par état, 1,5 Mo
+   au plus ; s'il manque de place, les plus anciennes partent, jamais l'enregistrement lui-même.
+   Le panneau « ? » les liste et permet d'y revenir ; l'état courant est gardé avant le retour.
+   Ne touche à aucune donnée existante ; n'écrit que des clés « __versions__… ».
+   ============================================================================= */
+(function(){
+  "use strict";
+  if(typeof Storage==="undefined" || !window.localStorage) return;
+  var HK="__versions__", MAX=8, ECART=10*60*1000, MAXOCTETS=1500000;
+  var SUIVIS=[["constructeur_v2_","Constructeur"],["constructeur_edt_","Constructeur — emploi du temps"],["gestion_majorelle_v01","Gestionnaire — carnet"]];
+  var MOIS=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  function fr(t){ var d=new Date(t); return d.getDate()+" "+MOIS[d.getMonth()]+" à "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function suivi(k){ for(var i=0;i<SUIVIS.length;i++) if(k.indexOf(SUIVIS[i][0])===0) return SUIVIS[i]; return null; }
+  function libelle(k){
+    var p=suivi(k); if(!p) return k;
+    var r=k.slice(p[0].length).replace(/^__/,"").split("__");
+    if(p[0]==="constructeur_v2_") return "Constructeur · niveau "+r[0];
+    if(p[0]==="constructeur_edt_") return "Constructeur · emploi du temps "+r[0].replace(/_/g," ");
+    if(p[0]==="gestion_majorelle_v01") return r.length>=2 ? "Gestionnaire · carnet "+r[r.length-1] : "Gestionnaire · carnet partagé "+(r[0]||"");
+    return p[1];
+  }
+  var orig=Storage.prototype.setItem;
+  function lire(k){ try{ return JSON.parse(orig ? localStorage.getItem(HK+k) : null)||[]; }catch(e){ return []; } }
+  function ecrire(k, arr){
+    while(arr.length){ try{ orig.call(localStorage, HK+k, JSON.stringify(arr)); return true; }catch(e){ arr.shift(); } }
+    try{ localStorage.removeItem(HK+k); }catch(e){} return false;
+  }
+  function garder(k, prev, motif){
+    var arr=lire(k), now=Date.now(), last=arr[arr.length-1];
+    if(last && last.v===prev) return;
+    if(motif==="auto" && last && (now-last.t)<ECART) return;
+    arr.push({t:now, v:prev, m:motif});
+    while(arr.length>MAX) arr.shift();
+    var tot=0; arr.forEach(function(x){ tot+=x.v.length; });
+    while(arr.length>1 && tot>MAXOCTETS){ tot-=arr[0].v.length; arr.shift(); }
+    ecrire(k, arr);
+  }
+  var vu={};
+  Storage.prototype.setItem=function(k, v){
+    var prev=null, p=null;
+    try{ if(this===window.localStorage && typeof k==="string" && k.indexOf(HK)!==0){ p=suivi(k); if(p) prev=localStorage.getItem(k); } }catch(e){ p=null; }
+    orig.call(this, k, v);
+    if(!p || prev===null || prev===String(v)) { if(p) vu[k]=true; return; }
+    try{ garder(k, prev, vu[k]?"auto":"ouverture"); }catch(e){}
+    vu[k]=true;
+  };
+  function cles(){
+    var page=(location.pathname.split("/").pop()||"").toLowerCase(), out=[];
+    try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k.indexOf(HK)!==0) continue; var kk=k.slice(HK.length);
+      if(page.indexOf("constructeur")===0 && kk.indexOf("constructeur_")!==0) continue;
+      if(page.indexOf("gestion")===0 && kk.indexOf("gestion_")!==0) continue;
+      out.push(kk); } }catch(e){}
+    return out.sort();
+  }
+  function revenir(k, i){
+    var arr=lire(k), x=arr[i]; if(!x) return;
+    if(!confirm("Revenir à la version du "+fr(x.t)+" de « "+libelle(k)+" » ?\n\nCe qui est enregistré maintenant sera lui-même gardé comme version : rien n'est perdu. La page se recharge.")) return;
+    try{ var cur=localStorage.getItem(k); if(cur!==null && cur!==x.v) garder(k, cur, "avant retour"); }catch(e){}
+    orig.call(localStorage, k, x.v);
+    location.reload();
+  }
+  function html(){
+    var ks=cles(); if(!ks.length) return "";
+    var s='<h4>Revenir à une version précédente</h4><p class="pcAideNote">À chaque enregistrement, la version d\'avant est gardée ici (celle d\'avant l\'ouverture de la page, puis une toutes les 10 min au plus). Revenir en arrière garde aussi l\'état actuel : rien ne peut être perdu.</p>';
+    ks.forEach(function(k){ var arr=lire(k); if(!arr.length) return;
+      s+='<p style="margin:6px 0 2px"><b>'+esc(libelle(k))+'</b></p><ul>';
+      for(var i=arr.length-1;i>=0;i--){ var x=arr[i];
+        s+='<li>'+esc(fr(x.t))+' <span class="pcAideNote" style="display:inline">· '+(x.m==="ouverture"?"avant l\'ouverture de la page":(x.m==="avant retour"?"avant un retour":"automatique"))+' · '+Math.round(x.v.length/1024)+' Ko</span> '
+          +'<button type="button" class="pcVersBtn" data-k="'+esc(k)+'" data-i="'+i+'" style="font-size:11px;padding:0 6px;border-radius:5px;border:1px solid var(--line,#ccc);background:var(--card2,#f4f4f4);cursor:pointer">revenir</button></li>'; }
+      s+='</ul>'; });
+    return s;
+  }
+  function poser(){
+    var pop=document.getElementById("pcAidePop"); if(!pop) return;
+    if(pop.querySelector("#pcVersions")) return;
+    var h=html(); if(!h) return;
+    var d=document.createElement("div"); d.id="pcVersions"; d.innerHTML=h; pop.appendChild(d);
+    d.querySelectorAll(".pcVersBtn").forEach(function(b){ b.addEventListener("click",function(e){ e.stopPropagation(); revenir(b.getAttribute("data-k"), +b.getAttribute("data-i")); }); });
+  }
+  function brancher(){
+    var btn=document.getElementById("pcAideBtn"), pop=document.getElementById("pcAidePop");
+    if(!btn||!pop){ setTimeout(brancher, 300); return; }
+    btn.addEventListener("click", function(){ setTimeout(poser, 0); });
+    try{ new MutationObserver(function(){ if(pop.classList.contains("open") && !pop.querySelector("#pcVersions")) poser(); }).observe(pop,{childList:true}); }catch(e){}
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", brancher); else brancher();
+  window.PCVersions={ lire:lire, cles:cles, garder:garder, libelle:libelle };
+})();
+/* ============================== fin VERSIONS_V64 ============================== */

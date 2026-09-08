@@ -2394,8 +2394,13 @@ function etatPropagation(){
            plan:  m.plan !== _empreintePlan(),
            dates: !!datesEcartees(state.annee||ANNEE) };
 }
+function _estAdmin_V64(){ try{ var s=(window.PCAide&&PCAide.session())||{}; return s.role==="prof" && /^laurent$/i.test(String(s.prenom||"")); }catch(e){ return false; } }   /* VERSIONS_V64 */
 function renderVoyants(){
   var z=document.getElementById("propage"); if(!z) return;
+  /* VERSIONS_V64 : « la base / le plan / les dates — a faire » sont des gestes d'ADMIN (deposer le
+     carnet dans _BASE, relancer un script, pousser le depot). Un collegue ne peut faire aucun des
+     trois : on ne les lui montre pas, et on ne l'empeche pas de fermer la page. */
+  if(!_estAdmin_V64()){ z.innerHTML=""; return; }
   var e=etatPropagation();
   var L=[["base","la base","Enregistre ton carnet, puis dépose-le dans _BASE\\carnets\\ et relance exporter_edt_site_v52.py."],
          ["plan","le plan","Republie le plan : sinon les questions du soir restent sur l’ancien emploi du temps."],
@@ -2415,7 +2420,7 @@ function gestePropager(quoi){
   if(quoi==="dates"){ if(typeof exporterDatesCours==="function") exporterDatesCours(); }
 }
 window.addEventListener("beforeunload", function(ev){
-  try{ var e=etatPropagation(); if(e.base||e.plan||e.dates){ ev.preventDefault(); ev.returnValue=""; } }catch(x){}
+  try{ if(!_estAdmin_V64()) return; var e=etatPropagation(); if(e.base||e.plan||e.dates){ ev.preventDefault(); ev.returnValue=""; } }catch(x){}   /* VERSIONS_V64 */
 });
 /* Amorcage : `save()` ne part qu'a la premiere modification. Sans ceci la bande reste
    vide tant qu'on n'a rien touche — c'est-a-dire au moment ou on en a le plus besoin. */
