@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon gestionnaire — Plateforme PC · Majorelle</title>
+<!-- COQUE_GESTION_V65 : la remise a plat du gestionnaire (spec _ORCHESTRATION\SPEC_remise_a_plat_gestionnaire_v65.md).
+     Cette page NE PORTE AUCUNE FONCTION : elle charge le meme code que gestion_v0.1.html (gestion_core.js,
+     gestion_greffes.js, gestion_core.css) et garde les memes identifiants (p-<onglet>, activeClass,
+     activeAnnee, propage, btnSave...). Elle n'ajoute que le parcours par usage, les phrases d'accueil,
+     les libelles en francais, le geste unique d'enregistrement et la zone « Publier » de l'admin.
+     Le carnet (localStorage gestion_majorelle_v01__<pid>__<annee>) est le meme, au meme endroit. -->
+<script src="pcmajo_test.js"></script>
+<script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script>
+<script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script>
+<link rel="stylesheet" href="gestion_core.css">
+<style>/*COQUE_GESTION_V65*/
+  header.coque-haut{padding:8px 16px}
+  header.coque-haut .hrow{gap:10px}
+  header.coque-haut h1{font-size:1.05rem}
+  .retour{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:.85rem;white-space:nowrap}
+  .retour:hover{border-color:var(--accent)}
+  #etatEnreg{font-size:.8rem;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  #etatEnreg .pt{width:8px;height:8px;border-radius:50%;background:var(--done);display:inline-block}
+  #etatEnreg.vif .pt{box-shadow:0 0 0 4px rgba(73,193,122,.25)}
+  .copie{display:inline-flex;gap:6px;flex:0 0 auto;white-space:nowrap;flex-wrap:wrap}
+  #publier{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;padding:6px 10px;border:1px dashed var(--line);border-radius:10px}
+  #publier.on{display:flex}
+  #publier .lab{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+  #publier #propage{margin:0}
+  #tabs{display:none!important}
+  .coque{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;min-height:calc(100vh - 60px)}
+  nav.parcours{border-right:1px solid var(--line);padding:14px 10px;position:sticky;top:58px;align-self:start;max-height:calc(100vh - 58px);overflow:auto}
+  nav.parcours button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;font:inherit;font-size:.95rem;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:10px;padding:9px 11px;margin:2px 0;cursor:pointer}
+  nav.parcours button:hover{border-color:var(--line);background:var(--card)}
+  nav.parcours button.on{background:var(--card2);border-color:var(--accent);font-weight:650}
+  nav.parcours button .ic{width:1.4em;text-align:center;flex:0 0 auto}
+  nav.parcours .sep{height:1px;background:var(--line);margin:10px 4px}
+  nav.parcours .plus button{font-size:.85rem;padding:6px 11px;color:var(--muted)}
+  nav.parcours .plus button.on{color:var(--ink)}
+  nav.parcours .plus{display:none}
+  nav.parcours .plus.open{display:block}
+  .contenu{min-width:0;padding:0 4px}
+  .accueil{margin:14px 18px 4px;padding:10px 14px;border-left:3px solid var(--accent);background:var(--card);border-radius:0 10px 10px 0;font-size:.9rem;color:var(--ink)}
+  .accueil b{font-weight:650}
+  .accueil .small{display:block;margin-top:3px;color:var(--muted)}
+  .accueil a.mini{text-decoration:none;display:inline-block;margin-left:8px}
+  .sousOnglets{margin:8px 18px 0;display:none;gap:6px}
+  .sousOnglets.on{display:flex}
+  .sousOnglets button{font:inherit;font-size:.82rem;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+  .sousOnglets button.on{color:var(--ink);border-color:var(--accent);background:var(--card2)}
+  @media (max-width:900px){
+    .coque{grid-template-columns:1fr}
+    nav.parcours{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px;padding:8px}
+    nav.parcours button{width:auto;padding:6px 10px}
+    nav.parcours .sep{display:none}
+    nav.parcours .plus.open{display:flex;flex-wrap:wrap;gap:4px;width:100%}
+  }
+  @media print{ nav.parcours,.accueil,.sousOnglets,header.coque-haut{display:none!important} }
+</style>
+</head>
+<body>
+<!-- L'en-tete porte l'identifiant « soloBar » : le code commun (MENU_UNIQUE_GESTION_V38) n'insere sa
+     barre « Accueil » que si cet identifiant manque. Ici, c'est la coque qui tient l'en-tete. -->
+<header class="coque-haut" id="soloBar">
+  <div class="hrow">
+    <a href="prof.html" class="retour" aria-label="Espace prof">‹ Espace prof</a>
+    <h1>👩‍🏫 <span id="gTitle">Mon gestionnaire</span></h1>
+    <div class="spacer"></div>
+    <label class="small muted" for="activeAnnee">Année</label>
+    <select id="activeAnnee"></select>
+    <button class="mini ghost" id="addAnnee" title="Ajouter une année scolaire">➕ année</button>
+    <label class="small muted" for="activeClass">Classe</label>
+    <select id="activeClass"></select>
+    <span id="etatEnreg" title="Chaque modification est enregistrée aussitôt, sur cet ordinateur, dans votre carnet de l'année."><span class="pt"></span><span class="txt">Enregistré automatiquement</span></span>
+    <span class="copie">
+      <button class="mini ghost" id="btnSave" title="Télécharge votre carnet dans un fichier — à garder si vous changez d'ordinateur ou de navigateur.">📥 Garder une copie</button>
+      <button class="mini ghost" id="btnLoad" title="Reprend un carnet depuis un fichier « Garder une copie ».">📤 Reprendre une copie</button>
+      <button class="mini ghost" id="btnRevenir" title="Retrouver l'état d'avant une modification (les versions précédentes sont gardées automatiquement).">↶ Revenir en arrière</button>
+      <input type="file" id="fileIn" accept="application/json" style="display:none">
+    </span>
+  </div>
+  <div id="publier">
+    <span class="lab">Publier</span>
+    <div class="row" id="propage" style="gap:8px;align-items:center;flex-wrap:wrap"></div>
+  </div>
+  <!-- Les onglets d'origine restent dans la page, invisibles : switchTab() s'en sert. -->
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-t="semaine">Semaine</div>
+    <div class="tab" data-t="seances">Séances</div>
+    <div class="tab" data-t="suivi">Suivi</div>
+    <div class="tab" data-t="eleves">Élèves &amp; groupes</div>
+    <div class="tab" data-t="comp">Compétences</div>
+    <div class="tab" data-t="materiel">Matériel</div>
+    <div class="tab" data-t="classes">Classes</div>
+    <div class="tab" data-t="calendrier">Calendrier</div>
+    <div class="tab" data-t="constr">Constructeur</div>
+    <div class="tab" id="legacyToggle">Anciens outils</div>
+    <span id="legacyTabs" style="display:none">
+      <div class="tab" data-t="prev">Prévisionnel</div>
+      <div class="tab" data-t="plan">Plannings cohérents</div>
+      <div class="tab" data-t="progressions">Progressions</div>
+    </span>
+  </div>
+</header>
+<div class="coque">
+  <nav class="parcours" id="parcours" aria-label="Parcours">
+    <button data-p="classes"><span class="ic">🏫</span>Mes classes</button>
+    <button data-p="semaine"><span class="ic">📆</span>Ma semaine</button>
+    <button data-p="plan"><span class="ic">🗺️</span>Mon plan</button>
+    <button data-p="cahier"><span class="ic">📓</span>Mon cahier de textes</button>
+    <button data-p="eleves"><span class="ic">🧑‍🎓</span>Mes élèves</button>
+    <div class="sep"></div>
+    <button data-p="plus" id="btnPlus"><span class="ic">⋯</span>Plus</button>
+    <div class="plus" id="plus">
+      <button data-t="materiel">Matériel</button>
+      <button data-t="calendrier">Dates de cours</button>
+      <button data-t="constr">Constructeur</button>
+      <button data-t="prev">Prévisionnel (ancien)</button>
+      <button data-t="plan">Plannings cohérents (ancien)</button>
+      <button data-t="progressions">Progressions (ancien)</button>
+    </div>
+  </nav>
+  <div class="contenu">
+    <div class="accueil" id="accueil"></div>
+    <div class="sousOnglets" id="sousOnglets">
+      <button data-t="eleves">Liste, groupes, notes</button>
+      <button data-t="comp">Notation par compétences</button>
+    </div>
+    <main>
+      <section class="panel on" id="p-semaine"></section>
+      <section class="panel" id="p-classes"></section>
+      <section class="panel" id="p-eleves"></section>
+      <section class="panel" id="p-calendrier"></section>
+      <section class="panel" id="p-seances"></section>
+      <section class="panel" id="p-prev"></section>
+      <section class="panel" id="p-suivi"></section>
+      <section class="panel" id="p-materiel"></section>
+      <section class="panel" id="p-plan"></section>
+      <section class="panel" id="p-progressions"></section>
+      <section class="panel" id="p-constr"></section>
+      <section class="panel" id="p-comp"></section>
+    </main>
+  </div>
+</div>
+
+<script src="gestion_core.js"></script>
+<script src="pcmajo_ui.js"></script>
+<script src="socle_data.js"></script>
+<button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
+<div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
+<script src="gestion_greffes.js"></script>
+
+<script>/*COQUE_GESTION_V65 — la coque : parcours, phrases, libelles, geste unique, zone Publier. Aucune donnee touchee.*/
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var esc_=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+
+  /* 1. Les cinq parcours -> l'onglet existant qu'ils montrent, et la phrase d'accueil. */
+  var PARCOURS={
+    classes:{tab:"classes",  phrase:"<b>Mes classes.</b> Vos classes de l'année et votre emploi du temps : quand vous avez chaque classe, en salle de TP ou non, et votre part si la classe est partagée. Tout le reste en découle.",
+             note:"Chaque champ est enregistré dès que vous le quittez."},
+    semaine:{tab:"semaine",  phrase:"<b>Ma semaine.</b> Votre semaine séance par séance, avec le chapitre du moment. Rien à saisir ici : c'est votre emploi du temps et votre plan qui la remplissent.",
+             note:"« à prévoir » = un créneau sans séance datée."},
+    plan:   {tab:"seances",  phrase:"<b>Mon plan.</b> Toutes les séances de l'année pour la classe choisie, datées d'après votre emploi du temps. Les dates viennent du constructeur : c'est là qu'on change le plan.",
+             note:"", lien:true},
+    cahier: {tab:"suivi",    phrase:"<b>Mon cahier de textes.</b> Chapitre par chapitre, ce qui est fait, en cours ou à faire, avec la date prévue. Cochez au fil de l'année.",
+             note:"◔ = prévu par le plan, pas encore coché · ✔ = fait · le bouton « Imprimer » donne le cahier de textes de la classe."},
+    eleves: {tab:"eleves",   phrase:"<b>Mes élèves.</b> La liste de la classe, les groupes de TP et les notes importées de Skolengo. Le second onglet sert à noter un TP par compétences.",
+             note:""},
+    plus:   {tab:null,       phrase:"<b>Plus.</b> Les outils moins fréquents : le matériel, les dates de début et de fin des cours, et les anciens outils de progression (remplacés par le constructeur, conservés pour mémoire).",
+             note:""}
+  };
+  var TAB2P={classes:"classes",semaine:"semaine",seances:"plan",suivi:"cahier",eleves:"eleves",comp:"eleves",
+             materiel:"plus",calendrier:"plus",constr:"plus",prev:"plus",plan:"plus",progressions:"plus"};
+  var PHRASE_PLUS={materiel:"<b>Matériel.</b> Ce qu'il faut préparer, par séance et par classe.",
+                   calendrier:"<b>Dates de cours.</b> Le premier et le dernier jour de cours de chaque niveau (les cours s'arrêtent avant la fin officielle à cause des examens).",
+                   constr:"<b>Constructeur.</b> L'outil qui bâtit le plan de l'année ; il s'ouvre en pleine page.",
+                   prev:"<b>Prévisionnel (ancien).</b> Remplacé par le constructeur, conservé pour mémoire.",
+                   plan:"<b>Plannings cohérents (ancien).</b> Remplacé par le constructeur, conservé pour mémoire.",
+                   progressions:"<b>Progressions (ancien).</b> Remplacé par le constructeur, conservé pour mémoire."};
+
+  function lienConstructeur(){
+    try{
+      var c=activeClass(); var tok=constrLevelToken(c);
+      var q="?annee="+encodeURIComponent(ANNEE)+(tok?"&niveau="+encodeURIComponent(tok):"")+(c?"&classe="+encodeURIComponent(c.id):"")+"&mode=editeur";
+      return '<a class="mini primary" href="constructeur.html'+q+'">🧭 Ouvrir le constructeur</a>';
+    }catch(e){ return ""; }
+  }
+  function majNav(t){
+    var p=TAB2P[t]||"semaine";
+    document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){b.classList.toggle("on",b.dataset.p===p);});
+    document.querySelectorAll("#plus button[data-t]").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
+    $("plus").classList.toggle("open",p==="plus");
+    var so=$("sousOnglets"); so.classList.toggle("on",p==="eleves");
+    so.querySelectorAll("button").forEach(function(b){b.classList.toggle("on",b.dataset.t===t);});
+    var d=PARCOURS[p]||PARCOURS.semaine; var ph=(p==="plus"&&PHRASE_PLUS[t])?PHRASE_PLUS[t]:d.phrase;
+    $("accueil").innerHTML=ph+(d.lien?lienConstructeur():"")+(d.note?'<span class="small">'+d.note+'</span>':"");
+  }
+
+  /* 2. Les libelles : dire ce que ca fait. Appliques sur le texte rendu, le code qui le produit n'est pas touche. */
+  var DICO=[
+    [/Séance \(constructeur\)/g,"Séance prévue"],
+    [/proposée(s?) par la progression, non confirmée(s?)/g,"prévue$1 par le plan, pas encore cochée$2"],
+    [/cochée(s?) à tort par un ancien import \(séance encore à venir\)/g,"cochée$1 alors que la séance n'a pas encore eu lieu"],
+    [/✔ Confirmer/g,"✔ Cocher jusqu'à aujourd'hui"],
+    [/↺ Reprendre de la progression/g,"↺ Décocher les séances à venir"],
+    [/Ma part — du/g,"Je l'ai du"],
+    [/au \(exclu\)/g,"le collègue reprend le"],
+    [/vide = à vous toute l'année/g,"vide = la classe est à vous toute l'année"],
+    [/\(dates de repli écrites dans la page — base_dates\.js manque\)/g,"(dates de l'année non trouvées : le dire à Laurent)"],
+    [/Renseignez d'abord l'emploi du temps PC dans l'onglet Classes\./g,"Renseignez d'abord votre emploi du temps dans « Mes classes »."],
+    [/« à programmer »/g,"« à prévoir »"],
+    [/à programmer/g,"à prévoir"],
+    [/Reviens ensuite ici pour reporter le travail dans le Suivi\./g,"Revenez ensuite dans « Mon cahier de textes »."]
+  ];
+  function traduire(t){
+    var p=$("p-"+t); if(!p) return;
+    var w=document.createTreeWalker(p,NodeFilter.SHOW_TEXT,null); var n;
+    while((n=w.nextNode())){
+      var s=n.nodeValue, s0=s;
+      for(var i=0;i<DICO.length;i++){ s=s.replace(DICO[i][0],DICO[i][1]); }
+      if(s!==s0) n.nodeValue=s;
+    }
+  }
+
+  /* 3. Enveloppes : on appelle l'existant, puis on habille. */
+  var st=window.switchTab;
+  window.switchTab=function(t){ var r=st.apply(this,arguments); majNav(t); traduire(t); return r; };
+  ["renderSeances","renderSuivi","renderClasses","renderSemaine","renderEleves","renderConstr"].forEach(function(nom){
+    var f=window[nom]; if(typeof f!=="function") return;
+    var tab={renderSeances:"seances",renderSuivi:"suivi",renderClasses:"classes",renderSemaine:"semaine",renderEleves:"eleves",renderConstr:"constr"}[nom];
+    window[nom]=function(){ var r=f.apply(this,arguments); traduire(tab); return r; };
+  });
+
+  /* 4. Le geste unique : l'enregistrement est automatique, on le montre. */
+  var sv=window.save;
+  window.save=function(){
+    var r=sv.apply(this,arguments);
+    try{ var d=new Date(); var e=$("etatEnreg"); e.querySelector(".txt").textContent="Enregistré à "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+         e.classList.add("vif"); setTimeout(function(){e.classList.remove("vif");},900); }catch(x){}
+    return r;
+  };
+  $("btnRevenir").addEventListener("click",function(e){
+    e.stopPropagation(); /* sinon le clic remonte au document, qui referme le panneau qu'on vient d'ouvrir */
+    var b=$("pcAideBtn"); if(!b){ alert("Les versions précédentes ne sont pas disponibles sur cette page."); return; }
+    var pop=$("pcAidePop"); if(!pop||!pop.classList.contains("open")) b.click();
+    setTimeout(function(){ var v=$("pcVersions"); if(v) v.scrollIntoView({block:"center"}); },150);
+  });
+
+  /* 5. La zone « Publier » : les gestes d'admin, visibles de l'admin seulement. */
+  function admin(){ try{ return _estAdmin_V64(); }catch(e){ return false; } }
+  function rangerPublier(){
+    var z=$("publier"); var ok=admin(); z.classList.toggle("on",ok);
+    var bp=$("btnPlan"); if(bp){ if(ok){ if(bp.parentNode!==z) z.appendChild(bp); } else { bp.style.display="none"; } }
+  }
+  var tries=0; var it=setInterval(function(){ rangerPublier(); if(++tries>8) clearInterval(it); },350);
+  document.addEventListener("DOMContentLoaded",rangerPublier);
+
+  /* 6. Les clics du parcours. */
+  document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var p=b.dataset.p;
+      if(p==="plus"){ $("plus").classList.toggle("open"); b.classList.add("on"); $("accueil").innerHTML=PARCOURS.plus.phrase; return; }
+      switchTab(PARCOURS[p].tab);
+    });
+  });
+  document.querySelectorAll("#plus button[data-t], #sousOnglets button[data-t]").forEach(function(b){
+    b.addEventListener("click",function(){ switchTab(b.dataset.t); });
+  });
+  /* Premier affichage : ?tab= est lu par le code commun (DOMContentLoaded) et passe par l'enveloppe. */
+})();
+</script>
+<script src="pcmajo_fond.js"></script>
+</body>
+</html>
