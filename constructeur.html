@@ -4261,6 +4261,28 @@ function migrerTypesHerites_V61(){
 }
 function planEnsure(force){
   try{ migrerTypesHerites_V61(); }catch(e){}   /* TYPES_HERITES_V61 */
+  /* ===== PLAN_FANTOME_V61 — Laurent, 08/09 : « seances : 160 · groupes : 26 · unites de la
+     progression : 18 · groupes HORS progression : 8 ». Il venait de regenerer (80 seances,
+     18 groupes) ; un simple F5 doublait son plan.
+     CAUSE : au demarrage, planEnsure(false) tourne AVANT que la proposition de progression
+     soit appliquee. unitesOrdonnees() ne reconnait alors AUCUN identifiant de STATE.order et
+     retombe sur le decoupage brut du B.O. (CTM.CTM1, MOU.MOU1, OND.OND1...). Ces huit
+     groupes-la sont semes ; la proposition arrive ensuite et les dix-huit vrais sont semes a
+     leur tour. Les huit premiers restent, orphelins, invisibles dans l'editeur (qui ne dessine
+     que la progression) mais comptes. C'est ce qui a fait durer le defaut.
+     LE GARDE : on ne seme rien tant qu'AUCUNE des unites a semer n'est dans STATE.order —
+     signature exacte de « le niveau n'est pas encore etabli ». planEnsure sera rappele une
+     fois la progression chargee.
+     Il ne s'applique QU'A force=false : « Regenerer les seances » passe outre en toutes
+     circonstances, pour qu'un garde-fou ne puisse jamais bloquer son geste a lui.
+     RIEN N'EST SUPPRIME : les groupes deja presents restent ou ils sont. */
+  if(!force) try{
+    if(STATE && STATE.order && STATE.order.length){
+      var _u=unitesOrdonnees(), _ok=false;
+      for(var _i=0;_i<_u.length;_i++){ if(STATE.order.indexOf(_u[_i].id)>=0){ _ok=true; break; } }
+      if(!_ok) return;
+    }
+  }catch(e){}
   /* GROUPE_LIBRE_V58 : « Regenerer les seances » refabrique le plan DU PROGRAMME.
      Les groupes libres ne sont pas generes : les vider ici les ferait revenir vides,
      en silence, alors que ce sont les SEULES seances du plan qui ne se reconstruisent
