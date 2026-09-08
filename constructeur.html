@@ -4085,6 +4085,21 @@ var TYPES_V33 = [
   {k:"DS",        lab:"DS",    dur:60}
 ];
 var TYPEMAP_V33 = {}; TYPES_V33.forEach(function(t){ TYPEMAP_V33[t.k]=t; });
+/* PLACEMENT_SIMPLE_V64 : la duree d'une seance NEUVE est celle du creneau de son type dans la classe
+   (le plus frequent) — jamais les 120 min de la table, qu'aucun de ses creneaux ne fait. */
+function _maxCreneau_V64(se){
+  var tp=(se.type==="TP"||se.type==="TP \u00e9valu\u00e9"), m=0;
+  try{ creneauxAnnee_V61().forEach(function(s){ if(s.min>m && (se.salleLibre || !!s.tp===tp)) m=s.min; }); }catch(e){}
+  return m||1e9;
+}
+function _dureeCreneau_V64(tk){
+  var tp=(tk==="TP"||tk==="TP \u00e9valu\u00e9"), cnt={}, any={}, best=0, bmin=0, abest=0, amin=0;
+  try{ creneauxAnnee_V61().forEach(function(s){ if(!s.min) return; any[s.min]=(any[s.min]||0)+1; if(!!s.tp===tp) cnt[s.min]=(cnt[s.min]||0)+1; }); }catch(e){}
+  Object.keys(cnt).forEach(function(m){ if(cnt[m]>best){ best=cnt[m]; bmin=+m; } });
+  if(bmin) return bmin;
+  Object.keys(any).forEach(function(m){ if(any[m]>abest){ abest=any[m]; amin=+m; } });
+  return amin || (TYPEMAP_V33[tk]||{dur:60}).dur;
+}
 function fmtMin_V33(m){ m=Math.max(0,Math.round(m)); var h=Math.floor(m/60), mm=m%60;
   return h ? (h+" h"+(mm?(" "+("0"+mm).slice(-2)):"")) : (mm+" min"); }
 function esc_V33(x){ return String(x==null?"":x).replace(/[&<>"]/g,function(c){
@@ -4595,6 +4610,15 @@ function construirePlanFromPlan(orderIds, opts){
     sessions.push(s);
   });
 
+  /* PLACEMENT_SIMPLE_V64 : dans chaque chapitre, la liste suit les DATES (tri stable ; hors annee a la
+     fin). Ce que l'editeur montre est le calendrier. L'ordre entre deux cours, ou entre deux TP, reste
+     celui de Laurent (le tri ne les croise pas) ; l'ordre entre un cours et un TP, c'est l'emploi du
+     temps qui le decide. Point fixe : replacer la liste triee redonne les memes dates. */
+  units.forEach(function(u){ var a=STATE.plan&&STATE.plan[u.id]; if(!a||a.length<2) return;
+    var idx=a.map(function(s,i){ return {s:s,i:i}; });
+    idx.sort(function(x,y){ var dx=x.s._date?x.s._date.getTime():Infinity, dy=y.s._date?y.s._date.getTime():Infinity;
+      if(dx!==dy) return dx<dy?-1:1; var hx=x.s._slotHoraire||"", hy=y.s._slotHoraire||""; if(hx!==hy) return hx<hy?-1:1; return x.i-y.i; });
+    for(var i=0;i<idx.length;i++) a[i]=idx[i].s; });
   // SÉANCES (grain fin) — pour l'arbre, l'éditeur et les documents
   var seances=[];
   units.forEach(function(u){ planSeances(u.id).forEach(function(se){
@@ -4821,6 +4845,7 @@ function renderEditeur(){
         +((s._free>0)?('<span class="ed-free">⏳ '+fmtMin_V33(s._free)+' libre</span>'
             +TYPES_V33.map(function(x){ return '<button class="ed-freeadd" data-fill="'+esc_V33(s.id)+'" data-t="'+esc_V33(x.k)+'" title="remplir ce temps avec '+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')
           ):'')
+        +((s.durMin>_maxCreneau_V64(s))?'<span class="ed-none" title="Aucun créneau de ce type ne fait '+fmtMin_V33(s.durMin)+' : la séance attendra un créneau assez long, ou partira en fin d\'année. Raccourcir la durée la remet à sa place.">⚠ trop longue pour un créneau</span>':'')   /* PLACEMENT_SIMPLE_V64 */
         +'<span class="ed-dur"><input type="range" min="5" max="240" step="5" value="'+s.durMin+'" data-dur="'+esc_V33(s.id)+'" aria-label="durée de la séance">'   /* TYPE_ET_SALLE_V64 : ses creneaux font 55 et 85 min */
         +'<span class="val">'+fmtMin_V33(s.durMin)+'</span></span>'
         +'<button class="ed-capsbtn" data-caps="'+esc_V33(s.id)+'">'+(s.capsOpen?"▾":"▸")+' cap. <b>'+((s.caps||[]).length)+'</b></button>'
@@ -4846,6 +4871,7 @@ function renderEditeur(){
       +'<span class="ed-gmeta">'+ses.length+' séances'+(refs.length?(' · '+placees+'/'+refs.length+' cap.'):'')
         +'<br>'+(d1?frShort(d1):"—")+' → '+(d2?frShort(d2):"—")+'</span>'
       +((u.kind==="libre")?('<button class="ed-glibredel" data-libredel="'+esc_V33(u.id)+'" title="Retirer ce groupe libre et ses seances">\u2715 groupe</button>'):"")
+      +((u.kind==="suite")?('<button class="ed-glibredel" data-suitedel="'+esc_V33(u.id)+'" title="Rendre ces capacités et ces séances au chapitre : elles sont recochées, le bloc (suite) disparaît">\u21a9 au chapitre</button>'):"")   /* PLACEMENT_SIMPLE_V64 */
       +'<button class="ed-fold" data-fold="'+esc_V33(u.id)+'">'+(_edFoldSet_V33_()[u.id]?"▸":"▾")+'</button></div>'
       +(_edFoldSet_V33_()[u.id]?"":('<ul class="ed-seances" data-id="'+esc_V33(u.id)+'">'+seHTML+'</ul>'
         +'<div class="ed-foot">'+TYPES_V33.map(function(x){ return '<button data-add="'+esc_V33(u.id)+'" data-t="'+esc_V33(x.k)+'">+ '+esc_V33(x.lab)+'</button>'; }).join('')+'</div>'
@@ -4872,7 +4898,7 @@ function edWire_V33(board){
   board.querySelectorAll("[data-add]").forEach(function(b){ b.onclick=function(){
     var uid=b.getAttribute("data-add"), tk=b.getAttribute("data-t");
     planEnsure(false); (STATE.plan[uid]=STATE.plan[uid]||[]).push(
-      {id:nextSeId_V33(), type:tk, durMin:(TYPEMAP_V33[tk]||{dur:60}).dur, caps:[], note:"", capsOpen:false});
+      {id:nextSeId_V33(), type:tk, durMin:_dureeCreneau_V64(tk), caps:[], note:"", capsOpen:false});   /* PLACEMENT_SIMPLE_V64 */
     commit(); }; });
   board.querySelectorAll("[data-fill]").forEach(function(b){ b.onclick=function(){
     var f=planFindSe(b.getAttribute("data-fill")); if(!f) return;
@@ -4893,6 +4919,18 @@ function edWire_V33(board){
   /* GROUPE_LIBRE_V58 : retirer. Le groupe ET ses seances partent ENSEMBLE — laisser
      STATE.plan[id] derriere, c'est fabriquer une orpheline de plus, invisible pour
      toujours (les 89 mesurees le 01/09). Et on annonce le nombre avant d'agir. */
+  /* PLACEMENT_SIMPLE_V64 : un bloc (suite) rend ses capacites et ses seances au chapitre parent. */
+  board.querySelectorAll("[data-suitedel]").forEach(function(b){ b.onclick=function(){
+    var sid=b.getAttribute("data-suitedel"), pid=parentDeSuite(sid); if(!pid) return;
+    var caps=(reporteesParChapitre()[pid]||[]), n=planSeances(sid).length;
+    if(!confirm("Rendre au chapitre "+pid+" ses "+caps.length+" capacité(s) et "+n+" séance(s) ? Le bloc (suite) disparaît.")) return;
+    if(!STATE.manualCaps) STATE.manualCaps={};
+    caps.forEach(function(c){ delete STATE.manualCaps[c]; });
+    planEnsure(false);
+    STATE.plan[pid]=(STATE.plan[pid]||[]).concat(STATE.plan[sid]||[]); delete STATE.plan[sid];
+    var j=STATE.order.indexOf(sid); if(j>=0) STATE.order.splice(j,1);
+    var _F=_edFoldSet_V33_(); delete _F[sid];
+    sauverEtat(); fullRender(); renderEditeur(); }; });
   board.querySelectorAll("[data-libredel]").forEach(function(b){ b.onclick=function(){
     var uid=b.getAttribute("data-libredel"), g=libreById(uid); if(!g) return;
     var n=planSeances(uid).length;
