@@ -306,7 +306,7 @@ function doExport(){
 
 load(); renderHead(); renderAll();
 </script>
-<script src="fflate.min.js?v=202609091246"></script>
+<script src="fflate.min.js?v=202609091330"></script>
 <script>/*QR_GRILLE_V66 : la grille arrive par l'adresse (#g=deflate+base64url), posee par le QR code du gestionnaire.
   fflate.min.js est charge juste avant (la meme bibliotheque que dans gestion_core.js).*/
 (function(){
@@ -323,11 +323,11 @@ load(); renderHead(); renderAll();
 })();
 </script>
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ (source unique pcmajo_ui.js). -->
-<script src="pcmajo_ui.js?v=202609091246"></script>
+<script src="pcmajo_ui.js?v=202609091330"></script>
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609091246"></script>
+<script src="pcmajo_fond.js?v=202609091330"></script>
 </body>
 </html>

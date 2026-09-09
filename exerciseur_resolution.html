@@ -672,10 +672,30 @@ var cur=null,chain=[],stack=[],identified=false;
 var session={on:false,level:1,streak:0,done:0,usedAide:false,wrong:0,lastId:null,counted:false};
 function lvlName(d){return d===1?'facile':(d===2?'standard':'approfondi');}
 var selNiv='all';
+/*NIVEAU_ELEVE_V69 : niveau de l'eleve = plafond. Jeton (revision.html) -> valeur du selecteur. */
+var nivVerrou=false;
+(function(){
+  function paramOf(k){var m=new RegExp('[?&]'+k+'=([^&#]*)').exec(location.search);return m?decodeURIComponent(m[1]):null;}
+  function nivDeCode(code){if(!code)return null;var c=String(code).toUpperCase();
+    if(/^2G/.test(c)||/^2NDE/.test(c))return '2de';
+    if(/^1PC/.test(c))return '1re';
+    if(/^(TPC|TSPE)/.test(c))return 'Tale';
+    if(/^1STI/.test(c))return '1STI';
+    if(/^(TSTI|TSISPH|TSI)/.test(c))return 'TSTI';
+    if(/NSI/.test(c))return null;
+    if(/^1ENS/.test(c)||/^TENS/.test(c)||/^1G/.test(c)||/^TG/.test(c))return '2de';   /* ens. sci. : socle de Seconde */
+    return null;}
+  var a=paramOf('acces')||paramOf('classe');var s=null;
+  if(!a){try{s=JSON.parse(sessionStorage.getItem('pcmajo_acces'));}catch(e){}
+         if(!s){try{s=JSON.parse(localStorage.getItem('pcmajo_acces'));}catch(e){}}
+         if(s&&s.role==='prof')return;                 /* enseignant : selecteur libre */
+         if(s&&s.role==='eleve')a=s.code||s.classe||s.acces;}
+  var n=nivDeCode(a);if(n){selNiv=n;nivVerrou=true;}
+})();
 function nivOK(r){if(selNiv==='all')return true;var n=r.niv;if(selNiv==='2de')return n==='2de';if(selNiv==='1re')return n==='2de'||n==='1re';if(selNiv==='Tale')return n==='2de'||n==='1re'||n==='Tale';if(selNiv==='1STI')return n==='2de'||n==='1STI';if(selNiv==='TSTI')return n==='2de'||n==='1STI'||n==='TSTI';return true;}
 function setNiv(v){selNiv=v;buildMenu();}
 function buildMenu(){var h='<button class="train" onclick="startSession()">🎯 S\'entraîner (difficulté auto)</button>';
-  var __o='<option value="all">Tous niveaux</option><option value="2de">Seconde (tronc commun)</option><option value="1re">1re spé PC</option><option value="Tale">Tale spé PC</option><option value="1STI">1re STI2D</option><option value="TSTI">Tale STI2D</option>'.replace('value="'+selNiv+'"','value="'+selNiv+'" selected');h+='<div class="nivsel" style="margin:.4rem 0">Niveau : <select onchange="setNiv(this.value)">'+__o+'</select></div>';
+  var __o='<option value="all">Tous niveaux</option><option value="2de">Seconde (tronc commun)</option><option value="1re">1re spé PC</option><option value="Tale">Tale spé PC</option><option value="1STI">1re STI2D</option><option value="TSTI">Tale STI2D</option>'.replace('value="'+selNiv+'"','value="'+selNiv+'" selected');h+=nivVerrou?'<div class="nivsel" style="margin:.4rem 0">Niveau : <b>'+({'2de':'Seconde','1re':'1re spé PC','Tale':'Tale spé PC','1STI':'1re STI2D','TSTI':'Tale STI2D'}[selNiv]||selNiv)+'</b> <span style="opacity:.7">et niveaux précédents</span></div>':'<div class="nivsel" style="margin:.4rem 0">Niveau : <select onchange="setNiv(this.value)">'+__o+'</select></div>';  /*NIVEAU_ELEVE_V69*/
   var groups={};REL.forEach(function(r){if(!nivOK(r))return;(groups[r.grp]=groups[r.grp]||[]).push(r);});
   Object.keys(groups).forEach(function(g){h+='<h2>'+g+'</h2>';groups[g].forEach(function(r){
     h+='<button class="item" data-id="'+r.id+'" onclick="pick(\''+r.id+'\')"><span class="t">'+cap(r.names[r.unk])+'<span class="lvlpill lvl'+r._diff+'">'+r._diff+'</span></span><br><span class="s">'+pretty(r.eq)+'</span></button>';});});
