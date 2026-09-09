@@ -281,8 +281,10 @@ window.PCAide = (function(){
       return "<ul><li>L'<b>année</b>, la <b>classe active</b> et les blocs du menu ouverts/fermés s'enregistrent <b>automatiquement</b>, sans bouton.</li>"+ANNEE+"</ul>"+NAV;
     },
     "app.html": function(){ return AIDES["prof.html"](); },
-    "eleve.html": function(){
-      return "<ul><li>Cette page ne modifie rien : c'est ton menu.</li><li>Tes réponses se gardent dans les pages de révision (« Révision du soir », « Réviser par niveau »), automatiquement.</li></ul>"+NAV;
+    "eleve.html": function(){   /* PREMIERS_PAS_V68 : l'essentiel de la premiere ouverture */
+      return "<ul><li>Cette page ne modifie rien : c'est ton menu.</li><li>Tes réponses se gardent dans les pages de révision (« Révision du soir », « Réviser par niveau »), automatiquement.</li>"
+        +"<li>Tu es entré en scannant ta carte ? Ce téléphone <b>se souvient de toi</b>. Sur un appareil qui n'est pas le tien : page d'accueil → « Ce n'est pas moi — changer de profil ».</li>"
+        +"<li>Première fois ? <a href='premiers_pas_eleve.html'>Comment ça marche</a> (aussi en feuille A4).</li></ul>"+NAV;
     },
     "classes.html": function(){
       return "<ul><li>Classe active, case « dédoublée », noms des groupes : enregistrés <b>automatiquement</b> à chaque clic, dans ce navigateur (magasin de l'enseignant, par année).</li><li>Aucun fichier n'est produit ici.</li></ul>"+NAV;
@@ -303,6 +305,16 @@ window.PCAide = (function(){
         +"<li><b>📂 Importer</b> recharge une copie fichier et <b>remplace tout</b> ce qui est à l'écran.</li>"
         +"<li>Le <b>cahier de textes prévisionnel</b> (onglet Suivi) et la colonne « Séance (constructeur) » se remplissent <b>tout seuls</b> depuis le constructeur, sur le même appareil. Une affectation faite à la main (onglet Prévisionnel) prime toujours. Le bouton « 📋 copier » donne le texte d'une séance, prêt à coller dans le cahier de textes de l'ENT.</li>"
         +"<li><b>📥 Importer un relevé Skolengo</b> ajoute les élèves à la classe active. <b>⇄ mobile</b> échange une grille de compétences avec la saisie mobile.</li>"
+        +ANNEE+"</ul>"+NAV;
+      if(admin) h+=ADMIN_BASE;
+      return h;
+    },
+    "gestion.html": function(){   /* PREMIERS_PAS_V68 : la page neuve n'avait pas d'aide ; ce texte dit ce qu'elle FAIT (releve v65-v68). */
+      var h="<ul><li>Tout ce que vous modifiez ici (classes, créneaux, élèves, groupes, cases du cahier de textes, notes par compétences, matériel) est enregistré <b>aussitôt</b> dans ce navigateur : c'est votre <b>carnet de l'année</b> (« Enregistré à hh:mm » en haut).</li>"
+        +"<li><b>📥 Garder une copie</b> = un fichier du carnet (<code>gestion_&lt;prénom&gt;_&lt;année&gt;_&lt;date&gt;.json</code>, il porte des noms d'élèves : à garder hors du site) ; <b>📤 Reprendre une copie</b> le recharge et <b>remplace tout</b> ; <b>↶ Revenir en arrière</b> = les versions précédentes, listées ci-dessous.</li>"
+        +"<li><b>Mon plan</b> vient du <b>constructeur</b> (Plus, ou le bouton de « Mon plan ») : il s'enregistre là-bas, par niveau, et arrive ici tout seul sur le même appareil — « Ma semaine » et « Mon cahier de textes » le lisent.</li>"
+        +"<li><b>Mes élèves</b> : import Skolengo, liste collée ou ajout à la main ; les listes restent dans ce navigateur.</li>"
+        +"<li>Première fois ? <a href='premiers_pas.html'>Premiers pas</a> — les quatre étapes, aussi en feuille A4.</li>"
         +ANNEE+"</ul>"+NAV;
       if(admin) h+=ADMIN_BASE;
       return h;

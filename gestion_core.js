@@ -604,6 +604,24 @@ function setServiceDefinitif(v){
   state.serviceDefinitif=!!v; save();
   try{ document.dispatchEvent(new CustomEvent("pcmajo:service",{detail:{definitif:!!v}})); }catch(e){}
 }
+/* PREMIERS_PAS_V68 : l'etat des quatre etapes de premiere utilisation — CALCULE, rien n'est ecrit.
+   1 classes : chaque classe a au moins un creneau avec un jour et une heure · 2 plan : au moins une classe a un plan du
+   constructeur (export sur cet appareil, ou pris dans le carnet) · 3 eleves : au moins une classe a une liste · 4 semaine : 1 et 2.
+   state.premiersPasMasque (setPremiersPasMasque) = la seule donnee neuve : la carte a ete fermee par l'enseignant. */
+function etatPremiersPas(){
+  const cls=(state&&state.classes)||[];
+  const edt=cls.filter(c=>(c.creneaux||[]).some(cr=>cr.jour&&cr.debut)).length;
+  const plan=cls.filter(c=>{ try{ if(state.constrGenere&&state.constrGenere[c.id]) return true;
+      return typeof _seancesConstr_V66==="function" && ((_seancesConstr_V66(c)||[]).length>0); }catch(e){ return false; } }).length;
+  const eleves=cls.filter(c=>Array.isArray(c.eleves)&&c.eleves.length).length;
+  const et={classes:cls.length>0&&edt===cls.length, plan:plan>0, eleves:eleves>0};
+  et.semaine=et.classes&&et.plan;
+  return {classes:cls.length, edt, plan, eleves, definitif:serviceDefinitif(), masque:!!(state&&state.premiersPasMasque), etapes:et, fini:et.classes&&et.plan&&et.eleves};
+}
+function setPremiersPasMasque(v){
+  state.premiersPasMasque=!!v; save();
+  try{ document.dispatchEvent(new CustomEvent("pcmajo:premierspas",{detail:{masque:!!v}})); }catch(e){}
+}
 /* MAITRE v22 — migration filière/programme : corrige les états sauvegardés antérieurs
    où TG5/TG6 (enseignement scientifique) et TSTI2D/1STI2D pointaient encore vers un
    programme erroné (spé « ...|gen ») → source de la confusion ens.sci ↔ spé (Suivi/Progressions). */
@@ -2877,7 +2895,7 @@ function ncToggleBo(evId){
     p.themes.forEach(t=>{ const tous=[]; t.chapters.forEach(ch=>ch.caps.forEach(id=>tous.push(id)));
       h+='<details class="tree"><summary>'+esc(t.label)+_nb(tous.length)+'</summary>';
       const pts=parThm[t.label]||[];
-      pts.forEach(x=>{ h+='<details class="tree"><summary>'+esc((x.pa.chap?x.pa.chap+' ':'')+x.pa.titre)+_nb(x.ids.length)+'</summary>'; x.ids.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
+      pts.forEach(x=>{ h+='<details class="tree"><summary><span class="code">'+esc(x.pa.code)+'</span> · '+esc((x.pa.chap?x.pa.chap+' ':'')+x.pa.titre)+_nb(x.ids.length)+'</summary>';/*CODE_MOTS_CLES_V68*/ x.ids.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
       const reste=tous.filter(id=>!place[id]);
       if(reste.length){ if(pts.length) h+='<details class="tree"><summary><span class="muted">Autres capacités du thème</span>'+_nb(reste.length)+'</summary>';
         reste.forEach(id=>{ h+=_capBO(id); }); if(pts.length) h+='</details>'; }
@@ -2886,7 +2904,8 @@ function ncToggleBo(evId){
   p.themes.forEach(t=>{ const nt=t.chapters.reduce((n,ch)=>n+ch.caps.length,0);
     h+='<details class="tree"><summary>'+esc(t.label)+_nb(nt)+'</summary>';
     if(t.chapters.length<=1){ t.chapters.forEach(ch=>ch.caps.forEach(id=>{ h+=_capBO(id); })); }
-    else t.chapters.forEach(ch=>{ h+='<details class="tree"><summary><span class="code">'+esc(ch.label||ch.code)+'</span>'+_nb(ch.caps.length)+'</summary>';
+    else t.chapters.forEach(ch=>{ const _ti=(((window.PARTIES_COURS||{}).titres||{})[p.key]||{})[ch.label||ch.code];/*CODE_MOTS_CLES_V68 : titre B.O. genere*/
+      h+='<details class="tree"><summary><span class="code">'+esc(ch.label||ch.code)+'</span>'+(_ti?' · '+esc(_ti):'')+_nb(ch.caps.length)+'</summary>';
       ch.caps.forEach(id=>{ h+=_capBO(id); }); h+='</details>'; });
     h+='</details>'; });
   }

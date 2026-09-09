@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Première fois ici ? — Espace élève</title>
+<!-- PREMIERS_PAS_V68 — l'aide de premiere ouverture, cote eleve. MAITRE v68, 09/09/2026 (« il faut aussi penser a la version eleve »).
+     Une page du site, imprimable sur une feuille A4 (a donner avec la carte QR). Aucune fonction a elle : elle ne lit ni n'ecrit rien.
+     Chaque phrase decrit ce que les pages FONT (index.html, eleve.html, test_du_soir_v45, revision, pcmajo_fond). -->
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#15202b;--muted:#5c6b7a;--line:#dbe2ea;--accent:#2b6cb0;}
+  @media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16222f;--ink:#e8eef6;--muted:#9fb0c3;--line:#26374a;--accent:#2b6cb0;}}
+  *{box-sizing:border-box}
+  body{margin:0;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:0 16px calc(28px + env(safe-area-inset-bottom))}
+  header{margin:0 -16px 18px;background:var(--accent);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 14px 14px;display:flex;align-items:center;gap:10px}
+  header .home{color:#fff;text-decoration:none;font-size:18px;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:2px 9px}
+  header h1{margin:0;font-size:18px;font-weight:600;flex:1}
+  header button{font:inherit;font-size:13px;color:#fff;background:transparent;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:4px 9px;cursor:pointer}
+  .wrap{max-width:620px;margin:0 auto}
+  .etape{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+  .ic{width:44px;height:44px;border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--accent);color:#fff}
+  .etape b.t{display:block;font-size:16px;margin-bottom:2px}
+  .etape p{margin:4px 0;font-size:14px}
+  .etape ul{margin:4px 0;padding-left:18px;font-size:14px}
+  .etape li{margin:2px 0}
+  .ou{font-size:13px;color:var(--muted);border-top:1px dashed var(--line);margin-top:6px;padding-top:5px}
+  .note{max-width:620px;margin:14px auto 0;font-size:12px;color:var(--muted);text-align:center}
+  code{background:rgba(127,127,127,.15);padding:0 5px;border-radius:4px;font-size:.9em}
+  a{color:var(--accent)}
+  .titre-print{display:none}
+  @media print{
+    @page{size:A4 portrait;margin:12mm 14mm}
+    :root{--bg:#fff;--card:#fff;--ink:#111;--muted:#555;--line:#aaa;--accent:#1f5fa8}
+    body{background:#fff;color:#111;font-size:10.5pt;line-height:1.3;padding:0}
+    header,.noprint,#pcAideBtn,#pcAidePop,.themebtn,.themepop{display:none!important}
+    .wrap{max-width:none}
+    .titre-print{display:block;font-size:15pt;font-weight:700;margin:0 0 6pt}
+    .etape{padding:7pt 10pt;margin-bottom:6pt;break-inside:avoid;gap:9pt;border-color:#999}
+    .ic{width:22pt;height:22pt;font-size:12pt;color:#fff;background:#1f5fa8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .etape b.t{font-size:12pt}.etape p,.etape li{font-size:10pt}
+    .ou{font-size:9pt}
+    a{color:#111;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<header><a class="home" href="eleve.html" aria-label="Espace élève">‹</a><h1>Première fois ici ?</h1><button type="button" onclick="window.print()" title="Imprimer sur une feuille A4">🖨 A4</button></header>
+<div class="wrap">
+  <div class="titre-print">Espace élève PC — première fois ici ? · pc-majorelle.github.io</div>
+
+  <section class="etape"><span class="ic">🔑</span><div>
+    <b class="t">1. Entrer</b>
+    <p>Sur ta <b>carte</b>, il y a un <b>QR code</b> et ton <b>code d'accès</b> (comme <code>AB12-CD34</code>). Scanne le QR avec l'appareil photo du téléphone,
+      ou tape le code sur la page d'accueil du site. Ton code est <b>personnel</b> : ne le donne à personne, le site n'en garde qu'une empreinte cryptée.</p>
+    <div class="ou"><b>Ce qui se passe :</b> tu arrives sur <b>ton espace</b>, au nom de ta classe. En scannant la carte, le téléphone <b>se souvient de toi</b> tout seul ;
+      avec le code tapé, coche <b>« Se souvenir de moi sur cet appareil »</b> — <b>sur ton téléphone à toi</b>, pas sur un ordinateur partagé.
+      Sur un appareil qui n'est pas le tien : <b>« Ce n'est pas moi — changer de profil »</b> sur la page d'accueil.</div>
+  </div></section>
+
+  <section class="etape"><span class="ic">🎯</span><div>
+    <b class="t">2. Le soir du cours : « Révision du soir »</b>
+    <p>Deux minutes. Des cartes sur ce qu'on a vu <b>aujourd'hui</b> en classe : tu réponds, tu retournes, tu dis si tu savais. Ce n'est pas noté, il n'y a pas de
+      classement — c'est pour que ça reste.</p>
+    <div class="ou"><b>Ce qui est gardé :</b> tes boîtes de cartes (ce que tu sais, ce qui revient bientôt) et ta série de soirs, <b>dans ce navigateur, sur cet appareil</b>.
+      Le fond de ton espace s'allume avec le nombre de cartes jouées — pas avec tes bonnes réponses — et pâlit si tu t'arrêtes.</div>
+  </div></section>
+
+  <section class="etape"><span class="ic">📚</span><div>
+    <b class="t">3. Avant un contrôle : « Réviser par niveau » et les fiches</b>
+    <p><b>Réviser par niveau</b> : les fiches de prérequis et des exercices de ton niveau, chapitre par chapitre. En bas de ton espace, les <b>fiches de révision (PDF)</b>
+      de ton niveau et des niveaux d'avant, à lire ou à imprimer. <b>Aide à la résolution d'équations</b> : une équation, résolue pas à pas avec toi.</p>
+    <div class="ou"><b>Ce qui est gardé :</b> tes réponses aux exercices, automatiquement, dans ce navigateur. Rien à envoyer, pas de compte.</div>
+  </div></section>
+
+  <section class="etape"><span class="ic">📱</span><div>
+    <b class="t">4. À savoir</b>
+    <ul>
+      <li>Tout ce que tu fais reste <b>sur ton appareil</b> : rien n'est envoyé au prof ni à personne. Si tu changes de téléphone, de navigateur, ou si tu vides
+        l'historique, tu <b>repars de zéro</b> — c'est normal, ce n'est pas une panne.</li>
+      <li>Le bouton <b>« ? »</b> en bas à droite de chaque page dit ce que la page garde et où.</li>
+      <li>Carte perdue ou code oublié : demande à ton prof, il t'en refait une.</li>
+    </ul>
+  </div></section>
+
+  <p class="note noprint">Feuille A4 : bouton « 🖨 A4 » en haut. Retour à <a href="eleve.html">ton espace</a>.</p>
+</div>
+<script src="pcmajo_test.js?v=202609091240"></script>
+<script src="pcmajo_ui.js?v=202609091240"></script>
+</body>
+</html>

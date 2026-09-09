@@ -46,7 +46,7 @@
   /* ===== fin OUTILS_TEST_V38 ===== */
 </style>
 <!-- OUTILS_TEST_V38 : doit être chargé AVANT tout autre script (il décale l'horloge). -->
-<script src="pcmajo_test.js?v=202609090931"></script>
+<script src="pcmajo_test.js?v=202609091240"></script>
 </head>
 <body>
 <header><h1>Plateforme PC — Majorelle</h1><p>Connexion</p></header>
@@ -198,7 +198,7 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
   var MEM="pcmajo_test_role";
   if(window.CLASSES_ANNEE){ poserListe(); }
   else {
-    var sc=document.createElement("script"); sc.src="classes_annee.js?v=202609090931";
+    var sc=document.createElement("script"); sc.src="classes_annee.js?v=202609091240";
     sc.onload=poserListe; sc.onerror=poserListe;
     document.head.appendChild(sc);
     poserListe();   /* affichage immédiat ; complété dès que le fichier arrive */
@@ -247,10 +247,10 @@ document.getElementById("code").addEventListener("keydown",function(e){ if(e.key
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
      inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
      unique désormais : une palette à corriger, pas sept. -->
-<script src="pcmajo_ui.js?v=202609090931"></script>
+<script src="pcmajo_ui.js?v=202609091240"></script>
 
 <script>if(window.PCTheme)PCTheme.swatches("themePick");</script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609090931"></script>
+<script src="pcmajo_fond.js?v=202609091240"></script>
 </body>
 </html>

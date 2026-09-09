@@ -10,10 +10,10 @@
      activeAnnee, propage, btnSave...). Elle n'ajoute que le parcours par usage, les phrases d'accueil,
      les libelles en francais, le geste unique d'enregistrement et la zone « Publier » de l'admin.
      Le carnet (localStorage gestion_majorelle_v01__<pid>__<annee>) est le meme, au meme endroit. -->
-<script src="pcmajo_test.js?v=202609090931"></script>
+<script src="pcmajo_test.js?v=202609091240"></script>
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script>
-<link rel="stylesheet" href="gestion_core.css?v=202609090931">
+<link rel="stylesheet" href="gestion_core.css?v=202609091240">
 <style>/*COQUE_GESTION_V65*/
   header.coque-haut{padding:8px 16px}
   header.coque-haut .hrow{gap:10px}
@@ -82,6 +82,19 @@
     nav.parcours .plus.open{display:flex;flex-wrap:wrap;gap:4px;width:100%}
   }
   @media print{ nav.parcours,.accueil,.sousOnglets,header.coque-haut{display:none!important} }
+  /*PREMIERS_PAS_V68*/
+  .premiers{margin:14px 18px 0;padding:10px 14px 6px;background:var(--card);border:1px solid var(--accent);border-radius:12px;font-size:.9rem}
+  .premiers .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .premiers .et{display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+  .premiers .et:first-of-type{border-top:0}
+  .premiers .n{flex:0 0 24px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+  .premiers .n.ok{background:var(--done);border-color:var(--done);color:#052a14}
+  .premiers .et > div{flex:1;min-width:0}
+  .premiers .et .small{display:block;color:var(--muted)}
+  .premiers a.mini{text-decoration:none;display:inline-block;color:var(--ink);background:var(--card2);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:.8rem}
+  .premiers a.mini.primary{background:var(--accent);color:var(--onaccent,#04203f);border-color:var(--accent);font-weight:600}
+  @media print{ .premiers{display:none!important} }
+  @media (max-width:640px){ .premiers{margin:10px 10px 0} .premiers .et{flex-wrap:wrap} .premiers .et > div{flex-basis:calc(100% - 34px)} .premiers .et .act{margin-left:34px} }
 </style>
 </head>
 <body>
@@ -153,9 +166,13 @@
       <a class="lien" href="activites_web.html">🧪 Activités</a>
       <a class="lien" href="saisie_competences_mobile.html">📝 Grille TP au téléphone</a>
       <a class="lien" id="lienApercu" href="eleve.html">👀 Aperçu côté élève</a>
+      <div class="sep"></div><!--PREMIERS_PAS_V68-->
+      <button id="plusPremiersPas" hidden>🧭 Première utilisation</button>
+      <a class="lien" href="premiers_pas.html">📄 Premiers pas (guide, feuille A4)</a>
     </div>
   </nav>
   <div class="contenu">
+    <div class="premiers" id="premiersPas" hidden></div><!--PREMIERS_PAS_V68-->
     <div class="accueil" id="accueil"></div>
     <div class="sousOnglets" id="sousOnglets">
       <button data-t="eleves">Liste, groupes, notes</button>
@@ -178,12 +195,12 @@
   </div>
 </div>
 
-<script src="gestion_core.js?v=202609090931"></script>
-<script src="pcmajo_ui.js?v=202609090931"></script>
-<script src="socle_data.js?v=202609090931"></script><script src="parties_cours.js?v=202609090931"></script><script src="qrcode.js?v=202609090931"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
+<script src="gestion_core.js?v=202609091240"></script>
+<script src="pcmajo_ui.js?v=202609091240"></script>
+<script src="socle_data.js?v=202609091240"></script><script src="parties_cours.js?v=202609091240"></script><script src="qrcode.js?v=202609091240"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
-<script src="gestion_greffes.js?v=202609090931"></script>
+<script src="gestion_greffes.js?v=202609091240"></script>
 
 <script>/*COQUE_GESTION_V65 — la coque : parcours, phrases, libelles, geste unique, zone Publier. Aucune donnee touchee.*/
 (function(){
@@ -330,6 +347,33 @@
     var st2=window.switchTab; window.switchTab=function(){ var r=st2.apply(this,arguments); resume(); return r; };
     document.addEventListener("DOMContentLoaded",function(){ setTimeout(resume,600); setTimeout(resume,2000); }); resume();
   })();
+  /* PREMIERS_PAS_V68 : la carte « Premiere utilisation ». L'etat des etapes vient de gestion_core.js (etatPremiersPas) ;
+     la carte se ferme d'elle-meme quand les trois etapes sont faites, ou par « Masquer » (setPremiersPasMasque) ; « Plus » la rouvre. */
+  function poserPremiersPas(){
+    var z=$("premiersPas"), lp=$("plusPremiersPas"); if(!z) return;
+    var e; try{ e=etatPremiersPas(); }catch(x){ z.hidden=true; if(lp) lp.hidden=true; return; }
+    if(lp) lp.hidden=!(e.masque||e.fini);
+    if(e.masque||e.fini){ z.hidden=true; return; }
+    var nc=e.classes, s=nc>1?"s":"";
+    function et(n,ok,titre,detail,action){
+      return '<div class="et"><span class="n'+(ok?' ok':'')+'">'+(ok?'✓':n)+'</span><div><b>'+titre+'</b><span class="small">'+detail+'</span></div><span class="act">'+action+'</span></div>';
+    }
+    var lc=""; try{ lc=lienConstructeur(); }catch(x){}
+    z.innerHTML='<div class="row"><b>Première utilisation</b><span class="small muted">quatre étapes, dans l\'ordre — tout s\'enregistre automatiquement dans votre carnet.</span><span class="spacer"></span>'
+      +'<a class="mini ghost" href="premiers_pas.html">📄 Le guide (page + feuille A4)</a><button class="mini ghost" id="ppMasquer" title="La carte revient par « Plus › Première utilisation »">Masquer</button></div>'
+      +et(1,e.etapes.classes,'Mes classes et mon emploi du temps',nc?(e.edt+'/'+nc+' classe'+s+' avec des créneaux — vérifiez le programme, les créneaux, les groupes de TP.'):'aucune classe : ajoutez-en une.','<button class="mini" data-pp="classes">Ouvrir</button>')
+      +et(2,e.etapes.plan,'Mon plan de l\'année',e.plan+'/'+nc+' classe'+s+' avec un plan — il se fait dans le constructeur, par niveau.',(lc||'<button class="mini" data-pp="seances">Ouvrir</button>'))
+      +et(3,e.etapes.eleves,'Mes élèves',e.eleves+'/'+nc+' classe'+s+' avec une liste — importez un relevé Skolengo ou collez une liste.','<button class="mini" data-pp="eleves">Ouvrir</button>')
+      +et(4,e.etapes.semaine,'Ma semaine et mon cahier de textes','se remplissent seuls dès que 1 et 2 sont faits.','<button class="mini" data-pp="semaine">Voir</button>');
+    z.hidden=false;
+    z.querySelectorAll("button[data-pp]").forEach(function(b){ b.addEventListener("click",function(){ try{ switchTab(this.dataset.pp); }catch(x){} }); });
+    var bm=$("ppMasquer"); if(bm) bm.addEventListener("click",function(){ try{ setPremiersPasMasque(true); }catch(x){} });
+  }
+  try{ $("plusPremiersPas").addEventListener("click",function(){ try{ setPremiersPasMasque(false); }catch(x){} try{ window.scrollTo({top:0,behavior:"smooth"}); }catch(x){} }); }catch(x){}
+  document.addEventListener("pcmajo:premierspas",poserPremiersPas);
+  document.addEventListener("pcmajo:service",poserPremiersPas);
+  (function(){ var sv3=window.save; window.save=function(){ var r=sv3.apply(this,arguments); try{ poserPremiersPas(); }catch(x){} return r; }; })();
+  document.addEventListener("DOMContentLoaded",function(){ setTimeout(poserPremiersPas,600); setTimeout(poserPremiersPas,2000); }); poserPremiersPas();
   /* 6. Les clics du parcours. */
   document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){
     b.addEventListener("click",function(){
@@ -344,6 +388,6 @@
   /* Premier affichage : ?tab= est lu par le code commun (DOMContentLoaded) et passe par l'enveloppe. */
 })();
 </script>
-<script src="pcmajo_fond.js?v=202609090931"></script>
+<script src="pcmajo_fond.js?v=202609091240"></script>
 </body>
 </html>

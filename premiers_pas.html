@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Premiers pas — Mon gestionnaire</title>
+<!-- PREMIERS_PAS_V68 — l'aide de premiere utilisation, cote enseignant. MAITRE v68, 09/09/2026.
+     Laurent : « prepare l'aide dont la premiere utilisation qui demande a ajuster etape apres etape certains parametres pour
+     construire » ; « page du site et feuille ». Une page du site, imprimable sur UNE feuille A4 (Ctrl+P). Aucune fonction a elle :
+     elle ne lit ni n'ecrit rien ; le suivi des etapes vit dans gestion.html (carte « Premiere utilisation », gestion_core.js). -->
+<style>
+  :root{--bg1:#0f1620;--bg2:#131f2e;--card:#182230;--card2:#1d2a3b;--ink:#e8eef6;--muted:#9fb0c3;--line:#2a3a4f;--accent:#4aa3ff;--accent2:#7ee0c8;--done:#49c17a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);min-height:100vh;line-height:1.42}
+  header{position:sticky;top:0;z-index:5;background:var(--bg1);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:1.1rem;margin:0;font-weight:650}
+  header .sub{color:var(--muted);font-size:.85rem}
+  header a,header button{font:inherit;font-size:.85rem;color:var(--ink);background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;text-decoration:none;cursor:pointer}
+  header a:hover,header button:hover{border-color:var(--accent)}
+  .spacer{flex:1}
+  main{max-width:900px;margin:0 auto;padding:18px 18px 90px}
+  .intro{border-left:3px solid var(--accent);background:var(--card);padding:10px 14px;border-radius:0 10px 10px 0;margin-bottom:16px;font-size:.95rem}
+  .etape{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 12px;margin-bottom:12px;display:grid;grid-template-columns:44px 1fr;gap:6px 12px}
+  .num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#04203f;font-weight:700;font-size:1.05rem;display:flex;align-items:center;justify-content:center;grid-row:span 3}
+  .etape h2{margin:2px 0 0;font-size:1.02rem}
+  .etape h2 .ou{font-weight:400;color:var(--muted);font-size:.85rem;margin-left:6px}
+  .etape p{margin:4px 0}
+  .etape ul{margin:4px 0 4px;padding-left:18px}
+  .etape li{margin:2px 0}
+  .ens{font-size:.83rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;margin-top:4px}
+  .ens b{color:var(--ink);font-weight:600}
+  .bloc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 18px;margin-bottom:12px;font-size:.9rem}
+  .bloc h3{margin:0 0 6px;font-size:.95rem}
+  .bloc ul{margin:0;padding-left:18px}
+  code{background:var(--card2);padding:0 5px;border-radius:4px;font-size:.88em}
+  kbd{border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:.85em;background:var(--card2)}
+  .deux{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:640px){.deux{grid-template-columns:1fr}.etape{grid-template-columns:34px 1fr}.num{width:30px;height:30px;font-size:.95rem}}
+  a{color:var(--accent)}
+  /* La feuille A4 : une page, noir sur blanc, sans l'en-tete ni les liens de navigation. */
+  @media print{
+    @page{size:A4 portrait;margin:7mm 9mm}
+    :root{--bg1:#fff;--bg2:#fff;--card:#fff;--card2:#f1f3f6;--ink:#111;--muted:#555;--line:#bbb;--accent:#1f5fa8}
+    body{background:#fff;color:#111;font-size:8.4pt;line-height:1.2}
+    ul{padding-left:12pt!important}
+    header,.noprint,#pcAideBtn,#pcAidePop,.themebtn,.themepop{display:none!important}
+    main{max-width:none;padding:0}
+    .intro{margin-bottom:4pt;padding:4pt 8pt;font-size:8.8pt}
+    .etape{padding:4pt 8pt 3pt;margin-bottom:4pt;break-inside:avoid;gap:2pt 8pt;grid-template-columns:22pt 1fr;border-color:#999}
+    .num{width:18pt;height:18pt;font-size:9pt;color:#fff;background:#1f5fa8;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .etape h2{font-size:10pt}.etape p,.etape li{margin:1pt 0}.etape ul{margin:1pt 0}
+    .ens{font-size:8pt;padding-top:2pt;margin-top:1pt}
+    .bloc{padding:4pt 8pt;margin-bottom:4pt;font-size:8.2pt;break-inside:avoid;border-color:#999}
+    .bloc h3{font-size:9.5pt;margin-bottom:2pt}
+    .deux{gap:5pt}
+    a{color:#111;text-decoration:none}
+    .titre-print{display:block!important;font-size:12pt;font-weight:700;margin:0 0 3pt}
+  }
+  .titre-print{display:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="gestion.html">‹ Mon gestionnaire</a>
+  <h1>Premiers pas <span class="sub">— enseignant · quatre étapes, une vingtaine de minutes</span></h1>
+  <span class="spacer"></span>
+  <a href="premiers_pas_eleve.html">Version élève ›</a>
+  <button type="button" onclick="window.print()" title="Imprime cette page sur une feuille A4 (ou l'enregistre en PDF)">🖨 Feuille A4</button>
+</header>
+<main>
+  <div class="titre-print">Premiers pas — Mon gestionnaire (enseignant) · pc-majorelle.github.io</div>
+  <div class="intro">
+    <b>Comment ça marche.</b> Vous vous connectez avec votre code sur la page d'accueil du site : elle ouvre <b>Mon gestionnaire</b>.
+    Tout ce que vous y réglez s'enregistre <b>aussitôt, automatiquement</b>, dans <b>votre carnet de l'année</b> — qui vit dans le navigateur de
+    <b>cet ordinateur</b> (« Enregistré à hh:mm » en haut de page). Rien n'est envoyé sur un serveur ; un autre ordinateur ou un autre navigateur
+    repart de zéro, sauf si vous y reprenez une copie (voir en bas). Les quatre étapes se font dans l'ordre, une fois ; ensuite vous ne revenez que
+    sur « Ma semaine », « Mon cahier de textes » et « Mes élèves ».
+  </div>
+
+  <section class="etape">
+    <div class="num">1</div>
+    <h2>Mes classes et mon emploi du temps <span class="ou">parcours « Mes classes »</span></h2>
+    <div>
+      <p>Si votre emploi du temps est dans la base du site, vos classes sont déjà là, créneaux compris — <b>vérifiez-les</b>. Sinon, <b>« Supprimer »</b>
+        celles qui ne sont pas à vous, <b>« + Ajouter une classe »</b> et <b>« + Créneau »</b>. Pour <b>chaque classe</b> :</p>
+      <ul>
+        <li>le <b>libellé</b>, le <b>programme suivi</b> (Seconde, 1re spé, Tale STI2D, ens. scientifique…) et l'<b>effectif</b> ;</li>
+        <li><b>« Je l'ai du … / le collègue reprend le … »</b> si la classe est partagée dans l'année — vide = elle est à vous toute l'année ;</li>
+        <li>les <b>créneaux</b> : jour, heure de début, durée, quinzaine A/B s'il y a lieu, <b>groupe de TP</b> (Seconde : G1/G2) et
+            <b>salle de TP</b> — c'est ce qui décide quelles séances peuvent être des TP.</li>
+      </ul>
+      <p>Quand tout est juste, cochez <b>« Mon état de service est définitif »</b> : « Mes classes » quitte le parcours et se range dans « Plus »
+        (vous pourrez toujours le décocher).</p>
+      <div class="ens"><b>Où ça s'enregistre :</b> dans votre carnet, dès que vous quittez un champ. <b>Ce que ça produit :</b> le calendrier réel de vos
+        séances (jours fériés et vacances de la zone B déduits), dont se servent toutes les autres étapes.</div>
+    </div>
+  </section>
+
+  <section class="etape">
+    <div class="num">2</div>
+    <h2>Mon plan de l'année <span class="ou">parcours « Mon plan » → « 🧭 Ouvrir le constructeur »</span></h2>
+    <div>
+      <p>Le <b>constructeur</b> s'ouvre en pleine page, déjà réglé sur le niveau et la classe choisis. Vous y faites, pour ce niveau :</p>
+      <ul>
+        <li>l'<b>ordre des chapitres</b> et leur <b>découpage en séances</b> (cours, TD, TP, DS, activité) avec leur durée — les séances se posent
+            sur vos créneaux réels, un TP ne va que sur un créneau de TP ;</li>
+        <li>les <b>capacités du B.O.</b> travaillées à chaque séance (cochées), et vos notes.</li>
+      </ul>
+      <p>Revenez par <b>« ‹ Retour au gestionnaire »</b> : le plan est <b>déjà</b> dans « Mon plan », « Ma semaine » et « Mon cahier de textes ».</p>
+      <div class="ens"><b>Où ça s'enregistre :</b> dans ce navigateur, automatiquement, <b>par niveau</b> (un plan de Tale STI2D sert à toutes vos
+        Tale STI2D). <b>Autre ordinateur :</b> dans le constructeur, « ⬇ Exporter les boKeys datés » donne un fichier ; dans le gestionnaire,
+        Plus → Prévisionnel → « Importer un fichier boKeys » le reprend.</div>
+    </div>
+  </section>
+
+  <section class="etape">
+    <div class="num">3</div>
+    <h2>Mes élèves <span class="ou">parcours « Mes élèves »</span></h2>
+    <div>
+      <p>Pour la classe active (sélecteur en haut de page), la liste se remplit de trois façons, au choix :</p>
+      <ul>
+        <li><b>📥 Importer un relevé Skolengo</b> (.xlsx ou .csv, lu directement dans le navigateur) — les évaluations qu'il contient viennent avec ;</li>
+        <li><b>📋 Coller une liste</b> : un élève par ligne, <code>NOM Prénom</code> (copiée depuis Pronote, l'ENT, un tableur, un mail) ;</li>
+        <li><b>+ Ajouter un élève</b>, à la main.</li>
+      </ul>
+      <p>En Seconde, <b>« ⚖️ Répartir en 2 groupes »</b> puis ajustez G1/G2 ligne par ligne. Le second onglet, <b>« Notation par compétences »</b>,
+        sert à noter un TP (critères libres ou <b>« ＋ depuis le B.O. »</b>, niveaux A/B/C/D, note /20 calculée) — et à envoyer la grille au téléphone par QR code.</p>
+      <div class="ens"><b>Où ça s'enregistre :</b> dans votre carnet — les noms d'élèves ne quittent jamais ce navigateur. Les codes d'accès des élèves
+        et leurs cartes QR sont préparés à part, par l'administrateur du site : vous n'avez rien à faire ici pour eux.</div>
+    </div>
+  </section>
+
+  <section class="etape">
+    <div class="num">4</div>
+    <h2>Ma semaine et mon cahier de textes <span class="ou">parcours « Ma semaine » · « Mon cahier de textes »</span></h2>
+    <div>
+      <p><b>Ma semaine</b> ne se remplit pas : elle affiche vos séances de la semaine, créneau par créneau, avec le chapitre prévu par le plan
+        (« à prévoir » = un créneau sans séance datée). <b>Mon cahier de textes</b> liste, chapitre par chapitre, ce qui est <b>fait</b>, <b>en cours</b>
+        ou <b>à faire</b> avec la date prévue : cochez au fil de l'année (« ✔ Cocher jusqu'à aujourd'hui » coche d'un coup les séances passées),
+        <b>« 📋 copier »</b> donne le texte d'une séance pour l'ENT, <b>« Imprimer »</b> sort le cahier de la classe.</p>
+      <div class="ens"><b>Où ça s'enregistre :</b> les cases cochées, dans votre carnet. Une séance placée à la main dans le cahier prime toujours sur le plan.</div>
+    </div>
+  </section>
+
+  <div class="deux">
+    <div class="bloc">
+      <h3>Garder, reprendre, revenir en arrière <span class="sub" style="font-weight:400;color:var(--muted)">(en haut de page)</span></h3>
+      <ul>
+        <li><b>📥 Garder une copie</b> télécharge votre carnet (<code>gestion_&lt;prénom&gt;_&lt;année&gt;_&lt;date&gt;.json</code>). Il porte des noms d'élèves : gardez-le hors du site.</li>
+        <li><b>📤 Reprendre une copie</b> recharge ce fichier — sur un autre ordinateur, par exemple — et <b>remplace</b> tout ce qui est à l'écran.</li>
+        <li><b>↶ Revenir en arrière</b> : la version d'avant chaque enregistrement est gardée automatiquement (huit au plus) ; le bouton « ? » les liste.</li>
+        <li>L'<b>année de travail</b> (sélecteur en haut) vaut pour toutes les pages enseignant : la changer, c'est changer de carnet.</li>
+      </ul>
+    </div>
+    <div class="bloc">
+      <h3>Trois choses à savoir</h3>
+      <ul>
+        <li>Le bouton <b>« ? »</b> en bas à droite de chaque page dit ce que la page enregistre, où, et la date de la base qu'elle utilise.</li>
+        <li>Tout vit dans <b>ce navigateur, sur cet appareil</b> : une navigation privée ou un historique vidé le fait repartir de zéro — d'où la copie.</li>
+        <li>« Plus » range le reste : le matériel, les dates de cours, le constructeur, les activités, la grille de TP au téléphone, et
+            <b>👀 Aperçu côté élève</b> pour voir ce que voit la classe active.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="noprint small" style="color:var(--muted);font-size:.85rem">Pour imprimer cette page sur une feuille A4 : bouton « 🖨 Feuille A4 » en haut, ou <kbd>Ctrl</kbd>+<kbd>P</kbd>.
+    La version élève est sur <a href="premiers_pas_eleve.html">premiers_pas_eleve.html</a>.</p>
+</main>
+<script src="pcmajo_test.js?v=202609091240"></script>
+<script src="pcmajo_ui.js?v=202609091240"></script>
+</body>
+</html>
