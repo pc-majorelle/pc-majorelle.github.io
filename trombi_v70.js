@@ -95,7 +95,8 @@ window.Trombi = (function(){
   }
   /* "NOM Prénom", "NOM Prénom Deuxième", "Prénom NOM" -> {nom, prenom} (le nom = les mots en majuscules) */
   function decouper(brut){
-    var w = String(brut || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+    /* Pronote ajoute le code de classe entre parenthèses sous le nom — « (2NDGT3) » — : on l'ôte (Laurent, 09/09) */
+    var w = String(brut || "").replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
     var isUp = function(t){ return t.length > 1 && t === t.toLocaleUpperCase("fr") && t !== t.toLocaleLowerCase("fr"); };
     var up = w.filter(isUp), lo = w.filter(function(t){ return !isUp(t); });
     if(up.length && lo.length) return {nom:up.join(" "), prenom:lo.join(" ")};

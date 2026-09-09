@@ -1333,7 +1333,7 @@ function renderEleves(){
        `</div><p class="hint">Les notes sont stockées par élève (suivi par compétences ultérieur : on stocke, on n'invente pas la notation).</p></div>`;
   }
 
-  h+=`<div class="card"><h3>Liste des élèves</h3>`;
+  h+=`<div class="card"><div class="row"><h3 style="margin:0">Liste des élèves</h3><div class="spacer"></div>${els.length>1?selecteurTriEleves():""}</div>`;/*TROMBINOSCOPE_V70 tri*/
   if(!els.length){
     h+=`<p class="muted small">Aucun élève. Importez un relevé Skolengo ou ajoutez un nom à la main.</p>`;
   } else {
@@ -1341,7 +1341,7 @@ function renderEleves(){
        584 px de large — c'est elle qui poussait TOUTE la page hors de l'écran à 390 px.
        Elle défile désormais dans son propre cadre, comme les grilles de compétences. */
     h+=`<div class="tblwrap"><table><thead><tr><th>#</th><th></th><th>Nom</th><th>Prénom</th><th>Groupe TP</th>${evs.length?`<th>Moy.</th><th>Notes</th>`:""}<th></th></tr></thead><tbody>`;
-    els.forEach((e,i)=>{
+    triEleves(els.map((e,i)=>({e,i}))).forEach(({e,i},k)=>{/*TROMBINOSCOPE_V70 tri : i = place dans le carnet (setEleveChamp/delEleve), k = rang affiche*/
       let grpCell;
       if(sec){
         grpCell=`<select onchange="setEleveGroupe(${i},this.value)">
@@ -1360,7 +1360,7 @@ function renderEleves(){
                   `<td class="small">${nNoted}/${notes.length}${etats.length?` <span class="badge" title="${esc(etats.join(', '))}">${etats.length} état(s)</span>`:""}</td>`;
       }
       h+=`<tr>
-        <td class="small muted">${i+1}</td><td>${vignette(e,28)}</td>
+        <td class="small muted">${k+1}</td><td>${vignette(e,28)}</td>
         <td><input value="${esc(e.nom)}" style="width:150px" onchange="setEleveChamp(${i},'nom',this.value)"></td>
         <td><input value="${esc(e.prenom)}" style="width:120px" onchange="setEleveChamp(${i},'prenom',this.value)"></td>
         <td>${grpCell}</td>
@@ -1516,6 +1516,21 @@ try{ chargerPhotos().then(function(n){ if(!n) return;
   const pe=document.getElementById("p-eleves"); if(pe&&pe.innerHTML) try{ renderEleves(); }catch(e){}
   const pc=document.getElementById("p-comp"); if(pc&&pc.innerHTML) try{ renderComp(); }catch(e){}
 }); }catch(e){}
+/* tri de la liste des élèves (Laurent, 09/09 : « le choix alphabétique ou groupe pour le tri ») — mémorisé dans ce navigateur */
+function triElevesMode(){ try{ return localStorage.getItem("pcmajo_tri_eleves")||"alpha"; }catch(e){ return "alpha"; } }
+function setTriEleves(v){ try{ localStorage.setItem("pcmajo_tri_eleves",v); }catch(e){} renderEleves(); }
+function triEleves(ordre){
+  const mode=triElevesMode(); const nomDe=x=>((x.e.nom||"")+" "+(x.e.prenom||"")).trim();
+  const cmp=(a,b)=>nomDe(a).localeCompare(nomDe(b),"fr");
+  if(mode==="alpha") ordre.sort(cmp);
+  else if(mode==="groupe"){ const rg=g=>g==="G1"?0:(g==="G2"?1:2); ordre.sort((a,b)=>(rg(a.e.groupe)-rg(b.e.groupe))||cmp(a,b)); }
+  return ordre;   /* "ajout" : l'ordre du carnet */
+}
+function selecteurTriEleves(){
+  const m=triElevesMode();
+  return '<label class="small muted">Tri <select onchange="setTriEleves(this.value)">'+[["alpha","alphabétique"],["groupe","par groupe de TP"],["ajout","ordre d\'ajout"]]
+    .map(o=>'<option value="'+o[0]+'"'+(o[0]===m?" selected":"")+'>'+o[1]+'</option>').join("")+'</select></label>';
+}
 /* fin TROMBINOSCOPE_V70 */
 /* COLLER_LISTE_V68 : une liste collee (un eleve par ligne) → nom / prenom. Le nom = les mots en MAJUSCULES en tete de ligne ;
    s'il y a un separateur (tab ; ,) il prime ; sans majuscule ni separateur : premier mot = nom, le reste = prenom. */
