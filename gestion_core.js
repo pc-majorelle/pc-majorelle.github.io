@@ -1292,8 +1292,18 @@ function renderEleves(){
     <div id="importMsg"></div>
     <div class="row">
       <button class="mini" onclick="addEleveManuel()">+ Ajouter un élève</button>
+      <button class="mini" id="btnCollerListe" onclick="toggleCollerListe()">📋 Coller une liste</button><!--COLLER_LISTE_V68-->
       ${sec?`<button class="mini" onclick="repartir2()">⚖️ Répartir en 2 groupes</button>
              <button class="mini ghost" onclick="viderGroupes()">Vider les groupes</button>`:""}
+    </div>
+    <div id="collerListe" style="display:none;margin-top:8px"><!--COLLER_LISTE_V68-->
+      <p class="hint" style="margin:0 0 4px">Un élève par ligne, <b>NOM Prénom</b> (le nom en majuscules) — ou « Nom ; Prénom ». Copié depuis Pronote, l'ENT, un tableur ou un mail : ça passe.</p>
+      <textarea id="collerListeTxt" rows="8" style="width:100%;box-sizing:border-box;font:inherit" placeholder="DUPONT Marie&#10;MARTIN Léo&#10;…"></textarea>
+      <div class="row" style="margin-top:6px">
+        <button class="mini primary" onclick="collerListe()">Ajouter ces élèves</button>
+        <button class="mini ghost" onclick="toggleCollerListe(false)">Annuler</button>
+        <span id="collerListeMsg" class="small muted"></span>
+      </div>
     </div></div>`;
 
   if(evs.length){
@@ -1348,6 +1358,45 @@ function renderEleves(){
 function setEleveChamp(i,k,v){ const c=activeClass(); elevesOf(c)[i][k]=v.trim(); save(); }
 function setEleveGroupe(i,v){ const c=activeClass(); elevesOf(c)[i].groupe=v; rebuildGroupes(c); save(); renderEleves(); }
 function addEleveManuel(){ const c=activeClass(); elevesOf(c).push({nom:"",prenom:"",groupe:"",moyenne:null,notes:[]}); save(); renderEleves(); }
+/* COLLER_LISTE_V68 : une liste collee (un eleve par ligne) → nom / prenom. Le nom = les mots en MAJUSCULES en tete de ligne ;
+   s'il y a un separateur (tab ; ,) il prime ; sans majuscule ni separateur : premier mot = nom, le reste = prenom. */
+function parseListeEleves(txt){
+  const out=[];
+  String(txt||"").split(/\r?\n/).forEach(l=>{
+    l=l.replace(/^\s*\d+[\.\)]?\s+/,"").trim(); if(!l) return;
+    let nom="",prenom="";
+    const sep=/\t|;|,/.test(l)?l.split(/\t|;|,/):null;
+    if(sep){ nom=sep[0].trim(); prenom=sep.slice(1).join(" ").trim(); }
+    else{
+      const w=l.split(/\s+/); const up=[]; let i=0;
+      const isUp=t=>t.length>1&&t===t.toLocaleUpperCase("fr")&&t!==t.toLocaleLowerCase("fr");
+      while(i<w.length&&isUp(w[i])){ up.push(w[i]); i++; }
+      if(up.length&&i<w.length){ nom=up.join(" "); prenom=w.slice(i).join(" "); }
+      else if(up.length===w.length&&w.length>1){ nom=w.slice(0,-1).join(" "); prenom=w[w.length-1]; }
+      else{ nom=w[0]; prenom=w.slice(1).join(" "); }
+    }
+    if(nom||prenom) out.push({nom,prenom});
+  });
+  return out;
+}
+function toggleCollerListe(on){
+  const d=document.getElementById("collerListe"); if(!d) return;
+  if(on===undefined) on=(d.style.display==="none");
+  d.style.display=on?"block":"none";
+  if(on){ const t=document.getElementById("collerListeTxt"); if(t) t.focus(); }
+}
+function collerListe(){
+  const c=activeClass(); if(!c) return;
+  const t=document.getElementById("collerListeTxt"); const liste=parseListeEleves(t?t.value:"");
+  const msg=document.getElementById("collerListeMsg");
+  if(!liste.length){ if(msg) msg.textContent="Rien à ajouter : collez un élève par ligne."; return; }
+  const els=elevesOf(c); const cle=e=>((e.nom||"")+"|"+(e.prenom||"")).toLocaleLowerCase("fr").replace(/\s+/g," ").trim();
+  const deja=new Set(els.map(cle)); let n=0,m=0;
+  liste.forEach(e=>{ const k=cle(e); if(deja.has(k)){ m++; return; } deja.add(k); els.push({nom:e.nom,prenom:e.prenom,groupe:"",moyenne:null,notes:[]}); n++; });
+  rebuildGroupes(c); save(); renderEleves();
+  const im=document.getElementById("importMsg");
+  if(im) im.innerHTML=`<p class="hint">📋 ${n} élève${n>1?"s":""} ajouté${n>1?"s":""}${m?` · ${m} déjà présent${m>1?"s":""} (ignoré${m>1?"s":""})`:""} — ${els.length} au total.</p>`;
+}
 function delEleve(i){ const c=activeClass(); elevesOf(c).splice(i,1); rebuildGroupes(c); save(); renderEleves(); }
 function viderGroupes(){ const c=activeClass(); elevesOf(c).forEach(e=>e.groupe=""); rebuildGroupes(c); save(); renderEleves(); }
 function repartir2(){
