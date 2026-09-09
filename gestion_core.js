@@ -2588,12 +2588,99 @@ function _dlg(html, boutons){
   document.body.appendChild(fond);
 }
 
+/* ===== COPIE_DOSSIER_V72 (09/09/2026) — « Garder une copie » écrit dans UN dossier choisi une fois.
+   Laurent : « garder une copie, ce serait peut-être mieux que de proposer où l'enregistrer et faire créer le dossier pour ça au lieu
+   d'aller dans téléchargement puis garder en mémoire le chemin ». Choix « 1 » : posé maintenant.
+   Chrome / Edge (API File System Access) : au premier clic, il choisit ou crée un dossier (« Sauvegardes PC ») ; la poignée est gardée
+   dans ce navigateur (IndexedDB pcmajo_copie) ; les fois suivantes, la copie s'écrit DIRECTEMENT dans ce dossier (le navigateur
+   redemande au plus une confirmation d'accès par session). Firefox, Safari, téléphone : l'API manque → téléchargement comme avant.
+   Choix annulé ou dossier devenu inaccessible → téléchargement, et on le dit. « Changer de dossier » dans la confirmation. */
+const COPIE={h:null};
+function copieDossierDispo(){ return typeof window.showDirectoryPicker==="function"; }
+function _copieDb(){
+  return new Promise(function(res,rej){
+    if(!window.indexedDB){ rej(new Error("IndexedDB indisponible")); return; }
+    const r=indexedDB.open("pcmajo_copie",1);
+    r.onupgradeneeded=function(){ r.result.createObjectStore("poignee"); };
+    r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+  });
+}
+function _copieLire(){
+  if(COPIE.h) return Promise.resolve(COPIE.h);
+  return _copieDb().then(function(db){ return new Promise(function(res){
+    const g=db.transaction("poignee").objectStore("poignee").get("dossier");
+    g.onsuccess=function(){ const h=g.result; res((h&&typeof h.getFileHandle==="function")?h:null); }; g.onerror=function(){ res(null); };
+  }); }).catch(function(){ return null; });
+}
+function _copieGarder(h){
+  COPIE.h=h; try{ localStorage.setItem("pcmajo_copie_dossier",h.name||""); }catch(e){}
+  return _copieDb().then(function(db){ return new Promise(function(res){
+    const tx=db.transaction("poignee","readwrite"); tx.objectStore("poignee").put(h,"dossier"); tx.oncomplete=res; tx.onerror=res; tx.onabort=res;
+  }); }).catch(function(){});
+}
+function copieOublierDossier(){
+  COPIE.h=null; try{ localStorage.removeItem("pcmajo_copie_dossier"); }catch(e){}
+  return _copieDb().then(function(db){ return new Promise(function(res){
+    const tx=db.transaction("poignee","readwrite"); tx.objectStore("poignee").delete("dossier"); tx.oncomplete=res; tx.onerror=res; tx.onabort=res;
+  }); }).catch(function(){});
+}
+function copieNomDossier(){ try{ return localStorage.getItem("pcmajo_copie_dossier")||""; }catch(e){ return ""; } }
+function _copieChoisir(){
+  return window.showDirectoryPicker({mode:"readwrite",startIn:"documents",id:"pcmajo_copie"}).then(function(h){ return _copieGarder(h).then(function(){ return h; }); });
+}
+function _copieAutorisee(h){
+  if(!h) return Promise.resolve(null);
+  return h.queryPermission({mode:"readwrite"}).then(function(s){
+    if(s==="granted") return h;
+    return h.requestPermission({mode:"readwrite"}).then(function(s2){ return s2==="granted"?h:null; });
+  }).catch(function(){ return null; });
+}
+function _copieEcrireFichier(h,nom,texte){
+  return h.getFileHandle(nom,{create:true}).then(function(fh){ return fh.createWritable(); })
+          .then(function(w){ return w.write(texte).then(function(){ return w.close(); }); });
+}
+/* texte = le JSON ; nom = le nom de fichier ; repli() = le téléchargement d'avant */
+function _copieDansDossier(texte,nom,repli){
+  let neuf=false;
+  return _copieLire().then(_copieAutorisee).then(function(h){ if(h) return h; neuf=true; return _copieChoisir(); })
+    .then(function(h){ return _copieEcrireFichier(h,nom,texte).then(function(){ return h; }); })
+    .then(function(h){
+      _dlg('<h3 style="margin:0 0 6px;font-size:1.05rem">✅ Copie enregistrée</h3>'
+          +'<p style="margin:0 0 8px">Dans ton dossier <b>« '+esc(h.name||"")+' »</b> :<br><code style="font-size:.85rem;word-break:break-all">'+esc(nom)+'</code></p>'
+          +(neuf?'<p class="hint" style="margin:0">Ce dossier est retenu : les prochaines copies s\'y écriront directement.</p>'
+                :'<p class="hint" style="margin:0">Le nom porte la date : garde les deux ou trois derniers fichiers.</p>'),
+          [{texte:"Changer de dossier",fait:function(){ copieOublierDossier(); }},{texte:"OK",fort:true}]);
+    })
+    .catch(function(err){
+      const annule=err&&err.name==="AbortError";
+      if(!annule) copieOublierDossier();   /* dossier disparu, permission refusée… : on repartira du choix */
+      try{ repli(); }catch(e){}
+      _dlg('<h3 style="margin:0 0 6px;font-size:1.05rem">📥 Copie téléchargée</h3>'
+          +'<p style="margin:0">'+(annule?"Pas de dossier choisi : le fichier est parti dans <i>Téléchargements</i>, comme avant."
+                                        :"Le dossier retenu n'est plus accessible : le fichier est parti dans <i>Téléchargements</i>. Au prochain clic, tu choisiras un dossier.")+'</p>',
+          [{texte:"OK",fort:true}]);
+    });
+}
+function _telechargerLien(blob,nom){
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nom; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+function _conseilRangement(){
+  if(copieDossierDispo()){
+    const d=copieNomDossier();
+    return d ? '<li><b>Elle s\'écrit dans ton dossier « '+esc(d)+' »</b>, sans passer par <i>Téléchargements</i> (« Changer de dossier » après l\'enregistrement).</li>'
+             : '<li><b>Choisis un dossier</b> au premier clic — crée-toi « Sauvegardes PC » dans Documents — : il sera retenu, les copies suivantes s\'y écriront directement.</li>';
+  }
+  return '<li><b>Range-le.</b> Il arrive dans ton dossier <i>Téléchargements</i>. Crée-toi un dossier « Sauvegardes PC » et déplace-le : sinon il se noiera dans le reste.</li>';
+}
+/* fin COPIE_DOSSIER_V72 */
 function _telecharger(){
   var paquet=Object.assign({}, state, {_sauvegarde:{
     prof:profPrenom(), annee:(state.annee||ANNEE), date:_isoJour(),
     classes:(state.classes||[]).length, eleves:_compteEleves(), outil:"gestion_v0.1"
   }});
   var blob=new Blob([JSON.stringify(paquet,null,2)],{type:"application/json"});
+  /*COPIE_DOSSIER_V72*/ if(copieDossierDispo()){ _copieDansDossier(JSON.stringify(paquet,null,2),_nomFichierSauvegarde(),function(){ _telechargerLien(blob,_nomFichierSauvegarde()); }); try{ poserMarqueur("base"); }catch(e){} return; }
   var a=document.createElement("a");
   a.href=URL.createObjectURL(blob); a.download=_nomFichierSauvegarde(); a.click();
   try{ poserMarqueur("base"); }catch(e){}   /* VOYANTS_A_PROPAGER_V52 */
@@ -2608,7 +2695,7 @@ document.getElementById("btnSave").addEventListener("click",function(){
     +'<p style="margin:0 0 14px;color:var(--muted,#5c6b7a);font-size:.85rem">Année <b>'+an+'</b>'
       +' · '+nCl+' classe'+(nCl>1?'s':'')+(nEl?' · <b>'+nEl+' élèves</b>':'')+'</p>'
 
-    +'<p style="margin:0 0 10px">Tu vas télécharger un fichier nommé<br>'
+    +'<p style="margin:0 0 10px">'+(copieDossierDispo()?'Tu vas enregistrer un fichier nommé<br>':'Tu vas télécharger un fichier nommé<br>')/*COPIE_DOSSIER_V72*/
       +'<code style="font-size:.85rem;color:var(--ink,#15202b);background:rgba(127,127,127,.18);'
       +'border:1px solid var(--line,#dbe2ea);padding:3px 7px;border-radius:5px;word-break:break-all">'
       +_nomFichierSauvegarde()+'</code></p>'
@@ -2620,15 +2707,14 @@ document.getElementById("btnSave").addEventListener("click",function(){
 
     +'<p style="margin:0 0 6px"><b>Trois conseils</b></p>'
     +'<ul style="margin:0 0 4px;padding-left:20px">'
-    +'<li><b>Range-le.</b> Il arrive dans ton dossier <i>Téléchargements</i>. Crée-toi un dossier '
-      +'« Sauvegardes PC » et déplace-le : sinon il se noiera dans le reste.</li>'
+    +_conseilRangement()/*COPIE_DOSSIER_V72*/
     +'<li><b>Recommence souvent.</b> Tes données vivent dans le navigateur <i>de cet appareil</i>. '
       +'Vider l\'historique, changer de navigateur ou d\'ordinateur, et tout est perdu. '
       +'Le nom porte la date : garde les deux ou trois derniers.</li>'
     +'<li><b>Pour revenir en arrière</b>, bouton <b>📂 Importer</b>, à côté. Il remplace ce que tu as '
       +'à l\'écran par le contenu du fichier — donc enregistre avant, par précaution.</li>'
     +'</ul>',
-    [{texte:"Annuler"},{texte:"Télécharger",fort:true,fait:_telecharger}]
+    [{texte:"Annuler"},{texte:copieDossierDispo()?"Enregistrer":"Télécharger",fort:true,fait:_telecharger}]/*COPIE_DOSSIER_V72*/
   );
 });
 
