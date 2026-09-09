@@ -284,7 +284,8 @@ window.PCAide = (function(){
     "eleve.html": function(){   /* PREMIERS_PAS_V68 : l'essentiel de la premiere ouverture */
       return "<ul><li>Cette page ne modifie rien : c'est ton menu.</li><li>Tes réponses se gardent dans les pages de révision (« Révision du soir », « Réviser par niveau »), automatiquement.</li>"
         +"<li>Tu es entré en scannant ta carte ? Ce téléphone <b>se souvient de toi</b>. Sur un appareil qui n'est pas le tien : page d'accueil → « Ce n'est pas moi — changer de profil ».</li>"
-        +"<li>Première fois ? <a href='premiers_pas_eleve.html'>Comment ça marche</a> (aussi en feuille A4).</li></ul>"+NAV;
+        +"<li>Première fois ? <a href='premiers_pas_eleve.html'>Comment ça marche</a> (aussi en feuille A4).</li>"
+        +"<li>« Remettre mes compteurs à zéro » (en bas) efface, sur cet appareil seulement et après confirmation, la Révision du soir, le rituel et l'élan du fond. Ton code de classe reste.</li></ul>"+NAV;   /*RAZ_ELEVE_V69*/
     },
     "classes.html": function(){
       return "<ul><li>Classe active, case « dédoublée », noms des groupes : enregistrés <b>automatiquement</b> à chaque clic, dans ce navigateur (magasin de l'enseignant, par année).</li><li>Aucun fichier n'est produit ici.</li></ul>"+NAV;
