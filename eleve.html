@@ -6,8 +6,8 @@
 <!-- TUILE_RITUEL_V46 : la table du plan (classe -> chapitre date -> refs). 12,7 ko, deja
      en ligne. Elle sert ICI a une seule chose : ne montrer la tuile du rituel qu'aux
      classes que le plan sert vraiment. Son absence ne casse rien (repli assume). -->
-<script src="plan_reco_v45.js?v=202609091342"></script>
-<script src="pcmajo_test.js?v=202609091342"></script>
+<script src="plan_reco_v45.js?v=202609091551"></script>
+<script src="pcmajo_test.js?v=202609091551"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2b6cb0">
@@ -243,7 +243,7 @@
       var h='<h3>Remettre mes compteurs à zéro ?</h3><p>Sur <b>cet appareil</b>, ceci va effacer :</p><ul>';
       if(b.seances||b.semaines) h+='<li>Révision du soir : <b>'+b.seances+'</b> séance(s), <b>'+b.semaines+'</b> semaine(s) de série, et les boîtes de mémorisation.</li>';
       else if(b.ks.some(function(k){return /^pcmajo_revision_/.test(k);})) h+='<li>Révision du soir : le carnet (encore vide).</li>';
-      if(b.rituel) h+='<li>Le rituel du soir : cartes vues et réponses.</li>';
+      if(b.rituel) h+='<li>Le rituel du soir : cartes vues, réponses et tes coches de chapitres.</li>';
       if(b.elan) h+='<li>L\'élan du fond d\'écran.</li>';
       h+='</ul><p>Conservés : ton code de classe, ton thème, tes signalements au prof. <b>Aucun retour en arrière possible.</b></p>';
       h+='<label><input type="checkbox" id="razOk"> Je comprends : c\'est définitif, sur cet appareil.</label>';
@@ -267,12 +267,12 @@
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
      inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
      unique désormais : une palette à corriger, pas sept. -->
-<script src="pcmajo_ui.js?v=202609091342"></script>
+<script src="pcmajo_ui.js?v=202609091551"></script>
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 <!-- FOND_REACTIF_V49 : le fond raconte le travail fourni. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609091342"></script>
+<script src="pcmajo_fond.js?v=202609091551"></script>
 <script>(function(){ if(window.PCFond){ PCFond.peindre(); PCFond.ligne("#pcmajo-regle-ici"); } })();</script>
 </body>
 </html>

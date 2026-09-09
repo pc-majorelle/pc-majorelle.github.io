@@ -924,6 +924,120 @@ charge(); maj(); accueil();
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById("themeBtn"),p=document.getElementById("themePop");if(!b||!window.PCTheme)return;PCTheme.swatches("themePick");b.addEventListener("click",function(e){e.stopPropagation();p.classList.toggle("open");});document.addEventListener("click",function(e){if(p.classList.contains("open")&&!p.contains(e.target)&&e.target!==b)p.classList.remove("open");});})();</script>
+<script>
+/* ------------------------------------------------------------------ CHAPITRES_ELEVE_V69
+   L'eleve a la main sur les chapitres faits / pas faits (Laurent, 09/09/2026). Par defaut, la
+   date choisit comme avant (D-S11) ; des qu'il coche, ses coches font autorite pour SA classe.
+   Un chapitre decoche n'est jamais servi (D-S3). Le dernier coche = « vu aujourd'hui ».   */
+(function(){
+  "use strict";
+  if(window.CHAPITRES_ELEVE_V69) return;
+  var PLAN = window.PCMAJO_RECO_PLAN;
+  if(!PLAN || !PLAN.classes || typeof window.accueil !== "function" || typeof window.tirage !== "function") return;
+
+  function iso(d){ var m=d.getMonth()+1, j=d.getDate(); return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(j<10?"0":"")+j; }
+  function aujourdhui(){ return iso(new Date()); }
+  function demain(){ return iso(new Date(Date.now()+86400000)); }
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function fr(d){ return String(d||"").split("-").reverse().join("/"); }
+
+  /* les dates d'origine du plan, gardees une fois pour toutes */
+  for(var cid0 in PLAN.classes){
+    PLAN.classes[cid0].chapitres.forEach(function(ch){ if(!ch._o) ch._o = { debut:ch.debut, fin:ch.fin }; });
+  }
+  function jouables(cl){ return cl.chapitres.filter(function(ch){ return (ch.refs||[]).length; }); }
+  function coches(cid){ if(!st.faits) st.faits = {}; return st.faits[cid] || null; }
+  function aDesCoches(cid){ var c = coches(cid); return !!(c && Object.keys(c).length); }
+  function fait(cid, ch){
+    var c = coches(cid);
+    if(c && Object.prototype.hasOwnProperty.call(c, ch.titre)) return !!c[ch.titre];
+    return ch._o.debut <= aujourdhui();                     /* le calendrier, comme avant */
+  }
+
+  /* recalcule debut/fin d'apres les coches ; sans coche, remet les originaux (rien ne change) */
+  function appliquer(){
+    var jr = aujourdhui(), dm = demain();
+    for(var cid in PLAN.classes){
+      var cl = PLAN.classes[cid], chs = jouables(cl);
+      if(!aDesCoches(cid)){ chs.forEach(function(ch){ ch.debut = ch._o.debut; ch.fin = ch._o.fin; }); continue; }
+      var dernier = null;
+      chs.forEach(function(ch){ if(fait(cid, ch)) dernier = ch; });
+      chs.forEach(function(ch){
+        if(fait(cid, ch)){
+          ch.debut = (ch._o.debut <= jr) ? ch._o.debut : jr;                         /* commence */
+          if(ch === dernier) ch.fin = (ch._o.fin > jr) ? ch._o.fin : dm;             /* c'est celui du jour */
+          else ch.fin = (ch._o.fin <= jr) ? ch._o.fin : jr;                          /* fait, mais pas celui du jour */
+        } else {
+          ch.debut = (ch._o.debut > jr) ? ch._o.debut : dm;                          /* a venir : jamais servi */
+          ch.fin = (ch._o.fin > ch.debut) ? ch._o.fin : dm;
+        }
+      });
+    }
+  }
+
+  /* ---- la carte « Tes chapitres » ---- */
+  function carteChapitres(){
+    var cid = st.classe, cl = cid && PLAN.classes[cid]; if(!cl) return;
+    var pil = document.querySelector("#app .pilote"); if(!pil) return;
+    var vieux = document.getElementById("chapEleve"); if(vieux) vieux.remove();
+    var chs = jouables(cl), perso = aDesCoches(cid);
+    var nb = chs.filter(function(ch){ return fait(cid, ch); }).length;
+    var h = '<details class="card" id="chapEleve"><summary style="cursor:pointer;font-weight:600;font-size:15px">Tes chapitres — '
+      + nb + ' sur ' + chs.length + ' coché(s)' + (perso ? ' <span class="hint">(tes coches)</span>' : ' <span class="hint">(d’après le calendrier)</span>')
+      + ' <span class="hint" style="font-weight:400">· modifier</span></summary>'
+      + '<p class="sub" style="margin-top:8px">Coche ce que vous avez <b>fait en classe</b>. Les questions du soir ne portent que sur les chapitres cochés, '
+      + 'et le dernier coché est « ce qu’on a vu aujourd’hui ». '
+      + (perso ? 'Tes coches font autorité pour cette classe.' : 'Pour l’instant, c’est le calendrier qui coche.') + '</p>';
+    chs.forEach(function(ch, k){
+      var f = fait(cid, ch);
+      h += '<label style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer">'
+        + '<input type="checkbox" data-k="'+k+'"'+(f?' checked':'')+' style="margin-top:3px;flex:0 0 auto">'
+        + '<span><b style="font-weight:'+(f?'600':'400')+'">'+esc(ch.titre)+'</b><br>'
+        + '<span class="hint">'+fr(ch._o.debut)+' → '+fr(ch._o.fin)+' au calendrier · '+(ch.refs||[]).length+' capacité(s)</span></span></label>';
+    });
+    h += '<div style="margin-top:8px">'
+      + (perso ? '<a href="#" id="chapCal" style="font-size:.85rem;color:var(--muted);text-decoration:underline">↺ Revenir au calendrier</a>' : '')
+      + '</div></details>';
+    var box = document.createElement("div"); box.innerHTML = h;
+    var cartes = document.querySelectorAll("#app .card"), carnet = cartes.length ? cartes[cartes.length-1] : null;
+    if(carnet) carnet.parentNode.insertBefore(box.firstChild, carnet); else pil.parentNode.insertBefore(box.firstChild, pil.nextSibling);
+    if(window.__chapOuvert) document.getElementById("chapEleve").open = true;
+    document.getElementById("chapEleve").addEventListener("toggle", function(){ window.__chapOuvert = this.open; });
+    var inputs = document.querySelectorAll("#chapEleve input[type=checkbox]");
+    Array.prototype.forEach.call(inputs, function(inp){
+      inp.onchange = function(){
+        if(!st.faits) st.faits = {};
+        if(!st.faits[cid]) st.faits[cid] = {};
+        st.faits[cid][chs[+inp.getAttribute("data-k")].titre] = !!inp.checked;
+        st.chap = null; grave(); window.accueil();
+      };
+    });
+    var cal = document.getElementById("chapCal");
+    if(cal) cal.onclick = function(e){ e.preventDefault(); if(st.faits) delete st.faits[cid]; st.chap = null; grave(); window.accueil(); return false; };
+    /* l'annonce du jour ne doit pas montrer les dates recalculees */
+    if(perso){
+      var lab = pil.querySelector("label"); if(lab) lab.innerHTML = "Ce que vous avez fait en classe, d’après tes coches";
+      var hint = pil.querySelector(".hint");
+      if(hint) hint.innerHTML = hint.innerHTML.replace(/\d{2}\/\d{2}\/\d{4}\s*(&rarr;|→)\s*\d{2}\/\d{2}\/\d{4}/, "coché fait");
+    }
+  }
+
+  var accueilV48 = window.accueil, tirageV48 = window.tirage;
+  window.accueil = function(){
+    try{ appliquer(); }catch(e){}
+    var r = accueilV48.apply(this, arguments);
+    try{ carteChapitres(); }catch(e){}
+    return r;
+  };
+  window.tirage = function(){
+    try{ appliquer(); }catch(e){}
+    return tirageV48.apply(this, arguments);
+  };
+  window.CHAPITRES_ELEVE_V69 = true;
+  window.__chapitres_v69 = { appliquer:appliquer, fait:fait };   /* pour le banc */
+  window.accueil();
+})();
+</script>
 <script src="pcmajo_fond.js"></script>
 <script>
 /* ------------------------------------------------------------------ FOND_REACTIF_V49

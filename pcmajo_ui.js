@@ -334,7 +334,7 @@ window.PCAide = (function(){
     },
     "revision_sti2d_tale.html": function(){ return AIDES["revision.html"](); },
     "test_du_soir_v45.html": function(){
-      var h="<ul><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage.</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
+      var h="<ul><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage — et tes coches de « Tes chapitres » (par défaut, c'est le calendrier de ta classe qui coche ; « Revenir au calendrier » efface tes coches).</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
       if(role==="prof") h+="<h4>Enseignant</h4><ul><li>En mode test, « ⚐ signaler cette question » garde une liste dans ce navigateur ; « Voir le rapport à copier » te donne le texte à coller dans la conversation du projet.</li></ul>";
       return h;
     },
