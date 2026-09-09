@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js"></script>
+<script src="pcmajo_test.js?v=202609090817"></script>
 <!-- DATES_DEPUIS_BASE_V52 : les dates cles, ecrites par _BASE. Absent = repli en dur. -->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache-->
 <!-- BASE_DANS_GESTION_V55a : l'emploi du temps de la base (carnet du prof, sinon EDT
@@ -12,7 +12,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestion — Classes & progression · Plateforme PC</title>
-<link rel="stylesheet" href="gestion_core.css">
+<link rel="stylesheet" href="gestion_core.css?v=202609090817">
 
 </head>
 <body>
@@ -69,7 +69,7 @@
 </main>
 
 <!-- Lib de dezippage bundlee (fflate 0.8.2, MIT) - OFFLINE, aucun CDN runtime -->
-<script src="gestion_core.js"></script>
+<script src="gestion_core.js?v=202609090817"></script>
 <!-- Parser Skolengo (xlsx/csv) offline - expose window.SkolengoParse -->
 
 
@@ -80,16 +80,16 @@
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
      inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
      unique désormais : une palette à corriger, pas sept. -->
-<script src="pcmajo_ui.js"></script>
-<script src="socle_data.js"></script><script src="parties_cours.js"></script><script src="qrcode.js"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences--><!--SOCLE_ENSSCI_V40 : referentiel B.O. embarque, 7 niveaux ; apporte la correspondance ens.sci. ENS-*/ENSSCI-GEN-*-->
+<script src="pcmajo_ui.js?v=202609090817"></script>
+<script src="socle_data.js?v=202609090817"></script><script src="parties_cours.js?v=202609090817"></script><script src="qrcode.js?v=202609090817"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences--><!--SOCLE_ENSSCI_V40 : referentiel B.O. embarque, 7 niveaux ; apporte la correspondance ens.sci. ENS-*/ENSSCI-GEN-*-->
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
-<script src="gestion_greffes.js"></script>
+<script src="gestion_greffes.js?v=202609090817"></script>
 
 
 
 
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js"></script>
+<script src="pcmajo_fond.js?v=202609090817"></script>
 </body>
 </html>
