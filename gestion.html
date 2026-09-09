@@ -10,10 +10,10 @@
      activeAnnee, propage, btnSave...). Elle n'ajoute que le parcours par usage, les phrases d'accueil,
      les libelles en francais, le geste unique d'enregistrement et la zone « Publier » de l'admin.
      Le carnet (localStorage gestion_majorelle_v01__<pid>__<annee>) est le meme, au meme endroit. -->
-<script src="pcmajo_test.js?v=202609090841"></script>
+<script src="pcmajo_test.js?v=202609090909"></script>
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script>
-<link rel="stylesheet" href="gestion_core.css?v=202609090841">
+<link rel="stylesheet" href="gestion_core.css?v=202609090909">
 <style>/*COQUE_GESTION_V65*/
   header.coque-haut{padding:8px 16px}
   header.coque-haut .hrow{gap:10px}
@@ -39,6 +39,8 @@
   nav.parcours .sep{height:1px;background:var(--line);margin:10px 4px}
   nav.parcours .plus button{font-size:.85rem;padding:6px 11px;color:var(--muted)}
   nav.parcours .plus button.on{color:var(--ink)}
+  nav.parcours .plus a.lien{display:flex;align-items:center;gap:9px;font-size:.85rem;padding:6px 11px;margin:2px 0;color:var(--muted);text-decoration:none;border:1px solid transparent;border-radius:10px}/*ACCUEIL_GESTION_V67*/
+  nav.parcours .plus a.lien:hover{border-color:var(--line);background:var(--card);color:var(--ink)}
   nav.parcours .plus{display:none}
   nav.parcours .plus.open{display:block}
   .contenu{min-width:0;padding:0 4px}
@@ -71,7 +73,7 @@
      barre « Accueil » que si cet identifiant manque. Ici, c'est la coque qui tient l'en-tete. -->
 <header class="coque-haut" id="soloBar">
   <div class="hrow">
-    <a href="prof.html" class="retour" aria-label="Espace prof">‹ Espace prof</a>
+    <a href="index.html" class="retour" aria-label="Connexion">‹ Connexion</a><!--ACCUEIL_GESTION_V67-->
     <h1>👩‍🏫 <span id="gTitle">Mon gestionnaire</span></h1>
     <div class="spacer"></div>
     <label class="small muted" for="activeAnnee">Année</label>
@@ -128,6 +130,10 @@
       <button data-t="prev">Prévisionnel (ancien)</button>
       <button data-t="plan">Plannings cohérents (ancien)</button>
       <button data-t="progressions">Progressions (ancien)</button>
+      <div class="sep"></div><!--ACCUEIL_GESTION_V67 : ce que l'Espace prof avait et que le gestionnaire n'a pas-->
+      <a class="lien" href="activites_web.html">🧪 Activités</a>
+      <a class="lien" href="saisie_competences_mobile.html">📝 Grille TP au téléphone</a>
+      <a class="lien" id="lienApercu" href="eleve.html">👀 Aperçu côté élève</a>
     </div>
   </nav>
   <div class="contenu">
@@ -153,12 +159,12 @@
   </div>
 </div>
 
-<script src="gestion_core.js?v=202609090841"></script>
-<script src="pcmajo_ui.js?v=202609090841"></script>
-<script src="socle_data.js?v=202609090841"></script><script src="parties_cours.js?v=202609090841"></script><script src="qrcode.js?v=202609090841"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
+<script src="gestion_core.js?v=202609090909"></script>
+<script src="pcmajo_ui.js?v=202609090909"></script>
+<script src="socle_data.js?v=202609090909"></script><script src="parties_cours.js?v=202609090909"></script><script src="qrcode.js?v=202609090909"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
-<script src="gestion_greffes.js?v=202609090841"></script>
+<script src="gestion_greffes.js?v=202609090909"></script>
 
 <script>/*COQUE_GESTION_V65 — la coque : parcours, phrases, libelles, geste unique, zone Publier. Aucune donnee touchee.*/
 (function(){
@@ -293,6 +299,8 @@
   var tries=0; var it=setInterval(function(){ rangerPublier(); if(++tries>8) clearInterval(it); },350);
   document.addEventListener("DOMContentLoaded",rangerPublier);
 
+  /* ACCUEIL_GESTION_V67 : l'apercu eleve suit la classe active, comme le lien du constructeur. */
+  try{ $("lienApercu").addEventListener("click",function(){ try{ var c=activeClass(); this.href=c?"eleve.html?classe="+encodeURIComponent(c.id):"eleve.html"; }catch(e){} }); }catch(e){}
   /* 6. Les clics du parcours. */
   document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){
     b.addEventListener("click",function(){
@@ -307,6 +315,6 @@
   /* Premier affichage : ?tab= est lu par le code commun (DOMContentLoaded) et passe par l'enveloppe. */
 })();
 </script>
-<script src="pcmajo_fond.js?v=202609090841"></script>
+<script src="pcmajo_fond.js?v=202609090909"></script>
 </body>
 </html>

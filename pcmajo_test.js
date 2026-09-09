@@ -173,7 +173,7 @@
     try{ sessionStorage.setItem(LS, JSON.stringify(session)); }catch(e){}
     set(LS, JSON.stringify(session));
     location.href = session.role==="prof"
-      ? "prof.html"
+      ? "gestion.html" /*ACCUEIL_GESTION_V67*/
       : "eleve.html?classe="+encodeURIComponent(session.code);
   }
 

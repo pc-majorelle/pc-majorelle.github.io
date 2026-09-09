@@ -2664,7 +2664,7 @@ refreshClassSelector();
     var bar=document.createElement("div"); bar.id="soloBar";
     bar.style.cssText="position:sticky;top:0;z-index:50;background:#12324a;color:#fff;"
       +"padding:9px 13px;font:600 14px system-ui,sans-serif";
-    bar.innerHTML='<a href="prof.html" style="color:#fff;text-decoration:none">\u2039 Accueil</a>';
+    bar.innerHTML='<a href="gestion.html" style="color:#fff;text-decoration:none">\u2039 Accueil</a>';/*ACCUEIL_GESTION_V67*/
     document.body.insertBefore(bar,document.body.firstChild);
   }
 }catch(e){}})();

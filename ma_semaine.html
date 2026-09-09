@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609090841"></script>
+<script src="pcmajo_test.js?v=202609090909"></script>
 <!-- SEMAINE_DEPUIS_BASE_V52 : l'emploi du temps ecrit par _BASE. Absent = repli sur EDT2026. -->
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache-->
 <!-- PART_DANS_SEMAINE_V54 : les dates cles (vacances, feries, ponts, fin des cours).
@@ -105,8 +105,8 @@
 </style>
 </head>
 <body>
-<div style="position:sticky;top:0;z-index:50;background:#12324a;color:#fff;padding:9px 13px;font:600 14px system-ui,sans-serif"><a href="app.html" style="color:#fff;text-decoration:none">‹ Accueil</a></div>
-<header><a class="home" href="prof.html" aria-label="Espace prof">‹</a><h1 id="ttl">Ma semaine<small id="sub"></small></h1><select id="ysel" aria-label="Année scolaire" style="margin-left:auto;font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px"></select></header>
+<div style="position:sticky;top:0;z-index:50;background:#12324a;color:#fff;padding:9px 13px;font:600 14px system-ui,sans-serif"><a href="gestion.html" style="color:#fff;text-decoration:none">‹ Accueil</a></div><!--ACCUEIL_GESTION_V67-->
+<header><a class="home" href="gestion.html" aria-label="Mon gestionnaire">‹</a><!--ACCUEIL_GESTION_V67--><h1 id="ttl">Ma semaine<small id="sub"></small></h1><select id="ysel" aria-label="Année scolaire" style="margin-left:auto;font:inherit;font-size:13px;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px"></select></header>
 <div class="leg" id="leg"></div>
 <div class="wrap"><div id="edt" class="cal"></div></div>
 <p class="note" id="note">EDT réel 2025-26. Les créneaux proviennent du compte enseignant connecté (jour, heure de début et durée). Les TP dédoublés d'une même classe apparaissent sur leurs créneaux respectifs. Vue de référence — l'édition et le calendrier réel restent dans le gestionnaire.</p>
@@ -666,11 +666,11 @@ if(!acces){ note.innerHTML+=" <b>(Aperçu : M. Agénor — connecte-toi pour voi
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ. Sept pages en embarquaient chacune une copie
      inline ; la palette était la même mais chacune posait un jeu de variables différent. Source
      unique désormais : une palette à corriger, pas sept. -->
-<script src="pcmajo_ui.js?v=202609090841"></script>
+<script src="pcmajo_ui.js?v=202609090909"></script>
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème de l'interface">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
 <script>(function(){var b=document.getElementById('themeBtn'),p=document.getElementById('themePop');if(!b||!window.PCTheme)return;PCTheme.swatches('themePick');b.addEventListener('click',function(e){e.stopPropagation();p.classList.toggle('open');});document.addEventListener('click',function(e){if(p.classList.contains('open')&&!p.contains(e.target)&&e.target!==b)p.classList.remove('open');});})();</script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609090841"></script>
+<script src="pcmajo_fond.js?v=202609090909"></script>
 </body>
 </html>
