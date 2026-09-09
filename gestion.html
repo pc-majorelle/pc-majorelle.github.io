@@ -10,10 +10,10 @@
      activeAnnee, propage, btnSave...). Elle n'ajoute que le parcours par usage, les phrases d'accueil,
      les libelles en francais, le geste unique d'enregistrement et la zone « Publier » de l'admin.
      Le carnet (localStorage gestion_majorelle_v01__<pid>__<annee>) est le meme, au meme endroit. -->
-<script src="pcmajo_test.js?v=202609090909"></script>
+<script src="pcmajo_test.js?v=202609090914"></script>
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script>
-<link rel="stylesheet" href="gestion_core.css?v=202609090909">
+<link rel="stylesheet" href="gestion_core.css?v=202609090914">
 <style>/*COQUE_GESTION_V65*/
   header.coque-haut{padding:8px 16px}
   header.coque-haut .hrow{gap:10px}
@@ -58,7 +58,23 @@
   .service input{width:16px;height:16px;margin:0}
   .service .small{flex-basis:100%;color:var(--muted)}
   #parcours > button[hidden], #plus button[hidden]{display:none}
+  /*PETIT_ECRAN_V67*/
+  .reglages{display:contents}
+  #hdrToggle{display:none;white-space:nowrap}
   @media (max-width:900px){
+    header.coque-haut{padding:6px 10px}
+    header.coque-haut .hrow{gap:8px;flex-wrap:nowrap}
+    header.coque-haut h1{font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+    #hdrToggle{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;max-width:55vw}
+    #hdrToggle #hdrResume{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .reglages{display:none}
+    header.coque-haut.open .hrow{flex-wrap:wrap}
+    header.coque-haut.open .reglages{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-basis:100%;padding:6px 0 2px;border-top:1px dashed var(--line)}
+    header.coque-haut.open #hdrToggle{border-color:var(--accent)}
+    header.coque-haut.open .copie{display:flex;flex-basis:100%;flex-wrap:wrap;white-space:normal}header.coque-haut.open #etatEnreg{white-space:normal}
+    #publier.on{display:none}
+    header.coque-haut.open #publier.on{display:flex}
+    nav.parcours button{font-size:.9rem;padding:8px 11px}
     .coque{grid-template-columns:1fr}
     nav.parcours{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px;padding:8px}
     nav.parcours button{width:auto;padding:6px 10px}
@@ -75,7 +91,9 @@
   <div class="hrow">
     <a href="index.html" class="retour" aria-label="Connexion">‹ Connexion</a><!--ACCUEIL_GESTION_V67-->
     <h1>👩‍🏫 <span id="gTitle">Mon gestionnaire</span></h1>
+    <button class="mini ghost" id="hdrToggle" type="button" aria-expanded="false" title="Année, classe, copies"><span id="hdrResume">Réglages</span> ▾</button><!--PETIT_ECRAN_V67-->
     <div class="spacer"></div>
+    <div class="reglages" id="hdrReglages"><!--PETIT_ECRAN_V67-->
     <label class="small muted" for="activeAnnee">Année</label>
     <select id="activeAnnee"></select>
     <button class="mini ghost" id="addAnnee" title="Ajouter une année scolaire">➕ année</button>
@@ -88,6 +106,7 @@
       <button class="mini ghost" id="btnRevenir" title="Retrouver l'état d'avant une modification (les versions précédentes sont gardées automatiquement).">↶ Revenir en arrière</button>
       <input type="file" id="fileIn" accept="application/json" style="display:none">
     </span>
+    </div><!--/reglages PETIT_ECRAN_V67-->
   </div>
   <div id="publier">
     <span class="lab">Publier</span>
@@ -159,12 +178,12 @@
   </div>
 </div>
 
-<script src="gestion_core.js?v=202609090909"></script>
-<script src="pcmajo_ui.js?v=202609090909"></script>
-<script src="socle_data.js?v=202609090909"></script><script src="parties_cours.js?v=202609090909"></script><script src="qrcode.js?v=202609090909"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
+<script src="gestion_core.js?v=202609090914"></script>
+<script src="pcmajo_ui.js?v=202609090914"></script>
+<script src="socle_data.js?v=202609090914"></script><script src="parties_cours.js?v=202609090914"></script><script src="qrcode.js?v=202609090914"></script><!--QR_GRILLE_V66--><!--BO_PARTIES_V65 : chapitres de cours pour la notation par competences-->
 <button class="themebtn" id="themeBtn" title="Thème de l'interface" aria-label="Changer le thème">🎨</button>
 <div class="themepop" id="themePop"><h4>Thème de l'interface</h4><div id="themePick"></div></div>
-<script src="gestion_greffes.js?v=202609090909"></script>
+<script src="gestion_greffes.js?v=202609090914"></script>
 
 <script>/*COQUE_GESTION_V65 — la coque : parcours, phrases, libelles, geste unique, zone Publier. Aucune donnee touchee.*/
 (function(){
@@ -301,6 +320,16 @@
 
   /* ACCUEIL_GESTION_V67 : l'apercu eleve suit la classe active, comme le lien du constructeur. */
   try{ $("lienApercu").addEventListener("click",function(){ try{ var c=activeClass(); this.href=c?"eleve.html?classe="+encodeURIComponent(c.id):"eleve.html"; }catch(e){} }); }catch(e){}
+  /* PETIT_ECRAN_V67 : le bouton replie/deplie l'en-tete ; son libelle resume l'annee et la classe. */
+  (function(){
+    var hd=document.querySelector("header.coque-haut"), bt=$("hdrToggle"); if(!hd||!bt) return;
+    function resume(){ try{ var a=$("activeAnnee"), c=$("activeClass"); var ta=a&&a.options[a.selectedIndex]?a.options[a.selectedIndex].text:"";
+      var tc=c&&c.options[c.selectedIndex]?c.options[c.selectedIndex].text:""; $("hdrResume").textContent=[ta,tc].filter(Boolean).join(" · ")||"Réglages"; }catch(e){} }
+    bt.addEventListener("click",function(e){ e.stopPropagation(); var o=!hd.classList.contains("open"); hd.classList.toggle("open",o); bt.setAttribute("aria-expanded",o?"true":"false"); });
+    ["activeAnnee","activeClass"].forEach(function(id){ var el=$(id); if(el) el.addEventListener("change",function(){ setTimeout(resume,50); }); });
+    var st2=window.switchTab; window.switchTab=function(){ var r=st2.apply(this,arguments); resume(); return r; };
+    document.addEventListener("DOMContentLoaded",function(){ setTimeout(resume,600); setTimeout(resume,2000); }); resume();
+  })();
   /* 6. Les clics du parcours. */
   document.querySelectorAll("#parcours > button[data-p]").forEach(function(b){
     b.addEventListener("click",function(){
@@ -315,6 +344,6 @@
   /* Premier affichage : ?tab= est lu par le code commun (DOMContentLoaded) et passe par l'enveloppe. */
 })();
 </script>
-<script src="pcmajo_fond.js?v=202609090909"></script>
+<script src="pcmajo_fond.js?v=202609090914"></script>
 </body>
 </html>
