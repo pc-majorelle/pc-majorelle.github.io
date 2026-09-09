@@ -1413,7 +1413,47 @@ function effacerPhotos(){
   _photosDb().then(function(db){ return new Promise(function(res){ const tx=db.transaction("photos","readwrite"); tx.objectStore("photos").clear(); tx.oncomplete=res; tx.onerror=res; }); })
     .then(function(){ PHOTOS.cache={}; PHOTOS.n=0; renderEleves(); try{ renderComp(); }catch(e){} });
 }
-function photoDe(e){ return PHOTOS.cache[eleveKey(e)]||null; }
+function _photoDe_v70(e){ return PHOTOS.cache[eleveKey(e)]||null; }/*PHOTOS_RECOLLEES_V72*/
+/* ===== PHOTOS_RECOLLEES_V72 (09/09/2026) — les photos de la réserve locale retrouvent leurs élèves.
+   Laurent : « les photos des trombinoscopes sont pérennes sauf dans mon groupe de spécialité PC en Tale » ; sa sonde (sans nom) :
+   206 photos en réserve, 59 orphelines dont 55 sous une clé « nom (2NDGT3)|prénom » et 3 sous une clé qui ne diffère que par un
+   accent ou un tiret. Cause : NOMS_TRI_GRILLES_V71 ne renomme les photos QUE des élèves dont le carnet porte encore des
+   parenthèses ; une liste déjà corrigée (ré-importée, ou retouchée à la main) laisse les photos sous l'ancienne clé, à jamais.
+   Ici c'est la RÉSERVE qui est réparée, quel que soit l'état du carnet :
+   1) au chargement, toute clé avec parenthèses est renommée vers la clé nette (si elle est libre ; sinon l'ancienne est effacée) ;
+   2) à l'affichage, une photo est cherchée d'abord sous la clé exacte, puis sous la clé « repliée » (sans accent, sans tiret,
+      sans parenthèses) : la liste (Skolengo, collée) et le trombinoscope (Pronote) n'écrivent pas toujours un nom pareil.
+   Une fois par ouverture ; rien ne remonte, rien ne quitte le navigateur ; pastille « n photos recollées » une fois. */
+function _cleRepliee(k){
+  return String(k||"").replace(/\([^)]*\)/g," ").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
+    .replace(/[-'’ ]+/g," ").replace(/\s*\|\s*/,"|").trim();
+}
+function _indexPhotos(){
+  const ix={}; const ks=Object.keys(PHOTOS.cache);
+  ks.forEach(function(k){ const r=_cleRepliee(k); if(!ix[r]||/\(/.test(ix[r])) ix[r]=k; });
+  PHOTOS.index=ix; PHOTOS.indexN=ks.length; return ix;
+}
+function photoDe(e){
+  const k=eleveKey(e); if(PHOTOS.cache[k]) return PHOTOS.cache[k];
+  if(!PHOTOS.index||PHOTOS.indexN!==Object.keys(PHOTOS.cache).length) _indexPhotos();
+  const r=PHOTOS.index[_cleRepliee(k)]; return (r&&PHOTOS.cache[r])||null;
+}
+function recollerPhotos(){
+  const ren=[];
+  Object.keys(PHOTOS.cache).forEach(function(k){
+    if(!/\(/.test(k)) return;
+    const n=k.replace(/\([^)]*\)/g," ").replace(/\s+/g," ").replace(/\s*\|\s*/,"|").trim();
+    if(n&&n!==k) ren.push([k,n]);
+  });
+  if(!ren.length){ _indexPhotos(); return Promise.resolve(0); }
+  return _renommerPhotos(ren).then(function(){ PHOTOS.recollees=ren.length; _indexPhotos(); return ren.length; });
+}
+function notePhotosRecollees(){
+  if(!PHOTOS.recollees) return "";
+  return '<span class="pill" title="des photos rangées sous un nom avec le code de classe entre parenthèses ont retrouvé leur élève">📷 '+
+         PHOTOS.recollees+' photo'+(PHOTOS.recollees>1?"s":"")+' recollée'+(PHOTOS.recollees>1?"s":"")+'</span> ';
+}
+/* fin PHOTOS_RECOLLEES_V72 */
 function vignette(e,t){
   t=t||28; const p=photoDe(e), hh=Math.round(t*1.25);
   return p?'<img class="ph" src="'+p+'" width="'+t+'" height="'+hh+'" alt="" title="'+esc((e.nom||"")+" "+(e.prenom||""))+'">'
@@ -1512,7 +1552,7 @@ function validerTrombi(){
       (reconnus?' · '+reconnus+' déjà présent'+(reconnus>1?"s":"")+' (photo rattachée)':"")+(classesTouchees>1?' · '+classesTouchees+' classes complétées':"")+'.</p>';
   }).catch(function(err){ alert("Les photos n'ont pas pu être enregistrées : "+(err&&err.message||err)); });
 }
-try{ chargerPhotos().then(function(n){ if(!n) return;
+try{ chargerPhotos().then(function(n){ return recollerPhotos().then(function(){ return n; }); })/*PHOTOS_RECOLLEES_V72*/.then(function(n){ if(!n) return;
   const pe=document.getElementById("p-eleves"); if(pe&&pe.innerHTML) try{ renderEleves(); }catch(e){}
   const pc=document.getElementById("p-comp"); if(pc&&pc.innerHTML) try{ renderComp(); }catch(e){}
 }); }catch(e){}
@@ -1574,8 +1614,8 @@ function _renommerPhotos(renommages){
   }); }).then(function(){ PHOTOS.cache={}; return chargerPhotos(); }).catch(function(){});
 }
 function noteNettoyageNoms(){
-  if(!NOMS_NETTOYES.n) return "";
-  return '<span class="pill" title="le code de classe entre parenthèses a été ôté des noms">'+NOMS_NETTOYES.n+' nom'+(NOMS_NETTOYES.n>1?"s":"")+' corrigé'+(NOMS_NETTOYES.n>1?"s":"")+
+  if(!NOMS_NETTOYES.n) return notePhotosRecollees();/*PHOTOS_RECOLLEES_V72*/
+  return notePhotosRecollees()+'<span class="pill" title="le code de classe entre parenthèses a été ôté des noms">'+NOMS_NETTOYES.n+' nom'+(NOMS_NETTOYES.n>1?"s":"")+' corrigé'+(NOMS_NETTOYES.n>1?"s":"")+
          (NOMS_NETTOYES.fusions?' · '+NOMS_NETTOYES.fusions+' doublon'+(NOMS_NETTOYES.fusions>1?"s":"")+' fusionné'+(NOMS_NETTOYES.fusions>1?"s":""):"")+'</span> ';
 }
 function triListeEleves(eleves){ return triEleves(eleves.map(function(e,i){ return {e:e,i:i}; })).map(function(x){ return x.e; }); }
