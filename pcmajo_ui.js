@@ -314,7 +314,7 @@ window.PCAide = (function(){
       var h="<ul><li>Tout ce que vous modifiez ici (classes, créneaux, élèves, groupes, cases du cahier de textes, notes par compétences, matériel) est enregistré <b>aussitôt</b> dans ce navigateur : c'est votre <b>carnet de l'année</b> (« Enregistré à hh:mm » en haut).</li>"
         +"<li><b>📥 Garder une copie</b> = un fichier du carnet (<code>gestion_&lt;prénom&gt;_&lt;année&gt;_&lt;date&gt;.json</code>, il porte des noms d'élèves : à garder hors du site) ; <b>📤 Reprendre une copie</b> le recharge et <b>remplace tout</b> ; <b>↶ Revenir en arrière</b> = les versions précédentes, listées ci-dessous.</li>"
         +"<li><b>Mon plan</b> vient du <b>constructeur</b> (Plus, ou le bouton de « Mon plan ») : il s'enregistre là-bas, par niveau, et arrive ici tout seul sur le même appareil — « Ma semaine » et « Mon cahier de textes » le lisent.</li>"
-        +"<li><b>Mes élèves</b> : import Skolengo, liste collée ou ajout à la main ; les listes restent dans ce navigateur.</li>"
+        +"<li><b>Mes élèves</b> : import Skolengo, liste collée, ajout à la main — ou <b>📷 un trombinoscope PDF</b> (Pronote) : lu dans ce navigateur, il complète la classe et garde les photos ici, dans ce navigateur seulement (jamais sur le site ni dans « Garder une copie ») ; les photos apparaissent dans la liste et dans les grilles de compétences.</li><!--TROMBINOSCOPE_V70-->"
         +"<li>Première fois ? <a href='premiers_pas.html'>Premiers pas</a> — les quatre étapes, aussi en feuille A4.</li>"
         +ANNEE+"</ul>"+NAV;
       if(admin) h+=ADMIN_BASE;

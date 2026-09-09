@@ -1311,6 +1311,9 @@ function renderEleves(){
     <div class="row">
       <button class="mini" onclick="addEleveManuel()">+ Ajouter un élève</button>
       <button class="mini" id="btnCollerListe" onclick="toggleCollerListe()">📋 Coller une liste</button><!--COLLER_LISTE_V68-->
+      <input type="file" id="trombiIn" accept=".pdf,application/pdf" multiple style="display:none" onchange="onTrombiFiles(this.files);this.value=''"><!--TROMBINOSCOPE_V70-->
+      <button class="mini" id="btnTrombi" onclick="document.getElementById('trombiIn').click()" title="Le PDF Pronote est lu dans ce navigateur : photos et noms ; rien n'est envoyé">📷 Importer un trombinoscope (PDF)</button>
+      ${PHOTOS.n?`<span class="pill" title="photos gardées dans ce navigateur">${PHOTOS.n} photo${PHOTOS.n>1?"s":""} <a href="#" onclick="effacerPhotos();return false" style="margin-left:4px">effacer</a></span>`:""}
       ${sec?`<button class="mini" onclick="repartir2()">⚖️ Répartir en 2 groupes</button>
              <button class="mini ghost" onclick="viderGroupes()">Vider les groupes</button>`:""}
     </div>
@@ -1322,7 +1325,7 @@ function renderEleves(){
         <button class="mini ghost" onclick="toggleCollerListe(false)">Annuler</button>
         <span id="collerListeMsg" class="small muted"></span>
       </div>
-    </div></div>`;
+    </div><div id="trombiApercu"></div></div>`;/*TROMBINOSCOPE_V70*/
 
   if(evs.length){
     h+=`<div class="card"><h3>Évaluations importées (${evs.length})</h3><div class="row">`+
@@ -1337,7 +1340,7 @@ function renderEleves(){
     /* MOBILE_V38 : la liste des élèves (7 colonnes, champs de saisie à largeur fixe) faisait
        584 px de large — c'est elle qui poussait TOUTE la page hors de l'écran à 390 px.
        Elle défile désormais dans son propre cadre, comme les grilles de compétences. */
-    h+=`<div class="tblwrap"><table><thead><tr><th>#</th><th>Nom</th><th>Prénom</th><th>Groupe TP</th>${evs.length?`<th>Moy.</th><th>Notes</th>`:""}<th></th></tr></thead><tbody>`;
+    h+=`<div class="tblwrap"><table><thead><tr><th>#</th><th></th><th>Nom</th><th>Prénom</th><th>Groupe TP</th>${evs.length?`<th>Moy.</th><th>Notes</th>`:""}<th></th></tr></thead><tbody>`;
     els.forEach((e,i)=>{
       let grpCell;
       if(sec){
@@ -1357,7 +1360,7 @@ function renderEleves(){
                   `<td class="small">${nNoted}/${notes.length}${etats.length?` <span class="badge" title="${esc(etats.join(', '))}">${etats.length} état(s)</span>`:""}</td>`;
       }
       h+=`<tr>
-        <td class="small muted">${i+1}</td>
+        <td class="small muted">${i+1}</td><td>${vignette(e,28)}</td>
         <td><input value="${esc(e.nom)}" style="width:150px" onchange="setEleveChamp(${i},'nom',this.value)"></td>
         <td><input value="${esc(e.prenom)}" style="width:120px" onchange="setEleveChamp(${i},'prenom',this.value)"></td>
         <td>${grpCell}</td>
@@ -1376,6 +1379,133 @@ function renderEleves(){
 function setEleveChamp(i,k,v){ const c=activeClass(); elevesOf(c)[i][k]=v.trim(); save(); }
 function setEleveGroupe(i,v){ const c=activeClass(); elevesOf(c)[i].groupe=v; rebuildGroupes(c); save(); renderEleves(); }
 function addEleveManuel(){ const c=activeClass(); elevesOf(c).push({nom:"",prenom:"",groupe:"",moyenne:null,notes:[]}); save(); renderEleves(); }
+/* TROMBINOSCOPE_V70 : photos des élèves. Laurent, 09/09 : « extraire des trombinoscopes … pour avoir les listes des classes et ajouter
+   les photos des élèves … y compris dans les listes d'élèves notation par compétence » ; « les listes de classes permettent de compléter
+   les listes de classe des collègues ainsi que mes listes de classes et les groupes ».
+   CADRE : le PDF est lu DANS le navigateur (trombi_v70.js + pdf.js embarqués, aucun réseau) ; les photos vont dans une RÉSERVE LOCALE
+   (IndexedDB « pcmajo_photos », clé = nom|prénom) — hors carnet, hors « Garder une copie », hors dépôt. Chaque collègue importe ses
+   trombinoscopes sur son propre navigateur. La grille reçue par QR sur le téléphone reste sans photo. */
+const PHOTOS={cache:{},pret:false,n:0};
+function _photosDb(){
+  return new Promise(function(res,rej){
+    if(!window.indexedDB){ rej(new Error("IndexedDB indisponible")); return; }
+    const r=indexedDB.open("pcmajo_photos",1);
+    r.onupgradeneeded=function(){ r.result.createObjectStore("photos"); };
+    r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); };
+  });
+}
+function chargerPhotos(){
+  return _photosDb().then(function(db){ return new Promise(function(res){
+    const req=db.transaction("photos").objectStore("photos").openCursor(); let n=0;
+    req.onsuccess=function(){ const c=req.result; if(c){ PHOTOS.cache[c.key]=(c.value&&c.value.photo)||""; n++; c.continue(); } else { PHOTOS.pret=true; PHOTOS.n=n; res(n); } };
+    req.onerror=function(){ PHOTOS.pret=true; res(0); };
+  }); }).catch(function(){ PHOTOS.pret=true; return 0; });
+}
+function enregistrerPhotos(liste){   /* [{key, photo, source}] */
+  return _photosDb().then(function(db){ return new Promise(function(res,rej){
+    const tx=db.transaction("photos","readwrite"), st=tx.objectStore("photos");
+    liste.forEach(function(x){ st.put({photo:x.photo,source:x.source||"",maj:Date.now()},x.key); PHOTOS.cache[x.key]=x.photo; });
+    tx.oncomplete=function(){ PHOTOS.n=Object.keys(PHOTOS.cache).length; res(liste.length); }; tx.onerror=function(){ rej(tx.error); };
+  }); });
+}
+function effacerPhotos(){
+  if(!confirm("Effacer toutes les photos d'élèves de ce navigateur ? (les listes d'élèves restent)")) return;
+  _photosDb().then(function(db){ return new Promise(function(res){ const tx=db.transaction("photos","readwrite"); tx.objectStore("photos").clear(); tx.oncomplete=res; tx.onerror=res; }); })
+    .then(function(){ PHOTOS.cache={}; PHOTOS.n=0; renderEleves(); try{ renderComp(); }catch(e){} });
+}
+function photoDe(e){ return PHOTOS.cache[eleveKey(e)]||null; }
+function vignette(e,t){
+  t=t||28; const p=photoDe(e), hh=Math.round(t*1.25);
+  return p?'<img class="ph" src="'+p+'" width="'+t+'" height="'+hh+'" alt="" title="'+esc((e.nom||"")+" "+(e.prenom||""))+'">'
+          :'<span class="ph ph-vide" style="width:'+t+'px;height:'+hh+'px" title="pas de photo"></span>';
+}
+/* clé canonique d'une classe, côté fichier Pronote (2ndgt3, 1phchgr1, tphchgr3, tg5, 1sti2d, tsti2d, 1nsinfgr1)
+   comme côté carnet (« 2de GT3 », « 1PH-CHGR1 », « TPH-CHGR3 », « Tale ens.sci. TG5 », « 1re STI2D », « 1NSINFGR1 ») */
+function cleClasseTrombi(s){
+  s=String(s||"").toLowerCase().replace(/ens\.?\s*sci\.?/g,"").replace(/\bseconde\b|2nde|2nd|2de/g,"2").replace(/premi[eè]re|1[eè]re/g,"1")
+    .replace(/terminale|tale|tle/g,"t").replace(/[^a-z0-9]/g,"");
+  let m;
+  if((m=/^2g?t?(\d+)$/.exec(s))) return "2GT"+m[1];
+  if((m=/^(1|t)(?:ph|pc)ch(?:gr)?(\d+)$/.exec(s))) return m[1].toUpperCase()+"PHCH"+m[2];
+  if((m=/^(1|t)nsi(?:nf)?(?:gr)?(\d+)$/.exec(s))) return m[1].toUpperCase()+"NSI"+m[2];
+  if((m=/^(1|t)(?:g|tg|ens)?-?(\d+)$/.exec(s))) return m[1].toUpperCase()+"G"+m[2];
+  if((m=/^(1|t)sti2d$/.exec(s))) return m[1].toUpperCase()+"STI2D";
+  return s.toUpperCase();
+}
+function classePourTrombi(codeFichier){
+  const k=cleClasseTrombi(codeFichier); if(!k) return null;
+  return state.classes.find(function(c){ return cleClasseTrombi(c.libelle)===k||cleClasseTrombi(c.id)===k; })||null;
+}
+let TROMBI_LUS=[];
+function onTrombiFiles(files){
+  const ap=document.getElementById("trombiApercu"); if(!ap) return;
+  const liste=Array.from(files||[]).filter(function(f){ return /\.pdf$/i.test(f.name); });
+  if(!liste.length){ ap.innerHTML='<p class="hint">Choisis un ou plusieurs trombinoscopes PDF.</p>'; return; }
+  if(typeof Trombi==="undefined"){ ap.innerHTML='<p class="hint">Le lecteur de trombinoscopes (trombi_v70.js) manque sur cette page.</p>'; return; }
+  TROMBI_LUS=[]; ap.innerHTML='<p class="hint" id="trombiEtat">Lecture de '+liste.length+' fichier'+(liste.length>1?"s":"")+' — dans ce navigateur, rien n\'est envoyé…</p>';
+  let ch=Promise.resolve();
+  liste.forEach(function(f,i){
+    ch=ch.then(function(){ return Trombi.lire(f,{sur:function(pct,txt){ const e=document.getElementById("trombiEtat"); if(e) e.textContent=f.name+" — "+txt+" ("+(i+1)+"/"+liste.length+")"; }}); })
+        .then(function(r){ r.cible=(classePourTrombi(r.classeFichier)||activeClass()||{}).id||""; TROMBI_LUS.push(r); })
+        .catch(function(err){ TROMBI_LUS.push({fichier:f.name,classeFichier:"",eleves:[],erreur:String(err&&err.message||err)}); });
+  });
+  ch.then(renderTrombiApercu);
+}
+function renderTrombiApercu(){
+  const ap=document.getElementById("trombiApercu"); if(!ap) return;
+  let h="";
+  TROMBI_LUS.forEach(function(r,ri){
+    h+='<div class="card trombi-fichier"><div class="row"><b>'+esc(r.fichier)+'</b>';
+    if(r.erreur){ h+='<span class="pill">illisible : '+esc(r.erreur)+'</span></div></div>'; return; }
+    h+='<span class="pill acc">'+r.eleves.length+' photo'+(r.eleves.length>1?"s":"")+'</span>'+(r.sansNom?'<span class="pill">'+r.sansNom+' sans nom lu</span>':"")+
+       '<div class="spacer"></div><label class="small">vers la classe <select onchange="TROMBI_LUS['+ri+'].cible=this.value">'+
+       '<option value="">— ne pas ajouter, photos seulement —</option>'+
+       state.classes.map(function(c){ return '<option value="'+esc(c.id)+'"'+(c.id===r.cible?" selected":"")+'>'+esc(c.libelle)+'</option>'; }).join("")+
+       '</select></label></div>';
+    h+='<p class="hint">Vérifie les noms lus sous les photos (modifiables) ; décoche ce qui n\'est pas un élève. Les élèves absents de la liste seront ajoutés, les autres reconnus ; les photos sont gardées dans ce navigateur seulement.</p>';
+    h+='<div class="trombi-grid">';
+    r.eleves.forEach(function(e,ei){
+      h+='<div class="trombi-item"><img src="'+e.photo+'" alt=""><label><input type="checkbox" '+(e.nom?"checked":"")+' onchange="TROMBI_LUS['+ri+'].eleves['+ei+'].garde=this.checked"></label>'+
+         '<input value="'+esc((e.nom||"")+(e.prenom?" "+e.prenom:""))+'" placeholder="NOM Prénom" onchange="trombiRenomme('+ri+','+ei+',this.value)"></div>';
+      e.garde=!!e.nom;
+    });
+    h+='</div></div>';
+  });
+  h+='<div class="row" style="margin-top:6px"><button class="mini primary" onclick="validerTrombi()">Ajouter les élèves manquants et enregistrer les photos</button>'+
+     '<button class="mini ghost" onclick="TROMBI_LUS=[];document.getElementById(\'trombiApercu\').innerHTML=\'\'">Annuler</button></div>';
+  ap.innerHTML=h;
+}
+function trombiRenomme(ri,ei,v){ const np=Trombi.decouper(v); const e=TROMBI_LUS[ri].eleves[ei]; e.nom=np.nom; e.prenom=np.prenom; e.garde=!!e.nom; }
+function validerTrombi(){
+  const aSauver=[]; let ajoutes=0,reconnus=0,classesTouchees=0;
+  TROMBI_LUS.forEach(function(r){
+    if(r.erreur) return;
+    const c=r.cible?state.classes.find(function(x){ return x.id===r.cible; }):null;
+    const els=c?elevesOf(c):null;
+    const cle=function(e){ return eleveKey(e); };
+    const deja=els?new Set(els.map(cle)):null; let touche=false;
+    r.eleves.forEach(function(e){
+      if(!e.garde||!e.nom) return;
+      aSauver.push({key:eleveKey(e),photo:e.photo,source:r.classeFichier||r.fichier});
+      if(!els) return;
+      if(deja.has(cle(e))){ reconnus++; return; }
+      deja.add(cle(e)); els.push({nom:e.nom,prenom:e.prenom||"",groupe:"",moyenne:null,notes:[]}); ajoutes++; touche=true;
+    });
+    if(c){ rebuildGroupes(c); if(touche) classesTouchees++; }
+  });
+  if(ajoutes) save();
+  enregistrerPhotos(aSauver).then(function(n){
+    TROMBI_LUS=[]; renderEleves(); try{ renderComp(); }catch(e){}
+    const im=document.getElementById("importMsg");
+    if(im) im.innerHTML='<p class="hint">📷 '+n+' photo'+(n>1?"s":"")+' enregistrée'+(n>1?"s":"")+' dans ce navigateur · '+ajoutes+' élève'+(ajoutes>1?"s":"")+' ajouté'+(ajoutes>1?"s":"")+
+      (reconnus?' · '+reconnus+' déjà présent'+(reconnus>1?"s":"")+' (photo rattachée)':"")+(classesTouchees>1?' · '+classesTouchees+' classes complétées':"")+'.</p>';
+  }).catch(function(err){ alert("Les photos n'ont pas pu être enregistrées : "+(err&&err.message||err)); });
+}
+try{ chargerPhotos().then(function(n){ if(!n) return;
+  const pe=document.getElementById("p-eleves"); if(pe&&pe.innerHTML) try{ renderEleves(); }catch(e){}
+  const pc=document.getElementById("p-comp"); if(pc&&pc.innerHTML) try{ renderComp(); }catch(e){}
+}); }catch(e){}
+/* fin TROMBINOSCOPE_V70 */
 /* COLLER_LISTE_V68 : une liste collee (un eleve par ligne) → nom / prenom. Le nom = les mots en MAJUSCULES en tete de ligne ;
    s'il y a un separateur (tab ; ,) il prime ; sans majuscule ni separateur : premier mot = nom, le reste = prenom. */
 function parseListeEleves(txt){
@@ -2859,7 +2989,7 @@ function ncEvalCard(ev,c,eleves){
   h+='<th>Note</th></tr></thead><tbody>';
   eleves.slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr")).forEach(e=>{
     const ek=eleveKey(e); const lv=(ev.niveaux&&ev.niveaux[ek])||{};
-    h+='<tr><td class="el">'+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';
+    h+='<tr><td class="el">'+vignette(e,22)+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';/*TROMBINOSCOPE_V70*/
     crits.forEach(cr=>{ h+='<td><span class="nc-lv">';
       NIV_ORDER.forEach(n=>{ const on=lv[cr.id]===n; const col=NIV_META[n].col;
         h+='<button onclick="setNiveau(\''+ev.id+'\',\''+ek+'\',\''+cr.id+'\',\''+n+'\')" '+(on?('style="background:'+col+';color:#0c1622"'):'')+'>'+n+'</button>'; });
@@ -2922,7 +3052,7 @@ function ncClassProfile(c,eleves){
   h+='</tr></thead><tbody>';
   eleves.slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr")).forEach(e=>{
     const pr=profilEleve(c.id,eleveKey(e));
-    h+='<tr><td class="el">'+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';
+    h+='<tr><td class="el">'+vignette(e,22)+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';/*TROMBINOSCOPE_V70*/
     cats.forEach(k=>{ const fr=(pr[k]!=null)?pr[k]:null; h+='<td>'+(fr!=null?(pastille(fracToNiv(fr))+' <span class="small muted">'+Math.round(fr*100)+'%</span>'):'<span class="small muted">·</span>')+'</td>'; });
     h+='</tr>';
   });
