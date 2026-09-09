@@ -1820,6 +1820,7 @@ function renderSemaine(){
     +'<button class="mini" onclick="wkNav(-1)">‹ Semaine préc.</button>'
     +'<div class="wklabel"><span>'+esc(wl)+'</span><br><span class="muted small">'+esc(ws)+'</span></div>'
     +'<button class="mini" onclick="wkNav(1)">Semaine suiv. ›</button>'
+    +wkBoutonAujourdhui()/*AUJOURDHUI_V72*/
     +'<button class="mini ghost" onclick="wkReset()">↺ 1re semaine</button>'
     +'</div>'
     +'<p class="hint">Vue Semaine façon agenda — construite depuis <b>tes créneaux</b> (classes de l\'année sélectionnée) et le calendrier officiel Zone B. Grille proportionnelle (½h = hauteur fixe). TP de Seconde marqués Groupe 1/2 (modifiable dans « Classes »). Contenu tiré des cahiers de textes (séance datée, sinon chapitre en cours) ; « à programmer » = aucune séance datée.</p>'
@@ -1828,6 +1829,30 @@ function renderSemaine(){
 }
 function wkNav(d){wkEnsure();var n=WK_cur+d;if(n>=0&&n<WKV.weeks.length){WK_cur=n;renderSemaine();}}
 function wkReset(){wkEnsure();WK_cur=WKV.first;renderSemaine();}
+/* ===== AUJOURDHUI_V72 (09/09/2026) — Ma semaine : bouton « Aujourd'hui ».
+   Laurent : « Pour Ma semaine, un bouton Aujourd'hui pour afficher la semaine en cours, ou juste à venir si on est en week-end ».
+   La date vient de new Date(), que pcmajo_test.js décale déjà (?testdate=AAAA-MM-JJ) : rien de plus à faire pour le mode test.
+   Samedi et dimanche → le lundi qui suit ; sinon le lundi de la semaine en cours. Si ce lundi n'est pas dans l'année affichée
+   (par exemple 2025-2026 sélectionnée), le bouton reste visible mais inactif, et il le dit. */
+function wkLundiAujourdhui(){
+  var t=new Date(); var d=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  var wd=d.getDay(); if(wd===6) d.setDate(d.getDate()+2); else if(wd===0) d.setDate(d.getDate()+1);
+  d.setDate(d.getDate()-((d.getDay()+6)%7));
+  return iso(d);
+}
+function wkIndexAujourdhui(){
+  wkEnsure(); var L=wkLundiAujourdhui();
+  for(var i=0;i<WKV.weeks.length;i++){ if(WKV.weeks[i].lundi===L) return i; }
+  return -1;
+}
+function wkAujourdhui(){ var i=wkIndexAujourdhui(); if(i<0) return; WK_cur=i; renderSemaine(); }
+function wkBoutonAujourdhui(){
+  var i=wkIndexAujourdhui(); var ici=(i>=0&&i===WK_cur);
+  if(i<0) return '<button class="mini ghost" type="button" disabled title="Aujourd\'hui n\'est pas dans l\'année affichée" style="opacity:.55;cursor:not-allowed">📍 Aujourd\'hui</button>';
+  return '<button class="mini'+(ici?' ghost':'')+'" type="button" id="wkAuj" onclick="wkAujourdhui()" title="'+(ici?'C\'est la semaine affichée':'Revenir à la semaine en cours (ou à venir, le week-end)')+'">📍 Aujourd\'hui</button>';
+}
+/* fin AUJOURDHUI_V72 */
+
 
 /* ===================== MATÉRIEL (taxonomie, agrégation « à préparer / à compléter ») ===================== */
 const MAT_TAXO=[["verrerie","Verrerie"],["reactif","Réactif"],["capteur_exao","Capteur ExAO"],["instrument","Instrument"],["optique","Optique"],["mecanique","Mécanique"],["electronique","Électronique"],["informatique","Informatique"],["consommable","Consommable"],["modele_doc","Modèle / doc"],["securite","Sécurité"]];
