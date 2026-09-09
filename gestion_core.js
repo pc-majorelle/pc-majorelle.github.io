@@ -1294,7 +1294,7 @@ function effectifsGroupes(cls){
 function renderEleves(){
   const el=document.getElementById("p-eleves"); const c=activeClass();
   if(!c){ el.innerHTML="<div class='card'><p class='muted'>Aucune classe active.</p></div>"; return; }
-  const els=elevesOf(c); rebuildGroupes(c);
+  nettoyerNomsEleves();/*NOMS_TRI_GRILLES_V71*/ const els=elevesOf(c); rebuildGroupes(c);
   const evs=evalsOf(c); const sec=isSeconde(c); const eff=effectifsGroupes(c);
   let h="";
   h+=`<div class="card"><div class="row">
@@ -1333,7 +1333,7 @@ function renderEleves(){
        `</div><p class="hint">Les notes sont stockées par élève (suivi par compétences ultérieur : on stocke, on n'invente pas la notation).</p></div>`;
   }
 
-  h+=`<div class="card"><div class="row"><h3 style="margin:0">Liste des élèves</h3><div class="spacer"></div>${els.length>1?selecteurTriEleves():""}</div>`;/*TROMBINOSCOPE_V70 tri*/
+  h+=`<div class="card"><div class="row"><h3 style="margin:0">Liste des élèves</h3><div class="spacer"></div>${noteNettoyageNoms()}${els.length>1?selecteurTriEleves():""}</div>`;/*TROMBINOSCOPE_V70 tri*/
   if(!els.length){
     h+=`<p class="muted small">Aucun élève. Importez un relevé Skolengo ou ajoutez un nom à la main.</p>`;
   } else {
@@ -1518,7 +1518,7 @@ try{ chargerPhotos().then(function(n){ if(!n) return;
 }); }catch(e){}
 /* tri de la liste des élèves (Laurent, 09/09 : « le choix alphabétique ou groupe pour le tri ») — mémorisé dans ce navigateur */
 function triElevesMode(){ try{ return localStorage.getItem("pcmajo_tri_eleves")||"alpha"; }catch(e){ return "alpha"; } }
-function setTriEleves(v){ try{ localStorage.setItem("pcmajo_tri_eleves",v); }catch(e){} renderEleves(); }
+function setTriEleves(v){ try{ localStorage.setItem("pcmajo_tri_eleves",v); }catch(e){} try{ renderEleves(); }catch(e){} try{ renderComp(); }catch(e){} }/*NOMS_TRI_GRILLES_V71*/
 function triEleves(ordre){
   const mode=triElevesMode(); const nomDe=x=>((x.e.nom||"")+" "+(x.e.prenom||"")).trim();
   const cmp=(a,b)=>nomDe(a).localeCompare(nomDe(b),"fr");
@@ -1531,6 +1531,55 @@ function selecteurTriEleves(){
   return '<label class="small muted">Tri <select onchange="setTriEleves(this.value)">'+[["alpha","alphabétique"],["groupe","par groupe de TP"],["ajout","ordre d\'ajout"]]
     .map(o=>'<option value="'+o[0]+'"'+(o[0]===m?" selected":"")+'>'+o[1]+'</option>').join("")+'</select></label>';
 }
+/* NOMS_TRI_GRILLES_V71 (Laurent, 09/09 : « il faut corriger les noms d'élèves et enlever la classe qui ne doit pas être dans le nom ;
+   de plus laisse le choix de trier également les élèves selon le groupe ou ordre alphabétique pour les listes des grilles de compétences »).
+   1) Les élèves importés AVANT le complément 2 de TROMBINOSCOPE_V70 portent « (2NDGT3) » dans leur nom : au prochain affichage, tout
+      « (…) » est ôté du nom et du prénom de TOUS les élèves du carnet ; les photos (réserve locale, clé nom|prénom) et les niveaux des
+      grilles de compétences (clé nom|prénom) suivent le nouveau nom ; un élève qui existait déjà sous son nom propre absorbe son doublon
+      (le groupe de TP passe, les niveaux déjà saisis sous le nom propre priment). Une fois par ouverture de page, rien si rien à corriger.
+   2) Les grilles de compétences (TP, profil, grille imprimée) suivent le même tri que la liste des élèves — alphabétique / par groupe de
+      TP / ordre d'ajout —, sélecteur en tête de « Notation par compétences », mémorisé dans ce navigateur (pcmajo_tri_eleves). */
+const NOMS_NETTOYES={fait:false,n:0,fusions:0};
+function _sansParentheses(s){ return String(s||"").replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim(); }
+function nettoyerNomsEleves(){
+  if(NOMS_NETTOYES.fait||!state||!Array.isArray(state.classes)) return; NOMS_NETTOYES.fait=true;
+  let n=0,fusions=0; const renommages=[];   /* [ancienne clé, nouvelle clé] */
+  state.classes.forEach(function(c){
+    const els=elevesOf(c); if(!els.some(function(e){ return /\(/.test((e.nom||"")+(e.prenom||"")); })) return;
+    const cles=new Set(els.filter(function(e){ return !/\(/.test((e.nom||"")+(e.prenom||"")); }).map(eleveKey)); const garder=[];
+    els.forEach(function(e){
+      const nom=_sansParentheses(e.nom), prenom=_sansParentheses(e.prenom);
+      if(nom===(e.nom||"")&&prenom===(e.prenom||"")){ garder.push(e); return; }
+      const avant=eleveKey(e); e.nom=nom; e.prenom=prenom; const apres=eleveKey(e); n++; renommages.push([avant,apres]);
+      if(cles.has(apres)){   /* doublon : l'élève existait déjà sous son nom propre → l'existant reste, il reçoit le groupe de TP s'il n'en avait pas */
+        const ex=els.find(function(x){ return x!==e&&eleveKey(x)===apres; });
+        if(ex&&!ex.groupe&&e.groupe) ex.groupe=e.groupe; fusions++; return;
+      }
+      cles.add(apres); garder.push(e);
+    });
+    if(garder.length!==els.length){ els.length=0; garder.forEach(function(x){ els.push(x); }); }
+    try{ rebuildGroupes(c); }catch(e){}
+    evalCompOf(c.id).forEach(function(ev){ if(!ev.niveaux) return;
+      renommages.forEach(function(r){ if(ev.niveaux[r[0]]!=null){ if(ev.niveaux[r[1]]==null) ev.niveaux[r[1]]=ev.niveaux[r[0]]; delete ev.niveaux[r[0]]; } }); });
+  });
+  if(!n) return;
+  NOMS_NETTOYES.n=n; NOMS_NETTOYES.fusions=fusions; save();
+  _renommerPhotos(renommages).then(function(){ try{ renderEleves(); }catch(e){} try{ renderComp(); }catch(e){} });
+}
+function _renommerPhotos(renommages){
+  return _photosDb().then(function(db){ return new Promise(function(res){
+    const tx=db.transaction("photos","readwrite"), st=tx.objectStore("photos");
+    renommages.forEach(function(r){ const g=st.get(r[0]); g.onsuccess=function(){ if(g.result){ const d=st.get(r[1]); d.onsuccess=function(){ if(!d.result) st.put(g.result,r[1]); st.delete(r[0]); }; } }; });
+    tx.oncomplete=res; tx.onerror=res; tx.onabort=res;
+  }); }).then(function(){ PHOTOS.cache={}; return chargerPhotos(); }).catch(function(){});
+}
+function noteNettoyageNoms(){
+  if(!NOMS_NETTOYES.n) return "";
+  return '<span class="pill" title="le code de classe entre parenthèses a été ôté des noms">'+NOMS_NETTOYES.n+' nom'+(NOMS_NETTOYES.n>1?"s":"")+' corrigé'+(NOMS_NETTOYES.n>1?"s":"")+
+         (NOMS_NETTOYES.fusions?' · '+NOMS_NETTOYES.fusions+' doublon'+(NOMS_NETTOYES.fusions>1?"s":"")+' fusionné'+(NOMS_NETTOYES.fusions>1?"s":""):"")+'</span> ';
+}
+function triListeEleves(eleves){ return triEleves(eleves.map(function(e,i){ return {e:e,i:i}; })).map(function(x){ return x.e; }); }
+/* fin NOMS_TRI_GRILLES_V71 */
 /* fin TROMBINOSCOPE_V70 */
 /* COLLER_LISTE_V68 : une liste collee (un eleve par ligne) → nom / prenom. Le nom = les mots en MAJUSCULES en tete de ligne ;
    s'il y a un separateur (tab ; ,) il prime ; sans majuscule ni separateur : premier mot = nom, le reste = prenom. */
@@ -2950,7 +2999,7 @@ function setBareme(k,v){ const b=bareme(); const x=parseFloat(String(v).replace(
 function renderComp(){
   const el=document.getElementById("p-comp"); const c=activeClass();
   if(!c){ el.innerHTML="<div class='card muted'>Aucune classe.</div>"; return; }
-  const eleves=elevesOf(c);
+  nettoyerNomsEleves();/*NOMS_TRI_GRILLES_V71*/ const eleves=elevesOf(c);
   let h='<div class="noprint">';
   h+='<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start">'+
      '<div><h3 style="margin:0">Notation par compétences — '+esc(c.libelle)+'</h3>'+
@@ -2963,7 +3012,7 @@ function renderComp(){
      '</div></div>';
   h+='<div class="nc-legend" style="margin-top:8px">';
   NIV_ORDER.forEach(k=>{ const m=NIV_META[k]; h+='<span>'+m.dot+' <b>'+k+'</b> = '+m.label+'</span>'; });
-  h+='</div>'+ncBaremeEditor()+'</div>';
+  h+='</div>'+(eleves.length>1?'<div class="row" style="margin-top:6px">'+selecteurTriEleves()+'<span class="small muted">— le même tri que la liste des élèves, pour toutes les grilles (écran et impression)</span></div>':'')+ncBaremeEditor()+'</div>';/*NOMS_TRI_GRILLES_V71*/
   if(!eleves.length){
     h+='<div class="card"><p class="hint">Aucun élève dans cette classe. Importez le roster (onglet <b>Élèves &amp; groupes</b>) — ou il sera ajouté à l\'import d\'une grille remplie sur mobile.</p></div>';
   }
@@ -3013,7 +3062,7 @@ function ncEvalCard(ev,c,eleves){
   h+='<div style="overflow-x:auto"><table class="nc-grid"><thead><tr><th class="el">Élève</th>';
   crits.forEach((cr,i)=>{ h+='<th title="'+esc(cr.label)+'"><span class="nc-chd" style="background:'+(CATCOL[cr.comp]||"#888")+'">C'+(i+1)+'</span><br><span class="small muted">'+catDisp(cr.comp)+' ×'+(+cr.coeff)+'</span></th>'; });
   h+='<th>Note</th></tr></thead><tbody>';
-  eleves.slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr")).forEach(e=>{
+  triListeEleves(eleves).forEach(e=>{/*NOMS_TRI_GRILLES_V71*/
     const ek=eleveKey(e); const lv=(ev.niveaux&&ev.niveaux[ek])||{};
     h+='<tr><td class="el">'+vignette(e,22)+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';/*TROMBINOSCOPE_V70*/
     crits.forEach(cr=>{ h+='<td><span class="nc-lv">';
@@ -3076,7 +3125,7 @@ function ncClassProfile(c,eleves){
   h+='<div style="overflow-x:auto"><table class="nc-grid"><thead><tr><th class="el">Élève</th>';
   cats.forEach(k=>{ h+='<th><span class="nc-chd" style="background:'+CATCOL[k]+'">'+catDisp(k)+'</span></th>'; });
   h+='</tr></thead><tbody>';
-  eleves.slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr")).forEach(e=>{
+  triListeEleves(eleves).forEach(e=>{/*NOMS_TRI_GRILLES_V71*/
     const pr=profilEleve(c.id,eleveKey(e));
     h+='<tr><td class="el">'+vignette(e,22)+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';/*TROMBINOSCOPE_V70*/
     cats.forEach(k=>{ const fr=(pr[k]!=null)?pr[k]:null; h+='<td>'+(fr!=null?(pastille(fracToNiv(fr))+' <span class="small muted">'+Math.round(fr*100)+'%</span>'):'<span class="small muted">·</span>')+'</td>'; });
@@ -3119,7 +3168,7 @@ function printEvalGrid(evId){
   crits.forEach((cr,i)=>{ h+='<b>C'+(i+1)+'</b> ('+catDisp(cr.comp)+', ×'+(+cr.coeff)+') '+esc(cr.label)+' &nbsp; '; });
   h+='</div><table class="nc-print-grid"><thead><tr><th class="el">Élève</th>';
   crits.forEach((cr,i)=>{ h+='<th>C'+(i+1)+'</th>'; }); h+='<th>Note /20</th></tr></thead><tbody>';
-  eleves.slice().sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,"fr")).forEach(e=>{
+  triListeEleves(eleves).forEach(e=>{/*NOMS_TRI_GRILLES_V71*/
     const ek=eleveKey(e); const lv=(ev.niveaux&&ev.niveaux[ek])||{};
     h+='<tr><td class="el">'+esc((e.nom||"")+" "+(e.prenom||""))+'</td>';
     crits.forEach(cr=>{ h+='<td>'; NIV_ORDER.forEach(n=>{ h+='<span class="nc-print-cell'+(lv[cr.id]===n?" on":"")+'">'+n+'</span>'; }); h+='</td>'; });
