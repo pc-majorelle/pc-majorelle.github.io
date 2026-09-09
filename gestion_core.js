@@ -1421,7 +1421,11 @@ function vignette(e,t){
 }
 /* clé canonique d'une classe, côté fichier Pronote (2ndgt3, 1phchgr1, tphchgr3, tg5, 1sti2d, tsti2d, 1nsinfgr1)
    comme côté carnet (« 2de GT3 », « 1PH-CHGR1 », « TPH-CHGR3 », « Tale ens.sci. TG5 », « 1re STI2D », « 1NSINFGR1 ») */
+/* trombinoscope PAR GROUPE de TP (Seconde) : 2_3p.1 / 2_3p.2 = 2de GT3, groupes G1 / G2 (Laurent, 09/09 : « j'ai des trombinoscopes
+   par groupe donc vers la classe, on peut proposer lorsqu'il y a des groupes d'entrer les groupes ») */
+function groupeDuCodeTrombi(s){ const m=/p\.?([12])$/i.exec(String(s||"").trim()); return m?"G"+m[1]:""; }
 function cleClasseTrombi(s){
+  const g=/^2[_-]?(\d+)p\.?[12]$/i.exec(String(s||"").trim()); if(g) return "2GT"+g[1];
   s=String(s||"").toLowerCase().replace(/ens\.?\s*sci\.?/g,"").replace(/\bseconde\b|2nde|2nd|2de/g,"2").replace(/premi[eè]re|1[eè]re/g,"1")
     .replace(/terminale|tale|tle/g,"t").replace(/[^a-z0-9]/g,"");
   let m;
@@ -1446,7 +1450,7 @@ function onTrombiFiles(files){
   let ch=Promise.resolve();
   liste.forEach(function(f,i){
     ch=ch.then(function(){ return Trombi.lire(f,{sur:function(pct,txt){ const e=document.getElementById("trombiEtat"); if(e) e.textContent=f.name+" — "+txt+" ("+(i+1)+"/"+liste.length+")"; }}); })
-        .then(function(r){ r.cible=(classePourTrombi(r.classeFichier)||activeClass()||{}).id||""; TROMBI_LUS.push(r); })
+        .then(function(r){ r.cible=(classePourTrombi(r.classeFichier)||activeClass()||{}).id||""; r.groupe=groupeDuCodeTrombi(r.classeFichier); TROMBI_LUS.push(r); })
         .catch(function(err){ TROMBI_LUS.push({fichier:f.name,classeFichier:"",eleves:[],erreur:String(err&&err.message||err)}); });
   });
   ch.then(renderTrombiApercu);
@@ -1458,9 +1462,12 @@ function renderTrombiApercu(){
     h+='<div class="card trombi-fichier"><div class="row"><b>'+esc(r.fichier)+'</b>';
     if(r.erreur){ h+='<span class="pill">illisible : '+esc(r.erreur)+'</span></div></div>'; return; }
     h+='<span class="pill acc">'+r.eleves.length+' photo'+(r.eleves.length>1?"s":"")+'</span>'+(r.sansNom?'<span class="pill">'+r.sansNom+' sans nom lu</span>':"")+
-       '<div class="spacer"></div><label class="small">vers la classe <select onchange="TROMBI_LUS['+ri+'].cible=this.value">'+
+       '<div class="spacer"></div><label class="small">vers la classe <select onchange="TROMBI_LUS['+ri+'].cible=this.value;trombiMajGroupe('+ri+')">'+
        '<option value="">— ne pas ajouter, photos seulement —</option>'+
        state.classes.map(function(c){ return '<option value="'+esc(c.id)+'"'+(c.id===r.cible?" selected":"")+'>'+esc(c.libelle)+'</option>'; }).join("")+
+       '</select></label>'+
+       '<label class="small" id="trombiGrp'+ri+'"'+(trombiClasseDedoublee(r.cible)?'':' style="display:none"')+'> groupe TP <select onchange="TROMBI_LUS['+ri+'].groupe=this.value">'+
+       ['','G1','G2'].map(function(g){ return '<option value="'+g+'"'+(g===(r.groupe||"")?" selected":"")+'>'+(g||"— sans changer —")+'</option>'; }).join("")+
        '</select></label></div>';
     h+='<p class="hint">Vérifie les noms lus sous les photos (modifiables) ; décoche ce qui n\'est pas un élève. Les élèves absents de la liste seront ajoutés, les autres reconnus ; les photos sont gardées dans ce navigateur seulement.</p>';
     h+='<div class="trombi-grid">';
@@ -1475,6 +1482,8 @@ function renderTrombiApercu(){
      '<button class="mini ghost" onclick="TROMBI_LUS=[];document.getElementById(\'trombiApercu\').innerHTML=\'\'">Annuler</button></div>';
   ap.innerHTML=h;
 }
+function trombiClasseDedoublee(cid){ const c=state.classes.find(function(x){ return x.id===cid; }); try{ return !!(c&&isSeconde(c)); }catch(e){ return false; } }
+function trombiMajGroupe(ri){ const l=document.getElementById("trombiGrp"+ri); if(l) l.style.display=trombiClasseDedoublee(TROMBI_LUS[ri].cible)?"":"none"; }
 function trombiRenomme(ri,ei,v){ const np=Trombi.decouper(v); const e=TROMBI_LUS[ri].eleves[ei]; e.nom=np.nom; e.prenom=np.prenom; e.garde=!!e.nom; }
 function validerTrombi(){
   const aSauver=[]; let ajoutes=0,reconnus=0,classesTouchees=0;
@@ -1484,16 +1493,18 @@ function validerTrombi(){
     const els=c?elevesOf(c):null;
     const cle=function(e){ return eleveKey(e); };
     const deja=els?new Set(els.map(cle)):null; let touche=false;
+    const grp=(c&&r.groupe&&trombiClasseDedoublee(c.id))?r.groupe:"";
     r.eleves.forEach(function(e){
       if(!e.garde||!e.nom) return;
       aSauver.push({key:eleveKey(e),photo:e.photo,source:r.classeFichier||r.fichier});
       if(!els) return;
-      if(deja.has(cle(e))){ reconnus++; return; }
-      deja.add(cle(e)); els.push({nom:e.nom,prenom:e.prenom||"",groupe:"",moyenne:null,notes:[]}); ajoutes++; touche=true;
+      const k=cle(e);
+      if(deja.has(k)){ reconnus++; if(grp){ const ex=els.find(function(x){ return cle(x)===k; }); if(ex&&ex.groupe!==grp){ ex.groupe=grp; touche=true; } } return; }
+      deja.add(k); els.push({nom:e.nom,prenom:e.prenom||"",groupe:grp,moyenne:null,notes:[]}); ajoutes++; touche=true;
     });
     if(c){ rebuildGroupes(c); if(touche) classesTouchees++; }
   });
-  if(ajoutes) save();
+  if(ajoutes||classesTouchees) save();
   enregistrerPhotos(aSauver).then(function(n){
     TROMBI_LUS=[]; renderEleves(); try{ renderComp(); }catch(e){}
     const im=document.getElementById("importMsg");
