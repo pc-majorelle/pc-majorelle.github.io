@@ -217,10 +217,10 @@
   #arbreOverlay .lgd{width:13px;height:13px;border-radius:4px}
   #lg-pc{background:#4E86B5}#lg-ma{background:#CC9544}
   #arbreOverlay .arbre-body{display:flex;gap:16px;align-items:flex-start;flex:1;min-height:0}
-  #arbreOverlay .arbre-fiche{flex:0 0 320px;max-width:340px;overflow:auto;max-height:78vh;
+  #arbreOverlay .arbre-fiche{flex:1 1 0;min-width:360px;max-width:none;overflow:auto;max-height:78vh; /*FICHE_LARGE_V69*/
     background:var(--carte);border:1px solid var(--trait);border-radius:12px;padding:12px 14px}
-  #arbreOverlay #host{flex:1;overflow:auto;max-height:80vh}
-  #arbreOverlay #host svg{width:1060px;max-width:1060px;height:auto;display:block}
+  #arbreOverlay #host{flex:0 0 44%;max-width:640px;overflow:auto;max-height:80vh} /*FICHE_LARGE_V69*/
+  #arbreOverlay #host svg{width:100%;max-width:100%;height:auto;display:block}
   #arbreOverlay .empty{margin-top:30px;padding:22px;border:1px dashed var(--trait);border-radius:12px;color:var(--texteDoux);font-size:14px;line-height:1.6}
   #arbreOverlay .bub{cursor:pointer}#arbreOverlay .bub rect{transition:fill .3s}
   #arbreOverlay .bub:hover rect{stroke:var(--texte);stroke-width:1.4}
@@ -682,7 +682,7 @@ function renderArbre(){
   const levelsUsed=Object.keys(byLev).sort((a,b)=>NIV.findIndex(x=>x[0]===a)-NIV.findIndex(x=>x[0]===b));
   const ranksUsed=[...new Set(visible.map(id=>rank[id]))].sort((a,b)=>a-b);
 
-  const W=1060,padTop=20,bw=148,dx=30,dy=34,grpGap=36,labelH=24,headH=16;
+  const W=640,padTop=20,bw=148,dx=30,dy=34,grpGap=36,labelH=24,headH=16; /*FICHE_LARGE_V69 : 1060 avant*/
   const pos={};const bandY={};const bandGroups={};let cursor=padTop;
   levelsUsed.forEach((lv)=>{
     const gmap={};
