@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609112315"></script>
+<script src="pcmajo_test.js?v=202609121202"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -234,6 +234,25 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 #secEditeur .ed-cap.on{background:var(--accent);color:var(--onaccent,#fff);border-color:var(--accent)}
 #secEditeur .ed-cap .n{opacity:.75;margin-left:3px;font-size:10px}
 #secEditeur .ed-cap .x{margin-left:4px;font-weight:700}
+/* CAPS_AUTRE_V76 : une capacite empruntee a un autre chapitre. Couleur distincte —
+   elle dit « celle-ci n'est pas du chapitre courant », sans rien cacher. */
+#secEditeur .ed-cap.ed-cap-autre{background:#6d4c41;border-color:#6d4c41;color:#fff}
+#secEditeur .ed-cap-og{display:inline-flex;align-items:center;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #6d4c41;border-radius:11px;padding:1px 7px;font-size:11px;color:#6d4c41;background:transparent;font-weight:600;margin-left:3px}
+#secEditeur .ed-cap-autrebtn{border:1px dashed var(--line);border-radius:11px;padding:1px 8px;font-size:11px;cursor:pointer;background:transparent;color:var(--ink-soft)}
+#secEditeur .ed-cap-autrebtn:hover{border-color:#6d4c41;color:#6d4c41}
+#secEditeur .ed-arbre{flex:1 0 100%;margin-top:5px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:var(--panel)}
+#secEditeur .ed-arbre details{margin:2px 0}
+#secEditeur .ed-arbre summary{cursor:pointer;font-size:11.5px;font-weight:600}
+#secEditeur .ed-arbre .ed-arbre-c summary{font-weight:500;padding-left:10px}
+#secEditeur .ed-arbre .ed-arbre-c>div{display:flex;flex-wrap:wrap;gap:3px;padding:3px 0 5px 18px}
+#secEditeur .ed-arbre .ed-arbre-cap{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--line);border-radius:11px;padding:1px 7px;font-size:11px;cursor:pointer}
+#secEditeur .ed-arbre .ed-arbre-cap input{margin:0}
+#secEditeur .ed-arbre .ed-arbre-cap.deja{opacity:.5;border-style:dashed;cursor:default}
+#secEditeur .ed-arbre .n{opacity:.6;font-size:10px;margin-left:3px}
+#secEditeur .ed-arbre-foot{display:flex;gap:5px;margin-top:6px}
+#secEditeur .ed-arbre-foot button{border:1px solid var(--line);border-radius:6px;padding:2px 9px;font-size:11.5px;cursor:pointer;background:var(--panel)}
+#secEditeur .ed-arbre-foot button[data-arbreadd]{background:#6d4c41;border-color:#6d4c41;color:#fff;font-weight:600}
+#secEditeur .ed-arbre-vide{font-size:11px;color:var(--ink-soft)}
 #secEditeur .ed-ref{margin:2px 8px 8px;font-size:11.5px}
 #secEditeur .ed-ref .rc{display:inline-block;border:1px solid var(--line);border-radius:11px;padding:1px 7px;margin:2px 2px 0;font-size:11px}
 #secEditeur .ed-ref .rc.z{border-color:#ef6c00;color:#ef6c00}
@@ -250,9 +269,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609112315"></script>
-<script src="store.js?v=202609112315"></script>
-<script src="pcmajo_ui.js?v=202609112315"></script>
+<script src="classes_annee.js?v=202609121202"></script>
+<script src="store.js?v=202609121202"></script>
+<script src="pcmajo_ui.js?v=202609121202"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -2059,6 +2078,84 @@ let TREE, CAPS, THEMEVAR, MI_THEME,
     CAHIER, REAL_CHAP_META, MI_PAR_CHAPITRE, MI_INTRO_CHAP, MI_CAPS, TOTAL_CAPS;
 
 function themeColor(code){ return (THEMEVAR && THEMEVAR[code]) || "--t-tampon"; }
+
+/* ===== CAPS_AUTRE_V76 =======================================================
+   Une seance peut pointer une capacite d'un AUTRE chapitre. Trois pieces :
+   (1) de quel chapitre vient une capacite, (2) le compte GLOBAL d'une capacite
+   dans toute l'annee, (3) l'arborescence a cocher. */
+/* Le NOM d'un chapitre, meme cascade que l'en-tete de groupe : un code nu (« E.EC »)
+   ne dit rien. `level` est la variable de niveau de la page (let level, ligne ~2055). */
+function _nomChap_V76(ch){
+  if(!ch) return "";
+  var t=ch.titre||"";
+  if(!t){ try{ t=_titreSection_V63(level, ch.id)||""; }catch(e){} }
+  if(!t) t=ch.themeLabel||"";
+  return t;
+}
+function _chapDeCap_V76(ref){
+  try{
+    var L=CHAPITRES||[];
+    for(var i=0;i<L.length;i++){ if((L[i].caps||[]).indexOf(ref)>=0) return L[i]; }
+  }catch(e){}
+  return null;
+}
+/* Le compte ne regarde plus le seul groupe : une capacite compte pour son chapitre
+   d'origine OU QU'ELLE SOIT pointee — sinon pointer un DS ailleurs ferait chuter le
+   compteur du chapitre qu'il evalue, ce qui est exactement l'inverse du but. */
+function _cntGlobal_V76(){
+  var cnt={};
+  try{
+    unitesOrdonnees().forEach(function(u){
+      planSeances(u.id).forEach(function(s){
+        (s.caps||[]).forEach(function(r){ cnt[r]=(cnt[r]||0)+1; });
+      });
+    });
+  }catch(e){}
+  return cnt;
+}
+function _arbreCaps_V76(s, refs){
+  var h='<div class="ed-arbre" data-arbre="'+esc_V33(s.id)+'">'
+       +'<span class="ed-hint">Capacités d\'un autre chapitre — cocher, puis « Ajouter ».</span>';
+  var parTheme={}, ordre=[];
+  try{
+    (CHAPITRES||[]).forEach(function(ch){
+      if(!parTheme[ch.theme]){ parTheme[ch.theme]=[]; ordre.push(ch.theme); }
+      parTheme[ch.theme].push(ch);
+    });
+  }catch(e){}
+  var total=0;
+  ordre.forEach(function(tc){
+    var chs=parTheme[tc], dedans="";
+    chs.forEach(function(ch){
+      /* Un chapitre dont TOUTES les capacites sont deja posees reste VISIBLE, ses
+         capacites cochees et grisees. Le masquer donnait a Laurent l'impression que
+         « le chapitre disparait de ma liste des chapitres » (12/09) : rien n'etait
+         perdu, mais un chapitre qui s'evanouit ressemble a une perte. */
+      var offerts=(ch.caps||[]).filter(function(r){ return refs.indexOf(r)<0; });
+      if(!offerts.length) return;
+      var dispo=offerts.filter(function(r){ return (s.caps||[]).indexOf(r)<0; });
+      total+=dispo.length;
+      var _nom=_nomChap_V76(ch);
+      dedans+='<details class="ed-arbre-c"><summary>'+esc_V33(ch.code)
+            +(_nom?(' · '+esc_V33(_nom)):'')
+            +'<span class="n"> — '+(dispo.length? (dispo.length+" à ajouter") : "toutes déjà sur cette séance")+'</span></summary><div>';
+      offerts.forEach(function(r){
+        var deja=(s.caps||[]).indexOf(r)>=0;
+        dedans+='<label class="ed-arbre-cap'+(deja?" deja":"")+'" title="'+esc_V33(capTip_V33(r)+(deja?" — déjà sur cette séance":""))+'">'
+             +'<input type="checkbox" data-arbreref="'+esc_V33(r)+'"'+(deja?' checked disabled':'')+'>'+esc_V33(capKw_V33(r))+'</label>';
+      });
+      dedans+='</div></details>';
+    });
+    if(!dedans) return;
+    h+='<details class="ed-arbre-t"><summary style="color:var('+themeColor(tc)+')">'
+      +esc_V33((chs[0]&&chs[0].themeLabel)||tc)+'</summary>'+dedans+'</details>';
+  });
+  if(!total) h+='<div class="ed-arbre-vide">Toutes les capacités des autres chapitres sont déjà sur cette séance.</div>';
+  h+='<div class="ed-arbre-foot"><button data-arbreadd="'+esc_V33(s.id)+'">Ajouter les capacités cochées</button>'
+    +'<button data-arbreclose="'+esc_V33(s.id)+'">Fermer</button></div></div>';
+  return h;
+}
+/* ===== fin CAPS_AUTRE_V76 ================================================== */
 function hasCahier(){ return !!(CAHIER && CAHIER.chapitres && CAHIER.chapitres.length); }
 
 // Injecte une seule fois les couleurs (hex) des niveaux non-STI2D en variables CSS :root.
@@ -4820,6 +4917,7 @@ function renderEditeur(){
     board.innerHTML='<div class="ed-stat bad">Aucun créneau : réglez « 🗓 Mon EDT » pour cette classe.</div>';
     return;
   }
+  var _CNT_V76=_cntGlobal_V76();   /* CAPS_AUTRE_V76 : calcule UNE fois par rendu */
   units.forEach(function(u){
     var ch=u.chap;
     /* GROUPE_LIBRE_V58 : ce garde ignorait l'unite EN ENTIER, sans rien dire. Il n'a
@@ -4834,7 +4932,7 @@ function renderEditeur(){
     }
     var refs=(u.kind==="suite")?(u.caps||[]):(ch.caps||[]);
     var ses=planSeances(u.id);
-    var cnt={}; ses.forEach(function(s){ (s.caps||[]).forEach(function(r){ cnt[r]=(cnt[r]||0)+1; }); });
+    var cnt=_CNT_V76||{};   /* CAPS_AUTRE_V76 : compte GLOBAL, plus le seul groupe */
     var placees=refs.filter(function(r){ return cnt[r]>0; }).length;
     var d1=null,d2=null; ses.forEach(function(s){ if(s._date){ if(!d1)d1=s._date; d2=s._date; } });
     var seHTML="";
@@ -4849,6 +4947,32 @@ function renderEditeur(){
                +esc_V33(capKw_V33(rf))+(n>0?'<span class="n">×'+n+'</span>':'')+(on?'<span class="x">✕</span>':'')+'</span>';
         });
         if(!refs.length) caps+='<span class="ed-hint">(aucune capacité rattachée)</span>';
+        /* CAPS_AUTRE_V76 : les capacites EMPRUNTEES a un autre chapitre. Meme ligne, deja
+           cochees, meme compteur, couleur distincte, et le ✕ existant les retire une a une.
+           Elles sont GROUPEES par chapitre d'origine, dont le CODE ET LE NOM sont ecrits UNE
+           fois : un code seul (« E.EC ») ne dit rien, et un titre repete sur chaque pastille
+           noierait la ligne. Le nom suit la meme cascade que l'en-tete de groupe. */
+        var _autres_V76=(s.caps||[]).filter(function(rf){ return refs.indexOf(rf)<0; });
+        if(_autres_V76.length){
+          var _parOg={}, _ordreOg=[];
+          _autres_V76.forEach(function(rf){
+            var og=_chapDeCap_V76(rf), k=og?og.id:"?";
+            if(!_parOg[k]){ _parOg[k]={og:og, refs:[]}; _ordreOg.push(k); }
+            _parOg[k].refs.push(rf);
+          });
+          _ordreOg.forEach(function(k){
+            var G=_parOg[k], og=G.og, nom=_nomChap_V76(og);
+            var etiq=(og?og.code:"?")+(nom?(" · "+nom):"");
+            caps+='<span class="ed-cap-og" title="'+esc_V33("Capacités de "+etiq)+'">↪ '+esc_V33(etiq)+'</span>';
+            G.refs.forEach(function(rf){
+              var n=cnt[rf]||0;
+              caps+='<span class="ed-cap on ed-cap-autre" data-se="'+esc_V33(s.id)+'" data-ref="'+esc_V33(rf)+'" title="'+esc_V33(etiq+" · "+capTip_V33(rf))+'">'
+                   +esc_V33(capKw_V33(rf))+(n>0?'<span class="n">×'+n+'</span>':'')+'<span class="x">✕</span></span>';
+            });
+          });
+        }
+        caps+='<button class="ed-cap-autrebtn" data-autre="'+esc_V33(s.id)+'">'+(s.autreOpen?'▾ autre':'＋ autre')+'</button>';
+        if(s.autreOpen) caps+=_arbreCaps_V76(s, refs);
         caps+='</div>';
       }
       seHTML+='<li class="ed-se" data-id="'+esc_V33(s.id)+'"><div class="ed-setop">'
@@ -4919,6 +5043,25 @@ function edWire_V33(board){
     var f=planFindSe(c.getAttribute("data-se")); if(!f) return;
     var rf=c.getAttribute("data-ref"), a=(f.se.caps=f.se.caps||[]), i=a.indexOf(rf);
     if(i>=0) a.splice(i,1); else a.push(rf);
+    commit(); }; });
+  /* CAPS_AUTRE_V76 : ouvrir l'arborescence, ajouter la selection, refermer.
+     Pas de prompt() ni de modale : une boite qui bloque la page ne se teste pas au banc. */
+  board.querySelectorAll("[data-autre]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-autre")); if(!f) return;
+    f.se.autreOpen=!f.se.autreOpen; sauverEtat(); renderEditeur(); }; });
+  board.querySelectorAll("[data-arbreclose]").forEach(function(b){ b.onclick=function(){
+    var f=planFindSe(b.getAttribute("data-arbreclose")); if(!f) return;
+    f.se.autreOpen=false; sauverEtat(); renderEditeur(); }; });
+  board.querySelectorAll("[data-arbreadd]").forEach(function(b){ b.onclick=function(){
+    var id=b.getAttribute("data-arbreadd"), f=planFindSe(id); if(!f) return;
+    var box=board.querySelector('[data-arbre="'+id+'"]'); if(!box) return;
+    var a=(f.se.caps=f.se.caps||[]);
+    [].forEach.call(box.querySelectorAll("input[data-arbreref]"), function(inp){
+      if(!inp.checked) return;
+      var r=inp.getAttribute("data-arbreref");
+      if(a.indexOf(r)<0) a.push(r);
+    });
+    f.se.autreOpen=false;
     commit(); }; });
   board.querySelectorAll("[data-add]").forEach(function(b){ b.onclick=function(){
     var uid=b.getAttribute("data-add"), tk=b.getAttribute("data-t");
@@ -5221,6 +5364,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609112315"></script>
+<script src="pcmajo_fond.js?v=202609121202"></script>
 </body>
 </html>
