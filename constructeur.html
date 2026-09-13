@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609131552"></script>
+<script src="pcmajo_test.js?v=202609131844"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -269,9 +269,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609131552"></script>
-<script src="store.js?v=202609131552"></script>
-<script src="pcmajo_ui.js?v=202609131552"></script>
+<script src="classes_annee.js?v=202609131844"></script>
+<script src="store.js?v=202609131844"></script>
+<script src="pcmajo_ui.js?v=202609131844"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -372,7 +372,7 @@ details.seq-int>summary::-webkit-details-marker{display:none}
         <option value="2026-2027">2026-2027</option>
       </select>
     </label>
-    <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="true" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button><button type="button" id="modeEditeur" aria-pressed="false" title="Vue édition : la progression séance par séance (créneaux réels, durées, capacités)">📝 Séances</button></span>
+    <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="false" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button><button type="button" id="modeEditeur" aria-pressed="true" title="Vue édition : la progression séance par séance (créneaux réels, durées, capacités)">📝 Séances</button></span>
     <button id="resetBtn" title="Revenir à la progression stricte auto-générée">↺ Réinitialiser</button>
     <button id="exportBoKeysBtn" title="Exporter les capacités datées (boKeys) pour le gestionnaire de classe">⬇ Exporter les boKeys datés</button><span id="expInfo" class="small" style="margin-left:6px;opacity:.75"></span>
   </header>
@@ -5331,7 +5331,7 @@ function bootEditeur_V33(){
       var h=document.getElementById("edEdtPanel"); if(!h) return;
       var vis=(h.style.display!=="none");
       h.style.display=vis?"none":""; if(!vis) renderEdtPanel_V33(); });
-    var m=null; try{ m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode"); }catch(e){}
+    var m=null; try{ m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"editeur"; }catch(e){}   /*MODE_SEANCES_V80*/
     if(m==="editeur") setMode("editeur");
   }catch(e){ try{ console.error("[EDITEUR_SEANCES_V33]",e); }catch(_){} }
 }
@@ -5339,6 +5339,10 @@ function bootEditeur_V33(){
 
 function boot(){
   try{
+    /*MODE_SEANCES_V80 : bascule UNIQUE de la memoire existante vers le mode Seances.
+       Le repli en dur ne sert que si rien n'est memorise ; or "frise" l'etait deja.
+       On ne le refait jamais : ensuite la memoire du mode reprend son cours normal. */
+    try{ if(!localStorage.getItem("mode_seances_v80")){ localStorage.setItem("mode_seances_v80","1"); localStorage.setItem("constructeur_mode","editeur"); } }catch(e){}
     injectLevelColors();
     const lsel=document.getElementById("lvlSel"); if(lsel) lsel.value=level;
     const sel=document.getElementById("anneeSel"); if(sel) sel.value=STATE.annee;
@@ -5348,7 +5352,7 @@ function boot(){
     initCursorRange();
     setupTimelineDrag();
     attacherEcouteurs();
-    /*UNIFY_I1_V30*/ try{ var _m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"frise"; setMode(_m);
+    /*UNIFY_I1_V30*/ try{ var _m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"editeur"; setMode(_m);   /*MODE_SEANCES_V80*/
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
@@ -5364,6 +5368,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609131552"></script>
+<script src="pcmajo_fond.js?v=202609131844"></script>
 </body>
 </html>
