@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609131844"></script>
+<script src="pcmajo_test.js?v=202609132300"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -269,9 +269,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609131844"></script>
-<script src="store.js?v=202609131844"></script>
-<script src="pcmajo_ui.js?v=202609131844"></script>
+<script src="classes_annee.js?v=202609132300"></script>
+<script src="store.js?v=202609132300"></script>
+<script src="pcmajo_ui.js?v=202609132300"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -3831,7 +3831,10 @@ function initCursorRange(){
 }
 // helper DÉFENSIF : attache un écouteur seulement si l'élément existe (ne casse jamais l'init)
 function on(id,evt,fn){ const el=document.getElementById(id); if(el) el.addEventListener(evt,fn); }
-/*UNIFY_I1_V30*/ function setMode(m){ m=(m==="arbre")?"arbre":"frise"; try{localStorage.setItem("constructeur_mode",m);}catch(e){}
+/*UNIFY_I1_V30 ; MODE_VISITE_V80 : `sansMemoire` = ce mode vient de l'adresse (lien du gestionnaire),
+  il vaut pour la visite et ne doit PAS ecraser la preference de Laurent. Un clic sur un onglet, lui,
+  n'passe pas ce drapeau : il enregistre, comme avant. */
+function setMode(m, sansMemoire){ m=(m==="arbre")?"arbre":"frise"; if(!sansMemoire){ try{localStorage.setItem("constructeur_mode",m);}catch(e){} }
   var isA=(m==="arbre");/*ARBRE_VIEW_V30*/
   var sF=document.getElementById("secFrise"); if(sF) sF.style.display=isA?"none":"";
   var sC=document.getElementById("secChapters"); if(sC) sC.style.display=isA?"none":"";
@@ -5152,6 +5155,13 @@ function edWire_V33(board){
 }
 
 /* ---------- panneau « Mon EDT » ---------- */
+/* DUREE_REELLE_V80 — Laurent, 13/09 : « les seances font 1h au lieu de 55 mn (...) ca ne devrait pas etre
+   en dur, les seances sont des multiples de 55 mn, c'est juste un calcul ».
+   Le champ de duree ci-dessous portait step="10" : une grille ecrite en dur qui ne sait pas exprimer 55.
+   110 (STI2D) est un multiple de 10 et passait ; 55 (ens. sci.) ne l'est pas et le navigateur l'arrondissait
+   a 60. C'est TOUTE la difference entre la classe juste et la classe fausse. step="5" ecrit 55, 110, 165.
+   NON CORRIGE ICI, et signale au relais : le repli `||120` quand une duree manque est lui aussi en dur,
+   a une demi-douzaine d'endroits, et vaut 120 dans un etablissement ou l'heure fait 55. */
 function renderEdtPanel_V33(){
   var host=document.getElementById("edEdtPanel"); if(!host) return;
   var e=edtCourant_V33();
@@ -5159,7 +5169,7 @@ function renderEdtPanel_V33(){
     return '<tr data-i="'+i+'">'
       +'<td><select data-f="j">'+[1,2,3,4,5,6].map(function(j){ return '<option value="'+j+'"'+(+c.j===j?" selected":"")+'>'+JOURLIB_V33[j]+'</option>'; }).join("")+'</select></td>'
       +'<td><input type="time" data-f="deb" value="'+esc_V33(c.deb)+'"></td>'
-      +'<td><input type="number" data-f="dur" min="10" max="360" step="10" value="'+(+c.dur||120)+'"> min</td>'
+      +'<td><input type="number" data-f="dur" min="5" max="360" step="5" value="'+(+c.dur||120)+'"> min</td>'
       /* QUINZAINE_V37 : un cours de 1 h 30 peut se poser en bloc hebdo, ou en 1 h une semaine
          et 2 h l'autre, ou 1 h fixe plus 1 h par quinzaine ailleurs. Il manquait ce reglage. */
       +'<td><select data-f="q" title="Toutes les semaines, ou une semaine sur deux">'
@@ -5216,16 +5226,16 @@ sauverEtat = function(){
 
 /* ---------- 3e mode : bascule Frise / Arbre / Éditeur ---------- */
 var _setMode_L33 = setMode;
-setMode = function(m){
+setMode = function(m, sansMemoire){   /*MODE_VISITE_V80*/
   var etait=null; try{ etait=document.documentElement.getAttribute("data-cmode"); }catch(e){}
   if(m!=="editeur"){
     var sE=document.getElementById("secEditeur"); if(sE) sE.style.display="none";
     var be=document.getElementById("modeEditeur"); if(be) be.setAttribute("aria-pressed","false");
-    var res=_setMode_L33(m);
+    var res=_setMode_L33(m, sansMemoire);   /*MODE_VISITE_V80*/
     if(etait==="editeur"){ try{ fullRender(); }catch(e){} }   // cartes-chapitres re-datées
     return res;
   }
-  try{ localStorage.setItem("constructeur_mode","editeur"); }catch(e){}
+  if(!sansMemoire){ try{ localStorage.setItem("constructeur_mode","editeur"); }catch(e){} }   /*MODE_VISITE_V80*/
   ["secFrise","secChapters","secArbre"].forEach(function(id){ var s=document.getElementById(id); if(s) s.style.display="none"; });
   var sE2=document.getElementById("secEditeur"); if(sE2) sE2.style.display="";
   ["modeFrise","modeArbre"].forEach(function(id){ var b=document.getElementById(id); if(b) b.setAttribute("aria-pressed","false"); });
@@ -5331,8 +5341,8 @@ function bootEditeur_V33(){
       var h=document.getElementById("edEdtPanel"); if(!h) return;
       var vis=(h.style.display!=="none");
       h.style.display=vis?"none":""; if(!vis) renderEdtPanel_V33(); });
-    var m=null; try{ m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"editeur"; }catch(e){}   /*MODE_SEANCES_V80*/
-    if(m==="editeur") setMode("editeur");
+    var m=null,_imp=false; try{ _imp=!!(__MENUCTX&&__MENUCTX.mode); m=(_imp?__MENUCTX.mode:null)||localStorage.getItem("constructeur_mode")||"editeur"; }catch(e){}   /*MODE_SEANCES_V80 ; MODE_VISITE_V80*/
+    if(m==="editeur") setMode("editeur",_imp);
   }catch(e){ try{ console.error("[EDITEUR_SEANCES_V33]",e); }catch(_){} }
 }
 /* ===================== fin EDITEUR_SEANCES_V33 ===================== */
@@ -5352,7 +5362,8 @@ function boot(){
     initCursorRange();
     setupTimelineDrag();
     attacherEcouteurs();
-    /*UNIFY_I1_V30*/ try{ var _m=(__MENUCTX&&__MENUCTX.mode)||localStorage.getItem("constructeur_mode")||"editeur"; setMode(_m);   /*MODE_SEANCES_V80*/
+    /*UNIFY_I1_V30*/ try{ var _imp=!!(__MENUCTX&&__MENUCTX.mode);
+      var _m=(_imp?__MENUCTX.mode:null)||localStorage.getItem("constructeur_mode")||"editeur"; setMode(_m,_imp);   /*MODE_SEANCES_V80 ; MODE_VISITE_V80*/
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
@@ -5368,6 +5379,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609131844"></script>
+<script src="pcmajo_fond.js?v=202609132300"></script>
 </body>
 </html>
