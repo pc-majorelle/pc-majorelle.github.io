@@ -596,6 +596,9 @@ function save(){
   try{ var p=currentPid(); if(p){ state.prof_pid=p; state.prof=loggedProfNom(); } }catch(e){}
   try{localStorage.setItem(lsKey(ANNEE), JSON.stringify(state));}catch(e){/* file:// ou privé : on ignore */}
   try{ renderVoyants(); }catch(e){}   /* VOYANTS_A_PROPAGER_V52 */
+  /*PUBLIER_AUTO_V78 : la publication part TOUTE SEULE, apres l'ecriture disque, en asynchrone.
+    Elle ne peut pas faire echouer save() : reseau absent = on reessaiera au prochain enregistrement.*/
+  try{ publierAuto_V78(); }catch(e){}
 }
 /*ETAT_SERVICE_V66 : l'etat de service (classes + emploi du temps) declare definitif par l'enseignant, dans son carnet de
   l'annee. La coque (gestion.html) s'en sert pour ranger « Mes classes » dans « Plus » ; l'ancienne page l'ignore.*/
@@ -2513,6 +2516,8 @@ function etatPropagation(){
 }
 function _estAdmin_V64(){ try{ var s=(window.PCAide&&PCAide.session())||{}; return s.role==="prof" && /^laurent$/i.test(String(s.prenom||"")); }catch(e){ return false; } }   /* VERSIONS_V64 */
 function renderVoyants(){
+  /*EN_LIGNE_V78 : AVANT le filtre admin — la publication vaut aussi pour ses collegues.*/
+  try{ renderEnLigne_V78(); }catch(e){}
   var z=document.getElementById("propage"); if(!z) return;
   /* VERSIONS_V64 : « la base / le plan / les dates — a faire » sont des gestes d'ADMIN (deposer le
      carnet dans _BASE, relancer un script, pousser le depot). Un collegue ne peut faire aucun des
@@ -3402,3 +3407,341 @@ function ncImportFile(e){
   };
   r.readAsText(f); e.target.value="";
 }
+
+/* ===== PUBLIER_AUTO_V78 — la publication automatique. MAITRE v78, 12/09/2026. =========================
+   SON EXIGENCE, mot pour mot : « lorsque je fais une modification dans mon constructeur ou lorsque je fais une
+   modification dans mon cahier de texte, je n'ai rien a faire, c'est automatiquement valide et l'eleve a la bonne
+   page. Ca vaut aussi pour mes collegues avec leurs eleves. » — et « il faut qu'une modification soit prise en
+   compte qu'elle soit faite avec le PC ou avec le tel ».
+
+   CE QUI MONTE : l'extrait publiable d'une classe, construit EXPLICITEMENT champ par champ (jamais un export du
+   carnet auquel on retire des colonnes). Aucun nom d'eleve, aucune note, aucune competence, aucune photo.
+   Le service refait le meme tri de son cote (extrait_propre) : deux filtres independants, pas un seul.
+
+   COUPURE PAR LA DATE : une seance ne part que si sa date est PASSEE (aujourd'hui compris). Ce qu'il prepare pour
+   jeudi prochain reste chez lui. Reglage par defaut annonce le 12/09, reversible en une ligne (_PUB_COUPURE_V78).
+
+   GARDE-FOU ANTI-NOMS : avant l'envoi, le texte est compare aux prenoms et noms de SES eleves (qui sont dans son
+   carnet, en local). Si l'un apparait, la classe n'est PAS publiee et le voyant dit laquelle et quel mot.
+   C'est le seul vrai risque de fuite (« TP note, voir avec Lea ») et il est mecanique, donc traite mecaniquement.
+
+   NE FAIT JAMAIS ECHOUER save() : tout est en try/catch, en asynchrone, apres l'ecriture localStorage.
+   Reseau absent = on ne publie pas, on n'avertit pas, on reessaiera au prochain enregistrement. ============ */
+
+var PUB_BASE_V78    = "https://pcmajorelle.alwaysdata.net";
+var PUB_CLE_V78     = "pcmajo_publier_v78";     /* {jeton, expire_ms, ident} */
+var PUB_ETAT_V78    = "pcmajo_publie_etat_v78"; /* {<classe>:{empreinte, maj, erreur}} */
+var PUB_ACTIF_V78   = "pcmajo_publier_actif_v78";
+var _PUB_COUPURE_V78 = true;   /* false = tout part, meme les seances futures */
+var _PUB_DELAI_V78   = 4000;   /* anti-rebond : save() part a chaque geste, pas la publication */
+var _pubMinuterie_V78 = null, _pubEnCours_V78 = false, _pubMdpRefuse_V78 = false;
+
+function _pubAnnee_V78(){
+  try{ if(state && state.annee) return String(state.annee); }catch(e){}
+  try{ if(typeof ANNEE!=="undefined" && ANNEE) return String(ANNEE); }catch(e){}
+  return "";
+}
+function _pubActif_V78(){ try{ return localStorage.getItem(PUB_ACTIF_V78)!=="non"; }catch(e){ return true; } }
+function setPublierActif_V78(v){
+  try{ localStorage.setItem(PUB_ACTIF_V78, v?"oui":"non"); }catch(e){}
+  try{ renderVoyants(); }catch(e){}
+}
+function _pubEtatLu_V78(){ try{ return JSON.parse(localStorage.getItem(PUB_ETAT_V78)||"{}")||{}; }catch(e){ return {}; } }
+function _pubEtatEcrit_V78(o){ try{ localStorage.setItem(PUB_ETAT_V78, JSON.stringify(o)); }catch(e){} }
+
+/* --- l'identite : le nom affiche vient de son carnet, l'identifiant de sa session ------------------------- */
+function _pubIdent_V78(){
+  try{ var s=(window.PCAide&&PCAide.session())||{}; var p=String(s.prenom||"").trim();
+       if(p) return _pubPlat_V78(p); }catch(e){}
+  return "";
+}
+function _pubNomProf_V78(){
+  /* « M. Agenor » SANS accent, volontairement : un accent qui traverse PowerShell puis SSH ressort abime. */
+  try{ return "M. " + _pubPlat_V78(loggedProfNom()).replace(/^./, function(x){ return x.toUpperCase(); }); }catch(e){ return ""; }
+}
+function _pubPlat_V78(s){
+  s = String(s==null?"":s);
+  try{ s = s.normalize("NFD").replace(/[\u0300-\u036f]/g,""); }catch(e){}
+  return s.toLowerCase();
+}
+
+/* --- l'extrait publiable d'UNE classe — on reutilise l'index de Ma semaine, on ne recalcule rien ---------- */
+function _pubExtrait_V78(c){
+  var idx = wkProgIndex(c);                 /* byDate + windows, deja construit et mis en cache */
+  var auj = iso(new Date());
+  var seances = [];
+  Object.keys(idx.byDate||{}).sort().forEach(function(d){
+    if(_PUB_COUPURE_V78 && d > auj) return;                        /* COUPURE PAR LA DATE */
+    var ch = wkChapAt(idx.windows||[], d) || {};
+    (idx.byDate[d]||[]).forEach(function(x){
+      var s = x.s || {};
+      seances.push({
+        date:    d,
+        type:    (typeof wkTypeLbl==="function" ? (wkTypeLbl(s.type)||String(s.type||"")) : String(s.type||"")),
+        titre:   String(ch.titre||""),                             /* le chapitre : ce qui situe la seance */
+        contenu: (typeof wkCleanTitre==="function" ? wkCleanTitre(s.titre||"") : String(s.titre||"")),
+        travail: String(s._travail||""),                           /* existe, vide tant qu'il ne s'en sert pas */
+        groupe:  ""                                                /* la seance ne porte pas de groupe : cf. journal */
+      });
+    });
+  });
+  var chapitres = (idx.windows||[]).map(function(w){
+    var ch = w.ch || {};
+    return { code:  String(ch.cid || ch.rang || ""),
+             titre: String(ch.titre || ""),
+             debut: w.start || null,
+             fin:   w.end   || null,
+             fait:  !!(w.end && w.end <= auj) };
+  });
+  var enc = wkChapAt(idx.windows||[], auj);
+  return {
+    classe:            String(c.id||"").toUpperCase(),
+    niveau:            String(c.niveau||""),
+    chapitre_en_cours: enc ? { code:String(enc.cid||enc.rang||""), titre:String(enc.titre||"") } : null,
+    chapitres:         chapitres,
+    seances:           seances,
+    professeur:        _pubNomProf_V78(),
+    annee:             _pubAnnee_V78()
+  };
+}
+
+/* --- GARDE-FOU : aucun nom d'eleve ne part, jamais ------------------------------------------------------- */
+function _pubMotsEleves_V78(){
+  var m = {};
+  try{
+    (state.classes||[]).forEach(function(c){
+      (typeof elevesOf==="function" ? elevesOf(c) : (c.eleves||[])).forEach(function(e){
+        [e && e.nom, e && e.prenom].forEach(function(x){
+          x = _pubPlat_V78(x).trim();
+          if(x.length >= 3) m[x] = true;      /* 3 lettres minimum : en dessous, trop de faux positifs */
+        });
+      });
+    });
+  }catch(e){}
+  return Object.keys(m);
+}
+function _pubGardeNoms_V78(ex){
+  var mots = _pubMotsEleves_V78(); if(!mots.length) return [];
+  var vus = {}, trouves = [];
+  (ex.seances||[]).forEach(function(s){
+    var plat = _pubPlat_V78([s.titre, s.contenu, s.travail].join(" · "));
+    for(var i=0;i<mots.length;i++){
+      var n = mots[i];
+      var re = new RegExp("(^|[^a-z0-9])" + n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)");
+      if(re.test(plat)){
+        var k = s.date + "|" + n;
+        if(!vus[k] && trouves.length < 20){ vus[k]=true; trouves.push({ date:s.date, mot:n }); }
+      }
+    }
+  });
+  return trouves;
+}
+
+/* --- la session du service : un mot de passe, puis plus rien ------------------------------------------- */
+function _pubJeton_V78(){
+  try{ var j = JSON.parse(localStorage.getItem(PUB_CLE_V78)||"null");
+       if(j && j.jeton && j.expire_ms > (Date.now()+60000)) return j; }catch(e){}
+  return null;
+}
+function _pubOublierJeton_V78(){ try{ localStorage.removeItem(PUB_CLE_V78); }catch(e){} }
+function publierConnexion_V78(mdp){
+  /* Appelee par la coque (un champ, pas un prompt) ou a la main depuis la console. Rend une promesse. */
+  var ident = _pubIdent_V78();
+  if(!ident) return Promise.reject(new Error("session sans prenom : reconnecte-toi par l'accueil"));
+  return fetch(PUB_BASE_V78 + "/api/connexion", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ identifiant: ident, motdepasse: String(mdp||"") })
+    }).then(function(r){ return r.json().then(function(o){ return {r:r, o:o}; }); })
+      .then(function(x){
+        if(!x.r.ok || !x.o.jeton) throw new Error((x.o && x.o.erreur) || ("connexion refusee ("+x.r.status+")"));
+        var duree = (x.o.duree_s || 7200) * 1000;
+        try{ localStorage.setItem(PUB_CLE_V78, JSON.stringify({ jeton:x.o.jeton, expire_ms: Date.now()+duree, ident:ident })); }catch(e){}
+        _pubMdpRefuse_V78 = false;
+        try{ renderVoyants(); }catch(e){}
+        publierAuto_V78(0);
+        return true;
+      });
+}
+
+/* --- le tour de publication : une classe a la fois, seulement ce qui a change ---------------------------- */
+function _pubEmpreinte_V78(ex){ try{ return _hash(JSON.stringify(ex)); }catch(e){ return String(Math.random()); } }
+
+function _pubTour_V78(){
+  if(_pubEnCours_V78) return; _pubEnCours_V78 = true;
+  var etat = _pubEtatLu_V78(), jeton = _pubJeton_V78(), aEnvoyer = [];
+  try{
+    (state.classes||[]).forEach(function(c){
+      var ex, emp;
+      try{ ex = _pubExtrait_V78(c); emp = _pubEmpreinte_V78(ex); }catch(e){ return; }
+      var e0 = etat[ex.classe] || {};
+      var noms = _pubGardeNoms_V78(ex);
+      if(noms.length){
+        etat[ex.classe] = { empreinte:e0.empreinte||"", maj:e0.maj||"", erreur:"noms", noms:noms };
+        return;                                   /* BLOQUE : rien ne part pour cette classe */
+      }
+      if(!ex.seances.length && !ex.chapitres.length){ return; }   /* rien a dire : on se taît */
+      if(e0.empreinte === emp && !e0.erreur){ return; }           /* deja publie, inchange */
+      aEnvoyer.push({ c:c, ex:ex, emp:emp });
+    });
+  }catch(e){}
+  _pubEtatEcrit_V78(etat);
+
+  if(!aEnvoyer.length){ _pubEnCours_V78 = false; try{ renderVoyants(); }catch(e){} return; }
+  if(!jeton){
+    /* Pas de session : on ne demande RIEN au milieu de sa frappe. Le voyant reclame le mot de passe. */
+    aEnvoyer.forEach(function(t){ var e0=etat[t.ex.classe]||{}; etat[t.ex.classe]={empreinte:e0.empreinte||"", maj:e0.maj||"", erreur:"session"}; });
+    _pubEtatEcrit_V78(etat); _pubEnCours_V78 = false; try{ renderVoyants(); }catch(e){} return;
+  }
+
+  var i = 0;
+  function suivant(){
+    if(i >= aEnvoyer.length){ _pubEtatEcrit_V78(etat); _pubEnCours_V78=false; try{ renderVoyants(); }catch(e){} return; }
+    var t = aEnvoyer[i++];
+    fetch(PUB_BASE_V78 + "/api/publier", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+jeton.jeton },
+        body: JSON.stringify(t.ex)
+      })
+      .then(function(r){
+        if(r.status === 401){ _pubOublierJeton_V78(); etat[t.ex.classe]={empreinte:"", maj:(etat[t.ex.classe]||{}).maj||"", erreur:"session"}; return; }
+        if(!r.ok){ etat[t.ex.classe]={empreinte:"", maj:(etat[t.ex.classe]||{}).maj||"", erreur:"http"+r.status}; return; }
+        etat[t.ex.classe] = { empreinte:t.emp, maj:new Date().toISOString(), erreur:"" };
+      })
+      .catch(function(){ etat[t.ex.classe]={empreinte:"", maj:(etat[t.ex.classe]||{}).maj||"", erreur:"reseau"}; })
+      .then(suivant);
+  }
+  suivant();
+}
+
+function publierAuto_V78(delai){
+  if(!_pubActif_V78()) return;
+  try{ clearTimeout(_pubMinuterie_V78); }catch(e){}
+  _pubMinuterie_V78 = setTimeout(function(){ try{ _pubTour_V78(); }catch(e){} },
+                                 (delai===0 ? 0 : (delai || _PUB_DELAI_V78)));
+}
+
+/* Etat lisible, pour le voyant et pour le banc. */
+function etatPublication_V78(){
+  var etat = _pubEtatLu_V78(), j = _pubJeton_V78();
+  var r = { session: !!j, actif: _pubActif_V78(), classes: [], noms: [], enRetard: 0 };
+  try{
+    (state.classes||[]).forEach(function(c){
+      var code = String(c.id||"").toUpperCase(), e = etat[code] || {};
+      var ex = null; try{ ex = _pubExtrait_V78(c); }catch(x){}
+      var aJour = !!(ex && e.empreinte && e.empreinte === _pubEmpreinte_V78(ex) && !e.erreur);
+      if(!aJour && ex && (ex.seances.length || ex.chapitres.length)) r.enRetard++;
+      if(e.erreur === "noms" && e.noms) e.noms.forEach(function(n){ r.noms.push({ classe:code, date:n.date, mot:n.mot }); });
+      r.classes.push({ classe:code, libelle:String(c.libelle||c.id||""), aJour:aJour, maj:e.maj||"", erreur:e.erreur||"" });
+    });
+  }catch(e){}
+  return r;
+}
+/* ===== fin PUBLIER_AUTO_V78 ===== */
+
+/* ===== EN_LIGNE_V78 — le voyant de la publication automatique. MAITRE v78, 13/09/2026. ================
+   Il dit trois choses, et rien d'autre : es-tu connecte au service, qu'est-ce qui est en ligne, et
+   qu'est-ce qui est BLOQUE parce qu'un nom d'eleve a ete detecte dans le texte.
+
+   ⚠ IL NE REMPLACE PAS ENCORE LE VOYANT « le plan ». Le relais v77 demandait que la publication le fasse
+   disparaitre — mais « le plan » avertit AUSSI que `plan_reco_v45.js` (les questions du soir) est gele sur
+   un plan perime, et la publication automatique ne repare PAS encore cela. Retirer le voyant maintenant
+   supprimerait un avertissement qui est ENCORE VRAI. Il partira quand la lecture cote eleve et la
+   regeneration du pont seront faites — pas avant.
+
+   PAS RESERVE A L'ADMIN, volontairement : « ca vaut aussi pour mes collegues avec leurs eleves ». ====== */
+
+var _pubMsg_V78 = "";   /* le message de connexion vit ICI, pas dans le DOM : renderVoyants() peut
+                           reconstruire la zone a tout moment, un noeud capture serait detache. */
+
+function _pubMsgAffiche_V78(){
+  try{ var m = document.getElementById("pubMdpMsg"); if(m) m.textContent = _pubMsg_V78; }catch(e){}
+}
+
+function _pubPuce_V78(ok, txt, titre, action){
+  return '<button class="mini '+(ok?"ghost":"")+'"'
+       + (titre?(' title="'+esc(titre)+'"'):"")
+       + (action?(' onclick="'+action+'"'):' disabled')
+       + ' style="'+(ok?"opacity:.75":"background:#b3541e;border-color:transparent;color:#fff;font-weight:600")+'">'
+       + (ok?"○ ":"● ") + esc(txt) + '</button>';
+}
+
+function renderEnLigne_V78(){
+  var z = document.getElementById("enligne"); if(!z) return;
+  /* ⚠ NE PAS RECONSTRUIRE PENDANT QU'IL TAPE : renderVoyants() part a chaque enregistrement, et
+     recreer l'input effacerait le mot de passe a moitie saisi. Mesure du banc v78. */
+  try{ var ch = document.getElementById("pubMdp");
+       if(ch && (document.activeElement === ch || ch.value)){ _pubMsgAffiche_V78(); return; } }catch(e){}
+  try{
+    if(!_pubActif_V78()){
+      z.innerHTML = '<span class="small muted" style="letter-spacing:.04em">en ligne</span>'
+        + '<button class="mini ghost" onclick="setPublierActif_V78(true)"'
+        + ' title="Reprendre la publication automatique : tes eleves reverront ce que tu enregistres.">'
+        + '○ publication arretee</button>';
+      return;
+    }
+    var e = etatPublication_V78();
+    var h = '<span class="small muted" style="letter-spacing:.04em">en ligne</span>';
+
+    /* 1. Ce qui est BLOQUE passe avant tout le reste : c'est le seul cas ou il doit agir. */
+    if(e.noms.length){
+      var n = e.noms[0];
+      h += _pubPuce_V78(false, "bloque : un nom d'eleve", 
+             "La classe " + n.classe + " n'est pas publiee : le mot « " + n.mot + " », qui est le nom ou le prenom "
+           + "d'un de tes eleves, apparait dans la seance du " + n.date + ". Corrige le texte de cette seance et "
+           + "enregistre : la publication repartira toute seule."
+           + (e.noms.length>1 ? "  (" + e.noms.length + " occurrences en tout)" : ""));
+    }
+
+    /* 2. La session : un champ, pas une boite de dialogue. */
+    if(!e.session){
+      h += '<span class="small" style="color:#b3541e">ton mot de passe une fois&nbsp;:</span>'
+        +  '<input id="pubMdp" type="password" autocomplete="current-password" placeholder="mot de passe"'
+        +  ' style="width:150px;padding:3px 6px;border:1px solid var(--line);border-radius:7px;font-size:.85rem"'
+        +  ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();pubSeConnecter_V78();}">'
+        +  '<button class="mini" onclick="pubSeConnecter_V78()" title="Le service ouvre une session ; le navigateur la garde et la renouvelle tout seul.">se connecter</button>'
+        +  '<span id="pubMdpMsg" class="small" style="color:#b3541e">' + esc(_pubMsg_V78) + '</span>';
+    }else{
+      var enRetard = e.classes.filter(function(c){ return !c.aJour && c.erreur !== "noms"; });
+      if(!enRetard.length){
+        var maj = ""; e.classes.forEach(function(c){ if(c.maj && c.maj > maj) maj = c.maj; });
+        h += _pubPuce_V78(true, "a jour", "Tes eleves voient ce que tu as enregistre."
+                          + (maj ? ("  Derniere publication : " + _pubQuand_V78(maj) + ".") : ""));
+      }else{
+        h += _pubPuce_V78(false, enRetard.length + " classe(s) a publier",
+               enRetard.map(function(c){ return c.libelle + (c.erreur ? (" (" + _pubRaison_V78(c.erreur) + ")") : ""); }).join(" · ")
+               + "  — la publication repart a chaque enregistrement.",
+               "publierAuto_V78(0)");
+      }
+      h += '<button class="mini ghost" onclick="setPublierActif_V78(false)" style="opacity:.55"'
+        +  ' title="Arreter la publication automatique. Ce qui est deja en ligne y reste.">arreter</button>';
+    }
+    z.innerHTML = h;
+  }catch(x){ try{ z.innerHTML = ""; }catch(y){} }
+}
+
+function _pubRaison_V78(code){
+  if(code === "session") return "session a rouvrir";
+  if(code === "reseau")  return "pas de reseau";
+  if(/^http/.test(code||"")) return "refus du service " + code.slice(4);
+  return code || "";
+}
+function _pubQuand_V78(iso8601){
+  try{
+    var d = new Date(iso8601), m = Math.floor((Date.now() - d.getTime()) / 60000);
+    if(m < 1)  return "a l'instant";
+    if(m < 60) return "il y a " + m + " min";
+    if(m < 1440) return "il y a " + Math.floor(m/60) + " h";
+    return "le " + d.toLocaleDateString("fr-FR");
+  }catch(e){ return ""; }
+}
+function pubSeConnecter_V78(){
+  var i = document.getElementById("pubMdp");
+  if(!i) return;
+  var mdp = i.value; i.value = "";          /* vide le champ : la zone peut se reconstruire sans risque */
+  _pubMsg_V78 = "verification…"; _pubMsgAffiche_V78();
+  publierConnexion_V78(mdp)
+    .then(function(){ _pubMsg_V78 = ""; renderEnLigne_V78(); })
+    .catch(function(x){ _pubMsg_V78 = (x && x.message) ? String(x.message) : "refuse";
+                        renderEnLigne_V78(); _pubMsgAffiche_V78(); });
+}
+/* ===== fin EN_LIGNE_V78 ===== */
