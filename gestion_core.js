@@ -1103,23 +1103,70 @@ function renderSuivi(){ fillReel();
   </div>`;
 
   h+=`<div class="card"><div class="row noprint" style="justify-content:space-between">
-    <h3 style="margin:0">Capacités par thème</h3>
+    <h3 style="margin:0">Capacités par thème et chapitre</h3>
     <div><button class="mini" onclick="window.print()">🖨️ Imprimer le cahier de textes</button></div></div>`;
+  /*SUIVI_CHAPITRES_V79 — le titre du chapitre, pris LA OU IL EST DEJA, jamais reinvente. Deux sources, dans
+    l'ordre : (1) PARTIES_COURS.titres, genere par CODE_MOTS_CLES_V68, qui couvre les programmes SANS parties
+    (ens. sci.) et se lit directement a la cle `<theme>.<chapitre>` ; (2) pour les programmes A parties (PC), la
+    `section` de la partie qui porte la capacite — jointure identique a BO_PARTIES_V65 : ref directe, sinon
+    texte B.O. verbatim (_constrTxtIndex). On garde la section MAJORITAIRE du chapitre, parce qu'une partie peut
+    deborder. Sans titre trouve : le code seul, comme avant. Calcule UNE fois pour tout l'onglet. */
+  const _titreChap_V79 = (function(){
+    const out={};
+    try{
+      const _t=(((window.PARTIES_COURS||{}).titres)||{})[p.key]||{};
+      Object.keys(_t).forEach(function(k){ out[k]=_t[k]; });
+      const _pc=(window.PARTIES_COURS||{})[p.key];
+      if(_pc && _pc.parties && _pc.parties.length){
+        const txt2id=_constrTxtIndex(), compte={};
+        _pc.parties.forEach(function(pa){
+          const sec=pa.section||""; if(!sec) return;
+          (pa.caps||[]).forEach(function(cc){
+            const id = (NODES[cc.ref] ? cc.ref : txt2id[_constrNorm(cc.bo)]);
+            const pos = id && PROGPOS[id];
+            if(!pos || pos.p!==p.key || !pos.chap) return;
+            if(!compte[pos.chap]) compte[pos.chap]={};
+            compte[pos.chap][sec] = (compte[pos.chap][sec]||0) + 1;
+          });
+        });
+        Object.keys(compte).forEach(function(ch){
+          let best="", n=0;
+          Object.keys(compte[ch]).forEach(function(sec){ if(compte[ch][sec]>n){ n=compte[ch][sec]; best=sec; } });
+          if(best && !out[ch]) out[ch]=best;
+        });
+      }
+    }catch(e){}
+    return out;
+  })();
   themesOrdered(p.themes).forEach(t=>{
     /* SUIVI_COMPACT_V37 : les themes etaient ouverts en dur, si bien que l'onglet
        s'ouvrait sur plusieurs milliers de pixels — et d'autant plus que l'annee
        comptait de capacites. Ils s'ouvrent desormais replies, et chacun retient
        son etat (meme mecanisme que le menu). */
-    h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary><b>${esc(t.label)}</b></summary>`;
-    t.chapters.forEach(ch=>ch.caps.forEach(id=>{
-      const v=eff(id);
-      h+=`<div class="cap"><span style="flex:1">${isReel(id)?confDot(rs[id]):(isPropose(id)?propDot(cd[id]):'')}<span class="code">${libCap_V63(id)}</span> ${esc(NODES[id]?.t||id)}</span>
+    /*SUIVI_CHAPITRES_V79 — le niveau CHAPITRE, demande par Laurent le 13/09 : « les capacites par theme,
+      j'aimerai que ce soit detaille par chapitre aussi comme un peu partout dans ce site ». On reprend la
+      forme DEJA en place dans « + depuis le B.O. » (BO_PARTIES_V65) : le titre B.O. genere quand il existe
+      (PARTIES_COURS.titres, CODE_MOTS_CLES_V68), le code sinon, et le compte des capacites. Un theme qui n'a
+      qu'un chapitre ne gagne PAS un pli de plus : on n'ajoute pas un niveau pour rien. Les plis retiennent
+      leur etat ouvert/ferme comme les themes (SUIVI_COMPACT_V37, cle stable par theme|chapitre). */
+    const _nbc=n=>' <span class="small muted">· '+n+' capacité'+(n>1?'s':'')+'</span>';
+    const _ligneCap=id=>{ const v=eff(id);
+      return `<div class="cap"><span style="flex:1">${isReel(id)?confDot(rs[id]):(isPropose(id)?propDot(cd[id]):'')}<span class="code">${libCap_V63(id)}</span> ${esc(NODES[id]?.t||id)}</span>
         <span class="s3">
           <button data-v="todo" class="${v==='todo'?'on':''}" onclick="setSuivi('${id}','todo')">à faire</button>
           <button data-v="wip" class="${v==='wip'?'on':''}" onclick="setSuivi('${id}','wip')">en cours</button>
           <button data-v="done" class="${v==='done'?'on':''}" onclick="setSuivi('${id}','done')">fait</button>
-        </span></div>`;
-    }));
+        </span></div>`; };
+    const _ntheme=t.chapters.reduce((n,ch)=>n+ch.caps.length,0);
+    h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary><b>${esc(t.label)}</b>${_nbc(_ntheme)}</summary>`;
+    if(t.chapters.length<=1){ t.chapters.forEach(ch=>ch.caps.forEach(id=>{ h+=_ligneCap(id); })); }
+    else t.chapters.forEach(ch=>{
+      const _cod=ch.label||ch.code;
+      const _ti=_titreChap_V79[_cod]||_titreChap_V79[ch.code];
+      h+=`<details class="tree" data-mem="ch:${esc(t.label)}|${esc(_cod)}"><summary><span class="code">${esc(_cod)}</span>${_ti?' · '+esc(_ti):''}${_nbc(ch.caps.length)}</summary>`;
+      ch.caps.forEach(id=>{ h+=_ligneCap(id); });
+      h+=`</details>`;
+    });
     h+=`</details>`;
   });
   h+=`</div>`;
@@ -3045,7 +3092,19 @@ function _cahierDeTextes_V63(c, S, pv, sv){
   lignes.forEach(function(s){
     var cs=SC[s.id]; var caps=_idsDeSeanceConstr_V63(c, cs).slice();
     (bySeance[s.id]||[]).forEach(function(cap){ if(caps.indexOf(cap)<0) caps.push(cap); });
-    var capsHtml=caps.map(function(cap){ var v=sv[cap]||"todo"; return "<div class='small'><span class='tag-"+v+"'>●</span> "+esc(NODES[cap]&&NODES[cap].t||cap)+(src[cap]==="main"?" <span class='muted'>(main)</span>":"")+"</div>"; }).join("");
+    /*CDT_ETAT_V79 — l'etat d'une capacite se change ICI, dans le cahier de textes, la ou il est. Demande de
+      Laurent le 13/09 : « je dois pouvoir aussi modifier ce qui est fait en cours ou pas dans mon cahier de
+      texte et que ca soit mis a jour ». AVANT : le point de couleur etait en LECTURE SEULE ; il fallait aller
+      chercher la capacite dans l'arbre de l'onglet Suivi. Rien de neuf n'est invente : on appelle setSuivi
+      (l.1180), qui ecrit dans state.suivi, appelle save() — donc publierAuto_V78 — et redessine renderSuivi,
+      dont ce tableau fait partie. Les boutons sont noprint : le cahier de textes imprime reste propre. */
+    var capsHtml=caps.map(function(cap){ var v=sv[cap]||"todo"; var q=String(cap).replace(/'/g,"");
+      return "<div class='small'><span class='tag-"+v+"'>●</span> "+esc(NODES[cap]&&NODES[cap].t||cap)+(src[cap]==="main"?" <span class='muted'>(main)</span>":"")
+        +" <span class='s3 noprint'>"
+        +"<button data-v='todo' class='"+(v==="todo"?"on":"")+"' onclick=\"setSuivi('"+q+"','todo')\">à faire</button>"
+        +"<button data-v='wip' class='"+(v==="wip"?"on":"")+"' onclick=\"setSuivi('"+q+"','wip')\">en cours</button>"
+        +"<button data-v='done' class='"+(v==="done"?"on":"")+"' onclick=\"setSuivi('"+q+"','done')\">fait</button>"
+        +"</span></div>"; }).join("");
     var txt=frDate(s.date)+(s.debut?" "+s.debut:"")+" — "+(cs?(cs.type||"Cours"):"Séance")+(cs&&(cs.chapitre_titre||cs.chapitre)?" — "+(cs.chapitre_titre||cs.chapitre):"")
            +(caps.length?"\n"+caps.map(function(cap){ return "• "+(NODES[cap]&&NODES[cap].t||cap); }).join("\n"):"")
            +(cs&&cs.note?"\n"+cs.note:"");
