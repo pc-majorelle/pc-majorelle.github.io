@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609132300"></script>
+<script src="pcmajo_test.js?v=202609140736"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -268,10 +268,11 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 </head>
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
+<script>document.write('<script src="base_grille.js?v='+Date.now()+'"><\/script>')</script><!--GRILLE_V81 : la grille horaire du lycee, source unique des replis de duree-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609132300"></script>
-<script src="store.js?v=202609132300"></script>
-<script src="pcmajo_ui.js?v=202609132300"></script>
+<script src="classes_annee.js?v=202609140736"></script>
+<script src="store.js?v=202609140736"></script>
+<script src="pcmajo_ui.js?v=202609140736"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -372,7 +373,7 @@ details.seq-int>summary::-webkit-details-marker{display:none}
         <option value="2026-2027">2026-2027</option>
       </select>
     </label>
-    <span class="modebtns"><button type="button" id="modeFrise" aria-pressed="false" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" aria-pressed="false" title="Vue structure : découpage en séances">🌳 Arbre</button><button type="button" id="modeEditeur" aria-pressed="true" title="Vue édition : la progression séance par séance (créneaux réels, durées, capacités)">📝 Séances</button></span>
+    <span class="modebtns"><button type="button" id="modeFrise" title="Vue temps : dates, calendrier, comparaison">🗓 Frise</button><button type="button" id="modeArbre" title="Vue structure : découpage en séances">🌳 Arbre</button><button type="button" id="modeEditeur" aria-pressed="true" title="Vue édition : la progression séance par séance (créneaux réels, durées, capacités)">📝 Séances</button></span>
     <button id="resetBtn" title="Revenir à la progression stricte auto-générée">↺ Réinitialiser</button>
     <button id="exportBoKeysBtn" title="Exporter les capacités datées (boKeys) pour le gestionnaire de classe">⬇ Exporter les boKeys datés</button><span id="expInfo" class="small" style="margin-left:6px;opacity:.75"></span>
   </header>
@@ -1603,8 +1604,11 @@ const CAL = {
 const ANNEES = ["2025-2026","2026-2027"];
 // creneaux hebdo : jeudi 10:00-12:00 (jour 4) et vendredi 08:00-10:00 (jour 5), 2 h chacun
 const CRENEAUX = [
-  {jour:4, h:"10:00–12:00", lib:"Jeu."},   // getUTCDay(): dim=0 ... jeu=4, ven=5
-  {jour:5, h:"08:00–10:00", lib:"Ven."},
+  /* GRILLE_V81 : `min` est desormais ECRIT. Ces deux creneaux font reellement 2 h
+     (10:00-12:00 et 08:00-10:00) : leur 120 est une VERITE, pas un repli. Le noter
+     ici est ce qui permet aux `||120` d'ailleurs de devenir « la duree manque ». */
+  {jour:4, h:"10:00–12:00", lib:"Jeu.", min:120},   // getUTCDay(): dim=0 ... jeu=4, ven=5
+  {jour:5, h:"08:00–10:00", lib:"Ven.", min:120},
 ];
 const HEURES_PAR_SEANCE = 2;
 
@@ -4260,12 +4264,16 @@ var EDT_NIVEAU_V33 = {
    "Tsti":{src:"EDT réel 2025-26 (Tale STI2D)",cren:EDT_CLASSE_V33["2025-2026"]["TSTI2D"].cren},
    "Tens":{src:"EDT réel 2025-26 (Tale G5 ens.sci.)",cren:EDT_CLASSE_V33["2025-2026"]["TG5"].cren}
  },
- "2026-2027":{
-   "Tspe":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:2,deb:"08:00",dur:120},{j:3,deb:"10:00",dur:120},{j:4,deb:"15:30",dur:120}]},
-   "Tsti":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:3,deb:"13:30",dur:60},{j:4,deb:"10:00",dur:120},{j:5,deb:"09:00",dur:60}]},
-   "Tens":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:5,deb:"10:00",dur:60}]},
-   "2nde":{src:"EDT 2026-27 PROVISOIRE (brouillon PHY.pdf)",cren:[{j:5,deb:"13:30",dur:180}]}
- }
+ /* REPLI_EDT_V81 : le brouillon PHY.pdf de juillet 2026 est RETIRE. Il donnait des
+    heures de 60 et 120 min (et une de 180) la ou l'EDT officiel du 26/08, dans
+    base_edt.js, donne 110 / 55 / 85 — et c'est `edtBaseDirect_V81` qui le lit
+    maintenant. Un brouillon perime en repli, c'est une donnee fausse presentee
+    comme une donnee. Les valeurs retirees, pour memoire :
+      Tspe mar.08:00/120 mer.10:00/120 jeu.15:30/120
+      Tsti mer.13:30/60  jeu.10:00/120 ven.09:00/60
+      Tens ven.10:00/60
+      2nde ven.13:30/180 */
+ "2026-2027":{}
 };
 var JOURLIB_V33 = ["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."];
 function finHeure_V33(deb,dur){ var p=String(deb).split(":");
@@ -4280,6 +4288,27 @@ function edtKey_V33(){
    pont Store deja en place. Les tables en dur ci-dessus deviennent le REPLI : sans base,
    sans classe choisie, ou base incomplete, rien ne change.
    Le champ `tp` qui en sort est ce qui remplace la regle « jeudi = TP ». */
+/* ===== GRILLE_V81 — LE REPLI DE DUREE, A UN SEUL ENDROIT =====
+   Laurent, 13/09 : « ca ne devrait pas etre en dur, les seances sont des multiples
+   de 55 mn, c'est juste un calcul ». Le voici, ce calcul. Trois etages, du plus
+   vrai au plus pauvre, et AUCUN n'est un nombre invente :
+     1. la duree la plus frequente des creneaux REELS non dedoubles de la classe ;
+     2. a defaut, le pas de la grille du lycee (base_grille.js) ;
+     3. et seulement si meme la grille manque, l'ancienne valeur (120) — pour
+        qu'un fichier absent degrade au comportement d'avant, jamais en erreur.
+   Etage 1 = exactement ce que faisait deja `dureeCreneauType_V33`, qui finissait
+   pourtant par `return best||120`. */
+function dureeReplit_V81(){
+  try{
+    var c={}, best=0, bv=-1;
+    (typeof CRENEAUX!=="undefined"?CRENEAUX:[]).forEach(function(x){
+      if(x && x.rep) return; var m=+(x&&x.min); if(!m) return; c[m]=(c[m]||0)+1; });
+    for(var k in c){ if(c[k]>bv){ bv=c[k]; best=+k; } }
+    if(best>0) return best;
+  }catch(e){}
+  try{ if(window.BASE_GRILLE && +window.BASE_GRILLE.pas>0) return +window.BASE_GRILLE.pas; }catch(e){}
+  return 120;
+}
 function edtBase_V60(){
   var cl=null;
   try{ cl=(__MENUCTX&&__MENUCTX.classe)||Store.classeActive(); }catch(e){}
@@ -4287,26 +4316,90 @@ function edtBase_V60(){
   var c=null; try{ c=Store.classeById(cl); }catch(e){}
   if(!c || !c.creneaux || !c.creneaux.length) return null;
   var J={"dimanche":0,"lundi":1,"mardi":2,"mercredi":3,"jeudi":4,"vendredi":5,"samedi":6};
-  var cren=[];
+  /* REPLI_EDT_V81 — AVANT : un seul creneau illisible et on rendait la main au
+     repli, donc TOUT l'emploi du temps reel etait remplace par une table en dur.
+     Le commentaire d'alors disait « mieux vaut l'ancien EDT en entier qu'un EDT a
+     trous » ; le banc a montre ce que valait « l'ancien EDT » : le brouillon de
+     juillet, avec des heures de 60 min dans un lycee ou elles font 55. On garde
+     desormais les creneaux lisibles, on compte les autres, et on le DIT. */
+  var cren=[], ignores=0;
   for(var i=0;i<c.creneaux.length;i++){
     var x=c.creneaux[i], j=J[String(x.jour||"").toLowerCase()];
-    /* un seul creneau illisible et on rend la main au repli : mieux vaut l'ancien
-       emploi du temps en entier qu'un emploi du temps a trous. */
-    if(j===undefined || !x.debut) return null;
-    cren.push({ j:j, deb:x.debut, dur:(+x.duree_min||120), rep:!!x.groupe,
+    if(j===undefined || !x.debut){ ignores++; continue; }
+    cren.push({ j:j, deb:x.debut, dur:(+x.duree_min||dureeReplit_V81()), rep:!!x.groupe,   /*GRILLE_V81*/
                 q:(x.quinzaine||""), tp:(String(x.type||"").toUpperCase()==="TP") });
   }
-  return { src:"emploi du temps r\u00e9el (carnet) \u2014 "+(c.libelle||cl), cren:cren };
+  if(!cren.length) return null;
+  return { src:"emploi du temps r\u00e9el (carnet) \u2014 "+(c.libelle||cl)
+                +(ignores?(" \u2014 "+ignores+" cr\u00e9neau"+(ignores>1?"x":"")+" illisible"+(ignores>1?"s":"")+" ignor\u00e9"+(ignores>1?"s":"")):""),
+           cren:cren };
+}
+/* ===== REPLI_EDT_V81 — L'EMPLOI DU TEMPS OFFICIEL COMME REPLI, PLUS UN BROUILLON =====
+   `edtBase_V60` ne rend quelque chose que si le professeur est IDENTIFIE (Store lit
+   son carnet). Quand il ne l'est pas — navigateur neuf, pas encore connecte — le
+   constructeur retombait sur `EDT_NIVEAU_V33`, et pour 2026-2027 c'etait le brouillon
+   PHY.pdf de juillet. MESURE AU BANC : niveau Tsti, il appliquait 60 / 120 / 60 min,
+   alors que base_edt.js (EDT officiel du 26/08, recale sur la grille du lycee) dit
+   110 / 55 / 55. Un repli qui invente des heures de 60 min dans un lycee ou elles
+   font 55 n'est pas un repli, c'est une donnee fausse.
+   Ici : on lit base_edt.js. Le professeur s'il est connu ; sinon UNE classe reelle
+   de ce niveau, prise dans l'ordre du fichier — jamais un melange de plusieurs
+   classes, et la source est ecrite dans `src` pour que la page puisse le dire. */
+function edtBaseDirect_V81(){
+  try{
+    var T = window.BASE_EDT && window.BASE_EDT[STATE.annee];
+    if(!T) return null;
+    var noms = Object.keys(T); if(!noms.length) return null;
+    var nom = null;
+    try{ var pre = Store.prenom();
+         if(pre && window.PRENOM2NOM) nom = window.PRENOM2NOM[String(pre).toLowerCase()] || null;
+    }catch(e){}
+    var listes = nom && T[nom] ? [T[nom]] : noms.map(function(n){ return T[n]; });
+    var cl = null; try{ cl = (__MENUCTX && __MENUCTX.classe) || null; }catch(e){}
+    var J = {"dimanche":0,"lundi":1,"mardi":2,"mercredi":3,"jeudi":4,"vendredi":5,"samedi":6};
+    /* on choisit UN code de classe, puis on ne prend que SES creneaux. */
+    var code = null;
+    for(var a=0; a<listes.length && !code; a++){
+      for(var b=0; b<listes[a].length; b++){
+        var y = listes[a][b];
+        if(cl){ if(y.code===cl){ code=y.code; break; } continue; }
+        var tok=null; try{ tok = Store.niveauToken(y.code); }catch(e){}
+        if(tok === level){ code = y.code; break; }
+      }
+    }
+    if(!code) return null;
+    var cren=[], vus={}, lib=code, src=null;
+    listes.forEach(function(L){ L.forEach(function(y){
+      if(y.code !== code) return;
+      var j = J[String(y.jour||"").toLowerCase()];
+      if(j===undefined || !y.debut) return;
+      var k = j+"|"+y.debut+"|"+(y.groupe||"");
+      if(vus[k]) return; vus[k]=1;
+      if(y.nom) lib = y.nom;
+      if(!src) src = y.source || null;
+      cren.push({ j:j, deb:y.debut, dur:(+y.duree||dureeReplit_V81()), rep:!!y.groupe,
+                  q:(y.quinzaine||""), tp:(String(y.type||"").toUpperCase()==="TP") });
+    }); });
+    if(!cren.length) return null;
+    return { src:"emploi du temps "+(src==="carnet"?"du carnet":"officiel")
+                 +" (base_edt.js) — "+lib+(nom?"":" — classe témoin de ce niveau"),
+             cren:cren };
+  }catch(e){ return null; }
 }
 function edtDefaut_V33(){
   var _b=null; try{ _b=edtBase_V60(); }catch(e){}
   if(_b) return _b;                                   /* TYPE_DEPUIS_CRENEAU_V60 */
+  try{ _b=edtBaseDirect_V81(); }catch(e){ _b=null; }   /* REPLI_EDT_V81 */
+  if(_b) return _b;
   var cl=null; try{ cl=(__MENUCTX&&__MENUCTX.classe)||null; }catch(e){}
   var tc=EDT_CLASSE_V33[STATE.annee]||{};
   if(cl && tc[cl]) return {src:tc[cl].src, cren:tc[cl].cren.map(function(c){return Object.assign({},c);})};
   var tn=EDT_NIVEAU_V33[STATE.annee]||{};
   if(tn[level]) return {src:tn[level].src, cren:tn[level].cren.map(function(c){return Object.assign({},c);})};
-  return {src:"créneaux par défaut (jeu. 10 h-12 h · ven. 8 h-10 h)",
+  /* REPLI_EDT_V81 : dernier recours, et il est INVENTE — ce sont les creneaux de
+     2025-26 du constructeur. Le `src` le dit desormais en clair : aucun ecran ne doit
+     pouvoir presenter ces deux creneaux comme un emploi du temps. */
+  return {src:"créneaux INVENTÉS par défaut — aucun emploi du temps connu (jeu. 10 h-12 h · ven. 8 h-10 h)",
           cren:[{j:4,deb:"10:00",dur:120},{j:5,deb:"08:00",dur:120}]};
 }
 function edtCourant_V33(){
@@ -4319,8 +4412,8 @@ function edtOublier_V33(){ try{ localStorage.removeItem(edtKey_V33()); }catch(e)
 
 /* Annote CRENEAUX_REELS (durée réelle + dédoublement) puis applique l'EDT à CRENEAUX. */
 function crAnnoter_V33(){
-  var m={}; CRENEAUX.forEach(function(c){ m[c.h]={min:(c.min||120), rep:!!c.rep}; });
-  (CRENEAUX_REELS||[]).forEach(function(cr){ var x=m[cr.horaire]||{min:120,rep:false};
+  var m={}; CRENEAUX.forEach(function(c){ m[c.h]={min:(c.min||dureeReplit_V81()), rep:!!c.rep}; });   /*GRILLE_V81*/
+  (CRENEAUX_REELS||[]).forEach(function(cr){ var x=m[cr.horaire]||{min:dureeReplit_V81(),rep:false};   /*GRILLE_V81*/
     cr.min=x.min; cr.rep=x.rep; });
 }
 var _chargerCalendrier_L33 = chargerCalendrier;
@@ -4328,7 +4421,7 @@ chargerCalendrier = function(annee){ _chargerCalendrier_L33(annee); try{ crAnnot
 
 /* Créneaux D'ORIGINE du constructeur (jeu. 10-12 · ven. 8-10) : mémorisés pour pouvoir
    revenir strictement au comportement antérieur quand l'éditeur n'est pas engagé. */
-var CRENEAUX_ORIG_V33 = CRENEAUX.map(function(c){ return {jour:c.jour, h:c.h, lib:c.lib, min:(c.min||120), rep:false}; });
+var CRENEAUX_ORIG_V33 = CRENEAUX.map(function(c){ return {jour:c.jour, h:c.h, lib:c.lib, min:(c.min||dureeReplit_V81()), rep:false};   /*GRILLE_V81*/ });
 var _edtSig_V33 = null;
 function edtEngage_V33(){
   /* TYPE_DEPUIS_CRENEAU_V60 : la base EST un emploi du temps reel. Sans cette ligne,
@@ -4352,7 +4445,7 @@ function appliquerEDT_V33(force){
   CRENEAUX.length=0;
   cible.cren.slice().sort(function(a,b){ return (a.j-b.j) || (a.deb<b.deb?-1:1); }).forEach(function(c){
     CRENEAUX.push({jour:+c.j, h:c.deb+"–"+finHeure_V33(c.deb,c.dur),
-                   lib:JOURLIB_V33[+c.j]||"?", min:(+c.dur||120), rep:!!c.rep,
+                   lib:JOURLIB_V33[+c.j]||"?", min:(+c.dur||dureeReplit_V81()), rep:!!c.rep,   /*GRILLE_V81*/
                    q:c.q||"", tp:!!c.tp});   /* QUINZAINE_V37 ; tp : TYPE_DEPUIS_CRENEAU_V60 */
   });
   chargerCalendrier(STATE.annee);
@@ -4373,8 +4466,8 @@ function slotsAnnee_V33(){
        de l'annee. C'est ce qui faisait disparaitre les vendredis de quinzaine B de la
        Seconde — deux demi-groupes de TP et rien d'autre — et envoyait seize seances
        « hors annee ». On ajoute la plus longue duree dedoublee du jour, une seule fois. */
-    if(!cr.rep){ s.min += (cr.min||120); }
-    else { var _d=(cr.min||120); if(_d>(s._rep||0)){ s.min += _d-(s._rep||0); s._rep=_d; } }
+    if(!cr.rep){ s.min += (cr.min||dureeReplit_V81()); }   /*GRILLE_V81*/
+    else { var _d=(cr.min||dureeReplit_V81()); if(_d>(s._rep||0)){ s.min += _d-(s._rep||0); s._rep=_d; } }
   });
   out.sort(function(a,b){ return a.date-b.date; });
   out.forEach(function(s){ s.horaire=s.horaires.join(" + "); });
@@ -4397,12 +4490,12 @@ function creneauxAnnee_V61(){
     var jour=cr.date.toISOString().slice(0,10);
     if(cr.rep){
       var k=jour+"|dedouble|"+(cr.tp?"TP":"CO"), b=fus[k];
-      if(!b){ b=fus[k]={date:new Date(cr.date), min:(cr.min||120), tp:!!cr.tp,
+      if(!b){ b=fus[k]={date:new Date(cr.date), min:(cr.min||dureeReplit_V81()), tp:!!cr.tp,   /*GRILLE_V81*/
                         jourLib:cr.jourLib, horaires:[cr.horaire], dedouble:true};
               out.push(b); }
-      else { if((cr.min||120)>b.min) b.min=(cr.min||120); b.horaires.push(cr.horaire); }
+      else { var _m=(cr.min||dureeReplit_V81()); if(_m>b.min) b.min=_m; b.horaires.push(cr.horaire); }   /*GRILLE_V81*/
     } else {
-      out.push({date:new Date(cr.date), min:(cr.min||120), tp:!!cr.tp,
+      out.push({date:new Date(cr.date), min:(cr.min||dureeReplit_V81()), tp:!!cr.tp,   /*GRILLE_V81*/
                 jourLib:cr.jourLib, horaires:[cr.horaire], dedouble:false});
     }
   });
@@ -4427,9 +4520,9 @@ function planSyncUid(){
    pour ne pas fabriquer des séances de 2 h dans des créneaux de 1 h 30. */
 function dureeCreneauType_V33(){
   var c={}, best=0, bv=-1;
-  CRENEAUX.forEach(function(x){ if(x.rep) return; var m=x.min||120; c[m]=(c[m]||0)+1; });
+  CRENEAUX.forEach(function(x){ if(x.rep) return; var m=x.min||dureeReplit_V81(); c[m]=(c[m]||0)+1; });   /*GRILLE_V81*/
   for(var k in c){ if(c[k]>bv){ bv=c[k]; best=+k; } }
-  return best||120;
+  return best||dureeReplit_V81();   /*GRILLE_V81 — c'etait `best||120`, le repli signale par l'audit*/
 }
 /* Seed : fabrique les séances manquantes à partir de la génération heuristique existante. */
 /* ===== TYPES_HERITES_V61 — Laurent, 07/09 : « j'ai encore (...) des activite alors que je
@@ -4502,7 +4595,7 @@ function planEnsure(force){
     if(uid==null) return;
     if(s.chap!=null) last=s.chap;
     var dur;
-    try{ dur=Math.round(_dureeSeance_L33(s)*60); }catch(e){ dur=120; }
+    try{ dur=Math.round(_dureeSeance_L33(s)*60); }catch(e){ dur=dureeReplit_V81(); }   /*GRILLE_V81*/
     /* DUREE_DU_CRENEAU_V60 — Laurent, 07/09 : « ne laisse pas de temps libre, pourquoi
        mets-tu parfois 30 mn libre ? ». Parce que la duree d'une seance venait d'une table
        fixe (Cours 120, TP 120, TD 60...) rabotee a UNE valeur de creneau pour toute la
@@ -4510,9 +4603,9 @@ function planEnsure(force){
        recevait deux seances de 55, et il restait 30 minutes orphelines.
        La duree d'une seance est desormais celle de SON creneau. */
     if(s._cr && s._cr.min) dur = s._cr.min;
-    else dur = Math.min(dur||120, crType);
+    else dur = Math.min(dur||dureeReplit_V81(), crType);   /*GRILLE_V81*/
     (byUnit[uid]=byUnit[uid]||[]).push({
-      id: nextSeId_V33(), type: s.baseType||"Cours", durMin: dur||120,
+      id: nextSeId_V33(), type: s.baseType||"Cours", durMin: dur||dureeReplit_V81(),   /*GRILLE_V81*/
       caps: (s.caps||[]).slice(), note: s.note||"",
       ds: !!s.ds, dsChapters: s.dsChapters||null, capsOpen:false
     });
@@ -5169,7 +5262,7 @@ function renderEdtPanel_V33(){
     return '<tr data-i="'+i+'">'
       +'<td><select data-f="j">'+[1,2,3,4,5,6].map(function(j){ return '<option value="'+j+'"'+(+c.j===j?" selected":"")+'>'+JOURLIB_V33[j]+'</option>'; }).join("")+'</select></td>'
       +'<td><input type="time" data-f="deb" value="'+esc_V33(c.deb)+'"></td>'
-      +'<td><input type="number" data-f="dur" min="5" max="360" step="5" value="'+(+c.dur||120)+'"> min</td>'
+      +'<td><input type="number" data-f="dur" min="5" max="360" step="5" value="'+(+c.dur||dureeReplit_V81())+'"> min</td>'   /*GRILLE_V81 : le jumeau de DUREE_REELLE_V80*/
       /* QUINZAINE_V37 : un cours de 1 h 30 peut se poser en bloc hebdo, ou en 1 h une semaine
          et 2 h l'autre, ou 1 h fixe plus 1 h par quinzaine ailleurs. Il manquait ce reglage. */
       +'<td><select data-f="q" title="Toutes les semaines, ou une semaine sur deux">'
@@ -5194,7 +5287,7 @@ function renderEdtPanel_V33(){
     host.querySelectorAll("tr[data-i]").forEach(function(tr){
       out.push({ j:+tr.querySelector('[data-f="j"]').value,
                  deb:tr.querySelector('[data-f="deb"]').value||"08:00",
-                 dur:+tr.querySelector('[data-f="dur"]').value||120,
+                 dur:+tr.querySelector('[data-f="dur"]').value||dureeReplit_V81(),   /*GRILLE_V81*/
                  q:(tr.querySelector('[data-f="q"]')||{}).value||"",   /* QUINZAINE_V37 */
                  rep:!!tr.querySelector('[data-f="rep"]').checked });
     });
@@ -5204,7 +5297,7 @@ function renderEdtPanel_V33(){
     var cur=lire(); cur.splice(+b.getAttribute("data-rm"),1);
     edtSauver_V33({src:"EDT personnalisé", cren:cur.length?cur:edtDefaut_V33().cren}); renderEdtPanel_V33(); }; });
   var add=document.getElementById("edtAdd"); if(add) add.onclick=function(){
-    var cur=lire(); cur.push({j:4,deb:"10:00",dur:120,rep:false});
+    var cur=lire(); cur.push({j:4,deb:"10:00",dur:dureeReplit_V81(),rep:false});   /*GRILLE_V81*/
     edtSauver_V33({src:"EDT personnalisé", cren:cur}); renderEdtPanel_V33(); };
   var sv=document.getElementById("edtSave"); if(sv) sv.onclick=function(){
     edtSauver_V33({src:"EDT personnalisé", cren:lire()});
@@ -5379,6 +5472,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609132300"></script>
+<script src="pcmajo_fond.js?v=202609140736"></script>
 </body>
 </html>

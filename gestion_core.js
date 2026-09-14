@@ -297,6 +297,14 @@ function saveAnnees(){try{localStorage.setItem(ANNEES_KEY,JSON.stringify(ANNEES)
 let ANNEES = loadAnnees();
 const PREF_ANNEE = "gestion_majorelle_annee";
 var AGENOR_PID="3126898c42e831a4c34e8991c386c7cad8b3ff522552274d5562d387608d067c";
+/* GRILLE_V81 — le pas de la grille du lycee (base_grille.js), et pas un nombre
+   invente. Ce fichier portait `duree_min||90` la ou constructeur.html portait 120 :
+   deux replis differents pour un seul fait. Si base_grille.js manque, on retombe
+   sur l'ancien 90, jamais en erreur. */
+function _pasGrille_V81(){
+  try{ if(window.BASE_GRILLE && +window.BASE_GRILLE.pas>0) return +window.BASE_GRILLE.pas; }catch(e){}
+  return 90;
+}
 function currentPid(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&a.pid) return a.pid;}catch(e){} return "";}
 /* CLE_PAR_PROF_V52 — la cle du carnet porte de nouveau le PROFESSEUR.
    CLE_UNIQUE_GESTION_V48 avait retire la session pour supprimer un doublon reel ;
@@ -547,7 +555,7 @@ function defaultState(annee){
       /*BASE_DANS_GESTION_V55f*/ du:c.du||"", au:c.au||"",
       creneaux:(c.emploi_du_temps_pc||[]).map(cr=>({
         jour:(cr.jour&&cr.jour!=="?")?cr.jour:"", debut:(cr.debut&&cr.debut!=="?")?cr.debut:"",
-        duree:cr.duree_min||90, quinzaine:cr.quinzaine?(cr.quinzaine===true?"A":cr.quinzaine):"",
+        duree:cr.duree_min||_pasGrille_V81(), quinzaine:cr.quinzaine?(cr.quinzaine===true?"A":cr.quinzaine):"",   /*GRILLE_V81*/
         /* GROUPES_V37 : le champ etait perdu a la lecture, si bien qu'un TP dedouble de Seconde
            comptait deux fois dans le temps de progression (4 h 30 la ou l'eleve en a 3). */
         groupe:cr.groupe||"auto",
