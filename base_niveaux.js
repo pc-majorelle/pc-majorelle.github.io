@@ -353,6 +353,20 @@
     var role = (type === "TP" || type === "TP \u00e9valu\u00e9") ? "TP"
              : (type === "Cours") ? "Cours" : null;
     if (!role) return null;
+
+    /* ★★★ CORRECTION V85, Laurent le 14/09 : « 120 mn ca n'existe pas. Ce qui existe, ce sont
+       des documents qui indiquent 2h et qu'on traduit par une seance (55 sur M1) puis une
+       seance (55 sur M2) ». UN COURS EST TOUJOURS UNE PLACE — c'etait deja sa regle de pose
+       (« un cours = UNE place, n'oblige a rien ») ; il manquait d'en tirer la consequence ici.
+       Le COEFFICIENT d'un module de cours dit le volume de la SEMAINE (1re spe : 2 h), PAS la
+       longueur d'une seance. Les confondre faisait rendre 110 a une seance de cours de 1re spe
+       et de Tale spe : une seance de 2 h qui n'existe nulle part.
+       ⚠ `places` n'a donc PAS le meme sens selon le role, et c'est voulu :
+          role "Cours" -> places consommees dans la SEMAINE (plusieurs seances d'une place) ;
+          role "TP"    -> places d'UNE SEULE seance (« poser un TP oblige a poser une heure et
+                          la suivante ») — d'ou 85 en Seconde et 110 ailleurs. */
+    if (role === "Cours") return PAS();
+
     var vus = {};
     N.modules.forEach(function (m) { if (m.role === role) vus[m.minutes()] = 1; });
     var k = Object.keys(vus);
