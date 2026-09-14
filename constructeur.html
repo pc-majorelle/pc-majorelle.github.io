@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609140833"></script>
+<script src="pcmajo_test.js?v=202609141721"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -268,11 +268,11 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 </head>
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
-<script>document.write('<script src="base_grille.js?v='+Date.now()+'"><\/script>')</script><!--GRILLE_V81 : la grille horaire du lycee, source unique des replis de duree-->
+<script>document.write('<script src="base_horaires.js?v='+Date.now()+'"><\/script>')</script><!--GRILLE_V81 / RENOMMAGE_V82 : les horaires du lycee, source unique des replis de duree-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609140833"></script>
-<script src="store.js?v=202609140833"></script>
-<script src="pcmajo_ui.js?v=202609140833"></script>
+<script src="classes_annee.js?v=202609141721"></script>
+<script src="store.js?v=202609141721"></script>
+<script src="pcmajo_ui.js?v=202609141721"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -4293,7 +4293,7 @@ function edtKey_V33(){
    de 55 mn, c'est juste un calcul ». Le voici, ce calcul. Trois etages, du plus
    vrai au plus pauvre, et AUCUN n'est un nombre invente :
      1. la duree la plus frequente des creneaux REELS non dedoubles de la classe ;
-     2. a defaut, le pas de la grille du lycee (base_grille.js) ;
+     2. a defaut, le pas de la grille du lycee (base_horaires.js) ;
      3. et seulement si meme la grille manque, l'ancienne valeur (120) — pour
         qu'un fichier absent degrade au comportement d'avant, jamais en erreur.
    Etage 1 = exactement ce que faisait deja `dureeCreneauType_V33`, qui finissait
@@ -4306,7 +4306,7 @@ function dureeReplit_V81(){
     for(var k in c){ if(c[k]>bv){ bv=c[k]; best=+k; } }
     if(best>0) return best;
   }catch(e){}
-  try{ if(window.BASE_GRILLE && +window.BASE_GRILLE.pas>0) return +window.BASE_GRILLE.pas; }catch(e){}
+  try{ if(window.BASE_HORAIRES && +window.BASE_HORAIRES.pas>0) return +window.BASE_HORAIRES.pas; }catch(e){}
   return 120;
 }
 function edtBase_V60(){
@@ -5472,6 +5472,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609140833"></script>
+<script src="pcmajo_fond.js?v=202609141721"></script>
 </body>
 </html>

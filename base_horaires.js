@@ -1,5 +1,7 @@
-/* base_grille.js — GRILLE_V81 (MAITRE v81, 13/09/2026).
-   LA GRILLE HORAIRE DU LYCEE, A UN SEUL ENDROIT.
+/* base_horaires.js — GRILLE_V81, renomme par RENOMMAGE_V82 (MAITRE v82, 14/09/2026).
+   LES HORAIRES DU LYCEE, A UN SEUL ENDROIT : la grille, les sonneries du carnet de
+   correspondance et la regle des coefficients de Laurent. Le global est BASE_HORAIRES.
+   (Ancien nom, jusqu'au 14/09/2026 : base_grille.js / window.BASE_GRILLE.)
    Pourquoi ce fichier existe : la duree d'une heure de cours etait ecrite en dur
    a une quinzaine d'endroits, avec TROIS valeurs differentes selon le fichier
    (120 dans constructeur.html, 90 dans gestion_core.js, 55 / 60 / 90 dans
@@ -10,7 +12,7 @@
    C'EST LA SEULE TABLE A CHANGER LE JOUR OU LE LYCEE BOUGE SES HORAIRES.
    (ma_semaine.html garde pour l'instant sa propre copie de ces valeurs : ce fichier
    ne doit pas etre modifie sans le geste de Laurent. A reunir plus tard.) */
-window.BASE_GRILLE = {
+window.BASE_HORAIRES = {
   pas: 55,            /* duree d'une heure de cours, en minutes */
   interclasse: 5,     /* entre deux heures consecutives */
   recre: 10,          /* duree d'une recreation */
@@ -21,8 +23,10 @@ window.BASE_GRILLE = {
      14/09/2026). C'est ICI, et nulle part ailleurs, qu'on corrige une sonnerie :
      la page « Dates de cours » du gestionnaire ne fait que lire cette table.
      `t` : "cours" | "interclasse" | "recreation" | "midi".
-     ⚠ Les deux lignes `midi` sont SANS INTITULE dans le carnet (vraisemblablement
-     les deux services de restauration) — intitule a confirmer par Laurent.
+     ⚠ Les deux lignes `midi` sont SANS INTITULE dans le carnet. Laurent, 14/09 :
+     ce ne sont PAS des services de restauration — CES PLAGES PEUVENT PORTER DU COURS
+     (un collegue a cours sur le creneau de midi). Ne jamais les traiter comme du
+     temps indisponible.
      ===================================================================== */
   sonneries: {
     source: "Carnet de correspondance — « Horaires de sonneries » (scan du 14/09/2026)",

@@ -297,12 +297,12 @@ function saveAnnees(){try{localStorage.setItem(ANNEES_KEY,JSON.stringify(ANNEES)
 let ANNEES = loadAnnees();
 const PREF_ANNEE = "gestion_majorelle_annee";
 var AGENOR_PID="3126898c42e831a4c34e8991c386c7cad8b3ff522552274d5562d387608d067c";
-/* GRILLE_V81 — le pas de la grille du lycee (base_grille.js), et pas un nombre
+/* GRILLE_V81 (fichier renomme par RENOMMAGE_V82) — le pas de la grille du lycee, et pas un nombre
    invente. Ce fichier portait `duree_min||90` la ou constructeur.html portait 120 :
-   deux replis differents pour un seul fait. Si base_grille.js manque, on retombe
+   deux replis differents pour un seul fait. Si base_horaires.js manque, on retombe
    sur l'ancien 90, jamais en erreur. */
 function _pasGrille_V81(){
-  try{ if(window.BASE_GRILLE && +window.BASE_GRILLE.pas>0) return +window.BASE_GRILLE.pas; }catch(e){}
+  try{ if(window.BASE_HORAIRES && +window.BASE_HORAIRES.pas>0) return +window.BASE_HORAIRES.pas; }catch(e){}
   return 90;
 }
 function currentPid(){try{var a=JSON.parse(sessionStorage.getItem("pcmajo_acces")); if(!a){a=JSON.parse(localStorage.getItem("pcmajo_acces"));} if(a&&a.role==="prof"&&a.pid) return a.pid;}catch(e){} return "";}
@@ -980,11 +980,11 @@ function renderCalendrier(){
   }
   h += `<p class="hint">${ecartes ? ecartes + " autre" + (ecartes > 1 ? "s jours ôtés ne tombent" : " jour ôté ne tombe") + " pas sur un créneau de cette classe. " : ""}${horsPart ? `<b>${horsPart} tombe${horsPart > 1 ? "nt" : ""} sur un créneau de cette classe mais <u>hors de votre part</u>` + ((cCal && (cCal.du || cCal.au)) ? ` (${cCal.du ? _dateFr(cCal.du) : "début"} → ${cCal.au ? _dateFr(cCal.au) : "fin"} exclu)` : ``) + ` : ce n'est pas vous qui les perdez.</b> ` : ``}Les jours fériés de week-end ou de vacances n'apparaissent jamais ici.</p></div>`;
   /* ===== HORAIRES_V81 — Laurent, 14/09 : « ajoute-la a une table modifiable a la main
-     et affiche-la dans dates de cours ». La table vit dans base_grille.js ; cette carte
-     ne fait que la LIRE. Si base_grille.js n'est pas charge, la carte ne s'affiche pas
+     et affiche-la dans dates de cours ». La table vit dans base_horaires.js ; cette carte
+     ne fait que la LIRE. Si base_horaires.js n'est pas charge, la carte ne s'affiche pas
      du tout — jamais d'horaires inventes. ===== */
   try{
-    var _SO = (window.BASE_GRILLE && window.BASE_GRILLE.sonneries) || null;
+    var _SO = (window.BASE_HORAIRES && window.BASE_HORAIRES.sonneries) || null;
     if(_SO && _SO.matin && _SO.apresmidi){
       var _lib = {cours:"COURS", interclasse:"Interclasse", recreation:"R\u00e9cr\u00e9ation", midi:"Midi"};
       var _n = Math.max(_SO.matin.length, _SO.apresmidi.length);
@@ -996,11 +996,11 @@ function renderCalendrier(){
         return '<td>'+(fort?('<b>'+esc(lab)+'</b>'):('<span class="muted">'+esc(lab)+'</span>'))+'</td>'
              + '<td>'+(fort?('<b>'+pl+'</b>'):('<span class="muted">'+pl+'</span>'))+'</td>';
       };
-      var _pas = (window.BASE_GRILLE.pas||55), _itc = (window.BASE_GRILLE.interclasse||5);
-      var _p2  = window.BASE_GRILLE.pause2nde || null;
+      var _pas = (window.BASE_HORAIRES.pas||55), _itc = (window.BASE_HORAIRES.interclasse||5);
+      var _p2  = window.BASE_HORAIRES.pause2nde || null;
       h += '<div class="card"><div class="row" style="justify-content:space-between;align-items:center">'
          + '<h3 style="margin:0">\ud83d\udd14 Horaires de sonneries</h3>'
-         + '<span class="pill">table modifiable \u2014 <code>base_grille.js</code></span></div>'
+         + '<span class="pill">table modifiable \u2014 <code>base_horaires.js</code></span></div>'
          + '<table><thead><tr><th colspan="2">Matin</th><th colspan="2">Apr\u00e8s-midi</th></tr></thead><tbody>';
       for(var _i=0;_i<_n;_i++){
         h += '<tr>'+_cell(_SO.matin[_i])+_cell(_SO.apresmidi[_i])+'</tr>';
@@ -1015,7 +1015,7 @@ function renderCalendrier(){
                    +' min, de h+'+_p2.debMin+' \u00e0 h+'+_p2.finMin+'.') : '')
          + '</p>'
          + '<p class="hint">Source : '+esc(_SO.source)+'. Pour corriger une sonnerie, '
-         + '\u00e9ditez <code>base_grille.js</code> \u2014 cette page ne fait que la lire.</p>'
+         + '\u00e9ditez <code>base_horaires.js</code> \u2014 cette page ne fait que la lire.</p>'
          + '</div>';
     }
   }catch(e){}
