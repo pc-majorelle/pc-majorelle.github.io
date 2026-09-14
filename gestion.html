@@ -141,12 +141,10 @@
     <div class="tab" data-t="classes">Classes</div>
     <div class="tab" data-t="calendrier">Calendrier</div>
     <div class="tab" data-t="constr">Constructeur</div>
-    <div class="tab" id="legacyToggle">Anciens outils</div>
-    <span id="legacyTabs" style="display:none">
-      <div class="tab" data-t="prev">Prévisionnel</div>
-      <div class="tab" data-t="plan">Plannings cohérents</div>
-      <div class="tab" data-t="progressions">Progressions</div>
-    </span>
+    <!--MENU_CONSTRUCTEUR_V82 — Laurent, 14/09 : « pour les collegues, dans Plus il faut enlever tous
+        les anciens. » Le site sert maintenant a d'autres professeurs : ce qui etait « conserve pour
+        memoire » n'est plus PROPOSE. Les panneaux p-prev / p-plan / p-progressions restent en place et
+        leur code est intact — rien n'est supprime, ils ne sont simplement plus offerts au clic.-->
   </div>
 </header>
 <div class="coque">
@@ -162,10 +160,7 @@
       <button data-t="classes" id="plusClasses" hidden>Mes classes</button><!--ETAT_SERVICE_V66 : quand l'etat de service est definitif-->
       <button data-t="materiel">Matériel</button>
       <button data-t="calendrier">Dates de cours</button>
-      <button data-t="constr">Constructeur</button>
-      <button data-t="prev">Prévisionnel (ancien)</button>
-      <button data-t="plan">Plannings cohérents (ancien)</button>
-      <button data-t="progressions">Progressions (ancien)</button>
+      <button id="plusConstr">🧭 Constructeur</button><!--MENU_CONSTRUCTEUR_V82 : plus de page intermediaire, il ouvre l'outil-->
       <div class="sep"></div><!--ACCUEIL_GESTION_V67 : ce que l'Espace prof avait et que le gestionnaire n'a pas-->
       <a class="lien" href="activites_web.html">🧪 Activités</a>
       <a class="lien" href="saisie_competences_mobile.html">📝 Grille TP au téléphone</a>
@@ -235,12 +230,19 @@
                    plan:"<b>Plannings cohérents (ancien).</b> Remplacé par le constructeur, conservé pour mémoire.",
                    progressions:"<b>Progressions (ancien).</b> Remplacé par le constructeur, conservé pour mémoire."};
 
+  /* MENU_CONSTRUCTEUR_V82 : l'adresse ne force plus « &mode=editeur ». Laurent, 14/09 : « le mode
+     seance pour commencer puis le mode est persistant sur chaque classe ». Un mode impose par
+     l'adresse ne s'enregistre pas (MODE_VISITE_V80) : il ecrasait donc son choix a chaque ouverture.
+     Sans mode dans l'adresse, le constructeur lit sa memoire PAR CLASSE, dont le defaut est Seances. */
+  function urlConstructeur(){
+    var c=activeClass(); var tok=constrLevelToken(c);
+    return "constructeur.html?annee="+encodeURIComponent(ANNEE)
+         +(tok?"&niveau="+encodeURIComponent(tok):"")
+         +(c?"&classe="+encodeURIComponent(c.id):"")+"&de=gestion";
+  }
   function lienConstructeur(){
-    try{
-      var c=activeClass(); var tok=constrLevelToken(c);
-      var q="?annee="+encodeURIComponent(ANNEE)+(tok?"&niveau="+encodeURIComponent(tok):"")+(c?"&classe="+encodeURIComponent(c.id):"")+"&mode=editeur&de=gestion";
-      return '<a class="mini primary" href="constructeur.html'+q+'">🧭 Ouvrir le constructeur</a>';
-    }catch(e){ return ""; }
+    try{ return '<a class="mini primary" href="'+urlConstructeur()+'">🧭 Ouvrir le constructeur</a>'; }
+    catch(e){ return ""; }
   }
   /*ETAT_SERVICE_V66 : « Mes classes » en tete tant que l'etat de service n'est pas definitif, dans « Plus » ensuite.
     La donnee (state.serviceDefinitif, serviceDefinitif(), setServiceDefinitif()) vit dans gestion_core.js. */
@@ -389,6 +391,10 @@
   document.querySelectorAll("#plus button[data-t], #sousOnglets button[data-t]").forEach(function(b){
     b.addEventListener("click",function(){ switchTab(b.dataset.t); });
   });
+  /* MENU_CONSTRUCTEUR_V82 — Laurent, 14/09 : « un clic sur constructeur devrait nous mener
+     directement au constructeur sans passer par une page intermediaire. » */
+  try{ var _bc=$("plusConstr"); if(_bc) _bc.addEventListener("click",function(){
+    try{ location.href=urlConstructeur(); }catch(x){ location.href="constructeur.html"; } }); }catch(e){}
   /* Premier affichage : ?tab= est lu par le code commun (DOMContentLoaded) et passe par l'enveloppe. */
 })();
 </script>

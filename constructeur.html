@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <!-- OUTILS_TEST_V38 : chargé AVANT tout autre script (il décale l'horloge). À retirer avec le reste de l'outillage. -->
-<script src="pcmajo_test.js?v=202609141810"></script>
+<script src="pcmajo_test.js?v=202609141721"></script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Constructeur de progression — PC Majorelle</title>
@@ -270,9 +270,9 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
 <script>document.write('<script src="base_horaires.js?v='+Date.now()+'"><\/script>')</script><!--GRILLE_V81 / RENOMMAGE_V82 : les horaires du lycee, source unique des replis de duree-->
 <script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
-<script src="classes_annee.js?v=202609141810"></script>
-<script src="store.js?v=202609141810"></script>
-<script src="pcmajo_ui.js?v=202609141810"></script>
+<script src="classes_annee.js?v=202609141721"></script>
+<script src="store.js?v=202609141721"></script>
+<script src="pcmajo_ui.js?v=202609141721"></script>
 <style>/*UNIFY_I1_V30*/
 .modebtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-right:8px}
 .modebtns button{border:none;background:transparent;color:var(--ink);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -2417,22 +2417,80 @@ function splittable(sess){ return sess.baseType!=="DS" && sess.baseType!=="Tampo
 // PARTIES d'un créneau : soit le découpage personnalisé (STATE.parts), soit une seule partie par défaut.
 //  Chaque partie = { type, dur } ; la somme des durées = durée du créneau.
 function partsOf(sess){
-  if(sess.real) return [{type:sess.baseType, dur:2}];   // séance RÉELLE du cahier : bloc plein, couleur = vrai type
+  /* COEF_V82 : `dur` reste le COEFFICIENT (rien de stocke ne change) ; on lui adjoint `min`,
+     les minutes reelles calculees par la grille — c'est `min` que l'affichage lit. */
+  if(sess.real) return coefParts_V82([{type:sess.baseType, dur:2}]);   // séance RÉELLE du cahier : bloc plein, couleur = vrai type
   const cust = STATE.parts && STATE.parts[sess.id];
-  if(cust && cust.length) return cust.map(p=>({type:p.type, dur:p.dur}));
-  if(sess.baseType==="DS")     return [{type:"DS",     dur:(sess.dsDur||1)}];
-  if(sess.baseType==="Tampon") return [{type:"Tampon", dur:2}];
-  return [{type:sess.baseType, dur:2}];
+  if(cust && cust.length) return coefParts_V82(cust.map(p=>({type:p.type, dur:p.dur})));
+  if(sess.baseType==="DS")     return coefParts_V82([{type:"DS",     dur:(sess.dsDur||1)}]);
+  if(sess.baseType==="Tampon") return coefParts_V82([{type:"Tampon", dur:2}]);
+  return coefParts_V82([{type:sess.baseType, dur:2}]);
 }
 // Durée effective d'un créneau = somme des durées de ses parties.
 function dureeSeance(sess){ return partsOf(sess).reduce((a,p)=>a+p.dur,0); }
 // Type « dominant » d'un créneau (pour la couleur du repère de chapitre, tooltips…) = 1re partie.
 function typeEffectif(sess){ return partsOf(sess)[0].type; }
 // Format lisible d'une durée en heures : 1 -> "1 h", 1.5 -> "1 h 30", 2 -> "2 h"
+// COEF_V82 : plus AUCUN affichage ne passe par ici — il parlait en heures de 60 min, que ce lycée
+// n'a pas. Gardé pour ne rien casser d'un appel oublié ; le vrai formateur est fmtCoefMin_V82.
 function fmtH(h){
   const H=Math.floor(h), M=Math.round((h-H)*60);
   return M ? (H+" h "+String(M).padStart(2,"0")) : (H+" h");
 }
+/* ============================ COEF_V82 — L'UNITE N'EST PLUS L'HEURE ============================
+   Laurent, 14/09 : « l'administration parle de creneaux de 1h ou 1,5h ou 2h et en realite il s'agit
+   de coefficients appliques a 55 mn. » Et : « en enseignement scientifique il y a marque 1h au lieu
+   de 55 mn. » Mesure (v81, sur la page servie) : partsOf rend dur:2 pour une seance ordinaire et
+   dur:1 pour un DS — des HEURES ADMINISTRATIVES ; fmtH(1) ecrivait donc « 1 h », et une seance
+   posee sur un vrai creneau de 55 min ecrivait « 0 h 55 ».
+   PIEGE MESURE PAR LA v81 : dur:2 (coefficient) et dur:0,9166 (55 min reelles) sont TOUS LES DEUX
+   des « heures » dans le meme champ — un formateur seul ne peut pas les distinguer. La distinction
+   n'existe qu'a la SOURCE : une seance du PLAN porte `_parts` (minutes reelles / 60), une seance
+   non placee n'a qu'un coefficient. On attache donc `min` (minutes REELLES) a chaque partie, la ou
+   on le sait, et TOUT l'affichage part de la minute.
+   AFFICHAGE VOULU, mot pour mot : « 1 h (55 min) ». Un coefficient n'est jamais affiche seul.
+   ET SI LE COMPTE NE TOMBE PAS JUSTE (60, 90, 120 : un nombre rond, donc suspect), on n'invente
+   aucun coefficient : on affiche la duree reelle, toute nue. */
+function pasGrille_V82(){
+  try{ if(window.BASE_HORAIRES && +window.BASE_HORAIRES.pas>0) return +window.BASE_HORAIRES.pas; }catch(e){}
+  return 55;
+}
+function nb_V82(x){ var s=(Math.round(x*100)/100).toString(); return s.replace(".", ","); }
+/* minutes REELLES -> « 1 h (55 min) ». Le premier nombre est le coefficient (la langue de
+   l'administration), le second la verite. */
+function fmtCoefMin_V82(min){
+  if(min==null || isNaN(min)) return "—";
+  min=Math.max(0, Math.round(min*10)/10);
+  var pas=pasGrille_V82();
+  /* En dessous de 3 h on parle en MINUTES — c'est l'echelle d'une seance, et c'est la langue de
+     Laurent (« 55 mn », « 110 min »). Au-dela, c'est un CUMUL d'annee : h et min se lisent mieux. */
+  var reel = (min<180) ? (nb_V82(min)+" min")
+                       : (Math.floor(min/60)+" h "+("0"+Math.round(min%60)).slice(-2));
+  var c=Math.round((min/pas)*2)/2;                 /* coefficient au demi pres */
+  if(c>0 && Math.abs(c*pas-min)<=3) return nb_V82(c)+" h ("+reel+")";
+  return reel;                                      /* nombre rond ou batard : la verite, sans coefficient */
+}
+/* minutes d'une partie : celles du plan si on les connait, sinon coefficient x pas de la grille */
+function minPart_V82(p){
+  if(!p) return null;
+  if(p.min!=null && !isNaN(p.min)) return +p.min;
+  return (+p.dur||0)*pasGrille_V82();
+}
+function fmtPart_V82(p){ return fmtCoefMin_V82(minPart_V82(p)); }
+function minSeance_V82(sess){ try{ return partsOf(sess).reduce(function(a,p){ return a+(minPart_V82(p)||0); },0); }catch(e){ return 0; } }
+/* combien de minutes vaut UNE unite de `dur` pour cette partie : 60 dans le plan (dur = min/60),
+   le pas de la grille pour un coefficient. Mesure, jamais devine. */
+function uniteMin_V82(p){
+  if(p && p.min!=null && +p.dur) return (+p.min)/(+p.dur);
+  return pasGrille_V82();
+}
+/* attache `min` a des parties qui n'ont qu'un coefficient */
+function coefParts_V82(parts){
+  var pas=pasGrille_V82();
+  return (parts||[]).map(function(p){ return {type:p.type, dur:p.dur, seId:p.seId, min:(+p.dur||0)*pas}; });
+}
+/* ============================ fin COEF_V82 (outils) ============================ */
+
 // Capacités DÉCOCHÉES à la main, regroupées PAR CHAPITRE d'origine (dans l'ordre du chapitre).
 // Chaque chapitre incomplet donnera un duplicata « X (suite) » avec ses seules capacités reportées.
 function reporteesParChapitre(){
@@ -2772,6 +2830,7 @@ function renderCounters(){
   const datees = PLAN.filter(s=>s.date);
   const horsAnnee = PLAN.length - datees.length;
   const heures = PLAN.reduce((a,s)=>a+dureeSeance(s),0);   // durées réelles (DS = 1 h / 1 h 30)
+  const minutes_V82 = PLAN.reduce((a,s)=>a+minSeance_V82(s),0);   /*COEF_V82 : le total en MINUTES*/
   const semaines = new Set(datees.map(s=>{
     // cle annee-semaine ISO simplifiee (jeudi de la semaine)
     return iso(addDays(s.date, 4 - ((s.date.getUTCDay()+6)%7)));
@@ -2781,7 +2840,7 @@ function renderCounters(){
   c.innerHTML="";
   const kpis=[
     {v:PLAN.length, l:"séances générées"},
-    {v:fmtH(heures), l:"heures totales"},
+    {v:fmtCoefMin_V82(minutes_V82), l:"temps total"},   /*COEF_V82*/
     {v:semaines, l:"semaines utilisées"},
     {v:NB_PERDUES, l:"séances perdues (vac./fériés)"},
     {v:CRENEAUX_REELS.length, l:"créneaux réels dispo."},
@@ -2805,12 +2864,12 @@ function renderCounters(){
   const TYPES=["Activité","Cours","TD","TP","TP évalué","DS","Tampon"];
   const varmap={"Activité":"--t-activite","Cours":"--t-cours","TD":"--t-td","TP":"--t-tp","TP évalué":"--t-tpe","DS":"--t-ds","Tampon":"--t-tampon"};
   const cnt={}, hrs={}; TYPES.forEach(t=>{cnt[t]=0; hrs[t]=0;});
-  PLAN.forEach(s=>{ partsOf(s).forEach(p=>{ cnt[p.type]=(cnt[p.type]||0)+1; hrs[p.type]=(hrs[p.type]||0)+p.dur; }); });
+  PLAN.forEach(s=>{ partsOf(s).forEach(p=>{ cnt[p.type]=(cnt[p.type]||0)+1; hrs[p.type]=(hrs[p.type]||0)+(minPart_V82(p)||0); }); });   /*COEF_V82 : on cumule des MINUTES*/
   const v=document.getElementById("ventil"); v.innerHTML="";
   TYPES.forEach(t=>{
     v.insertAdjacentHTML("beforeend",
       `<span class="pill"><span class="dot" style="background:var(${varmap[t]})"></span>
-       <b>${t}</b> : ${cnt[t]} parties · ${fmtH(hrs[t])}</span>`);
+       <b>${t}</b> : ${cnt[t]} parties · ${fmtCoefMin_V82(hrs[t])}</span>`);   /*COEF_V82*/
   });
 }
 
@@ -2939,11 +2998,11 @@ function dessinerFrise(svg, sessions, chapDates, chapOrder, opts){
             fill:blockColor(p.type)});
           r.appendChild(svgEl("title",{})).textContent=
             (s.suite?"("+cCode+" suite) · ":(cCode?cCode+" · ":""))
-            +p.type+" · "+fmtH(p.dur)+" · "+frDate(s.date)+(s.label?" · "+s.label:"");
+            +p.type+" · "+fmtPart_V82(p)+" · "+frDate(s.date)+(s.label?" · "+s.label:"");   /*COEF_V82*/
           svg.appendChild(r);
           x+=w+2;   // 2 px d'écart entre blocs successifs
         });
-        statut=(cCode?cCode+" — ":"")+parts.map(p=>p.type+" "+fmtH(p.dur)).join(" + ");
+        statut=(cCode?cCode+" — ":"")+parts.map(p=>p.type+" "+fmtPart_V82(p)).join(" + ");   /*COEF_V82*/
       } else { statut="créneau libre"; }
     }
     const jl=svgEl("text",{x:it.x+it.w/2,y:CY+CH+8,"text-anchor":"middle","font-size":7,
@@ -3108,7 +3167,7 @@ function dessinerLignePeriode(svg,period,pid,yTop,sessISO,chapDates,chapOrder,ta
         partsOf(s).forEach(pp=>{
           const w=Math.max(1.5, pp.dur*PXH);   // largeur ∝ durée (échelle de LA LIGNE), aplat sans bord
           const r=svgEl("rect",{x:bx,y:yTop+3,width:w,height:CH-6,rx:3,fill:blockColor(pp.type)});
-          r.appendChild(svgEl("title",{})).textContent=(cCode?cCode+" · ":"")+pp.type+" · "+fmtH(pp.dur)+" · "+frDate(cell.date)+(s.label?" · "+s.label:"");
+          r.appendChild(svgEl("title",{})).textContent=(cCode?cCode+" · ":"")+pp.type+" · "+fmtPart_V82(pp)+" · "+frDate(cell.date)+(s.label?" · "+s.label:"");
           svg.appendChild(r); bx+=w+2;
         });
       }
@@ -3308,9 +3367,10 @@ function selType(current, isDS, onChange){
   return sel;
 }
 // Menu de durée d'une partie (0,5 / 1 / 1,5 h ; en créneau non découpé : 2 h fixe).
-function selDur(current, options, onChange){
+function selDur(current, options, onChange, uniteMin){   /*COEF_V82 : uniteMin = combien de minutes vaut 1 unite ici*/
   const sel=document.createElement("select");
-  options.forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=fmtH(v); if(v===current)o.selected=true; sel.appendChild(o); });
+  const _u = uniteMin || pasGrille_V82();
+  options.forEach(v=>{ const o=document.createElement("option"); o.value=v; o.textContent=fmtCoefMin_V82(v*_u); if(v===current)o.selected=true; sel.appendChild(o); });
   sel.style.padding="1px 4px"; sel.addEventListener("change",()=>onChange(+sel.value));
   return sel;
 }
@@ -3343,7 +3403,7 @@ function tableSeances(sess){
       const line=document.createElement("div"); line.style.cssText="display:flex;align-items:center;gap:4px;margin:1px 0";
       line.appendChild(dot(p.type));
       if(isTampon){
-        const lab=document.createElement("span"); lab.textContent=p.type+" · "+fmtH(p.dur); line.appendChild(lab);
+        const lab=document.createElement("span"); lab.textContent=p.type+" · "+fmtPart_V82(p); line.appendChild(lab);   /*COEF_V82*/
       } else {
         // menu type de la partie
         line.appendChild(selType(p.type, isDS, (val)=>{ const np=partsOf(s); np[pi].type=val; setParts(s,np); renderChapters(); }));
@@ -3351,9 +3411,9 @@ function tableSeances(sess){
         if(parts.length>=2){
           line.appendChild(selDur(p.dur,[0.5,1,1.5],(val)=>{
             const np=partsOf(s); np[pi].dur=val; const _o=np[1-pi]; if(_o) _o.dur=+(total-val).toFixed(1); setParts(s,np); renderChapters();   /*EDITEUR_SEANCES_V33 : garde-fou >2 parties*/
-          }));
+          }, uniteMin_V82(p)));
         } else {
-          const lab=document.createElement("span"); lab.textContent=fmtH(p.dur); lab.style.color="var(--ink-soft)"; line.appendChild(lab);
+          const lab=document.createElement("span"); lab.textContent=fmtPart_V82(p); lab.style.color="var(--ink-soft)"; line.appendChild(lab);   /*COEF_V82*/
         }
       }
       cell.appendChild(line);
@@ -3838,7 +3898,23 @@ function on(id,evt,fn){ const el=document.getElementById(id); if(el) el.addEvent
 /*UNIFY_I1_V30 ; MODE_VISITE_V80 : `sansMemoire` = ce mode vient de l'adresse (lien du gestionnaire),
   il vaut pour la visite et ne doit PAS ecraser la preference de Laurent. Un clic sur un onglet, lui,
   n'passe pas ce drapeau : il enregistre, comme avant. */
-function setMode(m, sansMemoire){ m=(m==="arbre")?"arbre":"frise"; if(!sansMemoire){ try{localStorage.setItem("constructeur_mode",m);}catch(e){} }
+/* MODE_CLASSE_V82 — Laurent, 14/09 : « le mode seance pour commencer puis le mode est persistant
+   sur chaque classe donc on peut avoir des modes differents selon les classes. » La memoire etait
+   UNIQUE et globale (MODE_SEANCES_V80) : un mode choisi pour une classe suivait toutes les autres. */
+function cleMode_V82(){
+  var cl=null; try{ cl=(window.__MENUCTX&&__MENUCTX.classe)||(window.Store&&Store.classeActive&&Store.classeActive())||null; }catch(e){}
+  return cl ? ("constructeur_mode__"+cl) : "constructeur_mode";
+}
+function ecrireMode_V82(m){ try{ localStorage.setItem(cleMode_V82(), m); }catch(e){} }
+/* Repli, du plus precis au plus general — et le DERNIER MOT est « editeur » (= Seances). */
+function lireMode_V82(){
+  try{
+    var parClasse=localStorage.getItem(cleMode_V82());
+    if(parClasse) return parClasse;
+  }catch(e){}
+  return "editeur";
+}
+function setMode(m, sansMemoire){ m=(m==="arbre")?"arbre":"frise"; if(!sansMemoire){ ecrireMode_V82(m); }
   var isA=(m==="arbre");/*ARBRE_VIEW_V30*/
   var sF=document.getElementById("secFrise"); if(sF) sF.style.display=isA?"none":"";
   var sC=document.getElementById("secChapters"); if(sC) sC.style.display=isA?"none":"";
@@ -4205,14 +4281,21 @@ function applyPropositionBoot_V66(pid){
    ============================================================================ */
 
 /* ---------- types de séance (mêmes libellés que le moteur existant) ---------- */
-var TYPES_V33 = [
-  {k:"Activité",  lab:"Act.",  dur:60},
-  {k:"Cours",     lab:"Cours", dur:120},
-  {k:"TD",        lab:"TD",    dur:60},
-  {k:"TP",        lab:"TP",    dur:120},
-  {k:"TP évalué", lab:"TP✓",   dur:120},
-  {k:"DS",        lab:"DS",    dur:60}
-];
+/* COEF_V82 : ces durees etaient ecrites en dur — 60 et 120 min, deux nombres RONDS
+   qu'aucun creneau de ce lycee ne fait (l'heure y vaut 55). Elles deviennent des COEFFICIENTS
+   convertis par la grille : coef 1 = 55, coef 2 = 110. Le repli reste un dernier recours :
+   _dureeCreneau_V64 prefere toujours la duree des creneaux REELS de la classe. */
+var TYPES_V33 = (function(){
+  var pas = (function(){ try{ if(window.BASE_HORAIRES && +window.BASE_HORAIRES.pas>0) return +window.BASE_HORAIRES.pas; }catch(e){} return 55; })();
+  return [
+    {k:"Activité",  lab:"Act.",  coef:1, dur:1*pas},
+    {k:"Cours",     lab:"Cours", coef:2, dur:2*pas},
+    {k:"TD",        lab:"TD",    coef:1, dur:1*pas},
+    {k:"TP",        lab:"TP",    coef:2, dur:2*pas},
+    {k:"TP évalué", lab:"TP✓",   coef:2, dur:2*pas},
+    {k:"DS",        lab:"DS",    coef:1, dur:1*pas}
+  ];
+})();
 var TYPEMAP_V33 = {}; TYPES_V33.forEach(function(t){ TYPEMAP_V33[t.k]=t; });
 /* PLACEMENT_SIMPLE_V64 : la duree d'une seance NEUVE est celle du creneau de son type dans la classe
    (le plus frequent) — jamais les 120 min de la table, qu'aucun de ses creneaux ne fait. */
@@ -4227,10 +4310,11 @@ function _dureeCreneau_V64(tk){
   Object.keys(cnt).forEach(function(m){ if(cnt[m]>best){ best=cnt[m]; bmin=+m; } });
   if(bmin) return bmin;
   Object.keys(any).forEach(function(m){ if(any[m]>abest){ abest=any[m]; amin=+m; } });
-  return amin || (TYPEMAP_V33[tk]||{dur:60}).dur;
+  return amin || (TYPEMAP_V33[tk]||{dur:pasGrille_V82()}).dur;   /*COEF_V82 : plus de 60 en dur*/
 }
-function fmtMin_V33(m){ m=Math.max(0,Math.round(m)); var h=Math.floor(m/60), mm=m%60;
-  return h ? (h+" h"+(mm?(" "+("0"+mm).slice(-2)):"")) : (mm+" min"); }
+/* COEF_V82 : l'editeur « Seances » recevait deja des MINUTES VRAIES et les ecrivait bien
+   (« 55 min », « 18 h 20 ») ; il leur manquait la langue de l'administration a cote. */
+function fmtMin_V33(m){ return fmtCoefMin_V82(m); }
 function esc_V33(x){ return String(x==null?"":x).replace(/[&<>"]/g,function(c){
   return c==="&"?"&amp;":c==="<"?"&lt;":c===">"?"&gt;":"&quot;"; }); }
 
@@ -4868,7 +4952,9 @@ construirePlan = function(orderIds, opts){
 };
 var _partsOf_L33 = partsOf;
 partsOf = function(sess){
-  if(sess && sess._parts) return sess._parts.map(function(p){ return {type:p.type, dur:p.dur, seId:p.seId}; });
+  /* COEF_V82 : ici `dur` vaut min/60 — la MINUTE REELLE est donc connue exactement. C'est la
+     seule difference avec le regime sans plan, et c'est a la SOURCE qu'elle se voit. */
+  if(sess && sess._parts) return sess._parts.map(function(p){ return {type:p.type, dur:p.dur, seId:p.seId, min:Math.round(p.dur*60)}; });
   return _partsOf_L33(sess);
 };
 var _dureeSeance_L33 = dureeSeance;
@@ -5328,7 +5414,7 @@ setMode = function(m, sansMemoire){   /*MODE_VISITE_V80*/
     if(etait==="editeur"){ try{ fullRender(); }catch(e){} }   // cartes-chapitres re-datées
     return res;
   }
-  if(!sansMemoire){ try{ localStorage.setItem("constructeur_mode","editeur"); }catch(e){} }   /*MODE_VISITE_V80*/
+  if(!sansMemoire){ ecrireMode_V82("editeur"); }   /*MODE_VISITE_V80 ; MODE_CLASSE_V82 : par classe*/
   ["secFrise","secChapters","secArbre"].forEach(function(id){ var s=document.getElementById(id); if(s) s.style.display="none"; });
   var sE2=document.getElementById("secEditeur"); if(sE2) sE2.style.display="";
   ["modeFrise","modeArbre"].forEach(function(id){ var b=document.getElementById(id); if(b) b.setAttribute("aria-pressed","false"); });
@@ -5434,7 +5520,7 @@ function bootEditeur_V33(){
       var h=document.getElementById("edEdtPanel"); if(!h) return;
       var vis=(h.style.display!=="none");
       h.style.display=vis?"none":""; if(!vis) renderEdtPanel_V33(); });
-    var m=null,_imp=false; try{ _imp=!!(__MENUCTX&&__MENUCTX.mode); m=(_imp?__MENUCTX.mode:null)||localStorage.getItem("constructeur_mode")||"editeur"; }catch(e){}   /*MODE_SEANCES_V80 ; MODE_VISITE_V80*/
+    var m=null,_imp=false; try{ _imp=!!(__MENUCTX&&__MENUCTX.mode); m=(_imp?__MENUCTX.mode:null)||lireMode_V82(); }catch(e){}   /*MODE_SEANCES_V80 ; MODE_VISITE_V80 ; MODE_CLASSE_V82*/
     if(m==="editeur") setMode("editeur",_imp);
   }catch(e){ try{ console.error("[EDITEUR_SEANCES_V33]",e); }catch(_){} }
 }
@@ -5456,7 +5542,7 @@ function boot(){
     setupTimelineDrag();
     attacherEcouteurs();
     /*UNIFY_I1_V30*/ try{ var _imp=!!(__MENUCTX&&__MENUCTX.mode);
-      var _m=(_imp?__MENUCTX.mode:null)||localStorage.getItem("constructeur_mode")||"editeur"; setMode(_m,_imp);   /*MODE_SEANCES_V80 ; MODE_VISITE_V80*/
+      var _m=(_imp?__MENUCTX.mode:null)||lireMode_V82(); setMode(_m,_imp);   /*MODE_SEANCES_V80 ; MODE_VISITE_V80 ; MODE_CLASSE_V82*/
       on("modeFrise","click",function(){setMode("frise");}); on("modeArbre","click",function(){setMode("arbre");}); }catch(e){}
     var _eb=document.getElementById("exportBoKeysBtn"); if(_eb) _eb.addEventListener("click",exporterBoKeysDates); /*EXPORT_BOKEYS_V29*/
     try{ initClasseSel(); }catch(e){}   /*CLASSE_SEL_V30 : liste de classes attribu\u00e9es pilote le niveau*/
@@ -5472,6 +5558,6 @@ function boot(){
 if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot); else boot();
 </script>
 <!-- FOND_PARTOUT_V49 : le fond du site. Voir pcmajo_fond.js. -->
-<script src="pcmajo_fond.js?v=202609141810"></script>
+<script src="pcmajo_fond.js?v=202609141721"></script>
 </body>
 </html>
