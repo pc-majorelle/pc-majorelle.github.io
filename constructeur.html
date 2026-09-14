@@ -488,8 +488,8 @@ details.seq-int>summary::-webkit-details-marker{display:none}
       <span>tout coché par défaut · décocher = <b style="color:var(--t-ds)">reportée dans « chap. (suite) »</b></span>
     </div>
     <div class="muted" style="margin-top:6px;font-size:12px">
-      Astuce : par défaut JEUDI = TP, VENDREDI = Cours (beaucoup de TP). Chaque créneau de 2 h est découpable
-      en 2 parties (type + durée propres, ex. 1 h Cours + 1 h TD). Tout est coché par défaut : décocher = « pas fait »
+      Astuce : par défaut JEUDI = TP, VENDREDI = Cours (beaucoup de TP). <span id="astuceDuree_V83">Un créneau double se
+      découpe en 2 parties</span> (type + durée propres, ex. Cours + TD). Tout est coché par défaut : décocher = « pas fait »
       → part en « (suite) ». Réordonnez chapitres ET « (suite) » (⠿ ou ▲▼) ; la frise a une case par jeudi/vendredi,
       largeur des blocs ∝ durée ; le curseur (repère de date) saute de jour de classe en jour de classe, et jour par jour en vacances.
     </div>
@@ -2477,6 +2477,19 @@ function minPart_V82(p){
   return (+p.dur||0)*pasGrille_V82();
 }
 function fmtPart_V82(p){ return fmtCoefMin_V82(minPart_V82(p)); }
+/*TEXTES_COEF_V83 — COEF_V82 avait converti tous les nombres CALCULES, mais il restait des textes
+  ECRITS EN DUR qui parlaient encore en heures de 60 min : la phrase d'aide sous les capacites et
+  les deux boutons decouper/fusionner. C'est la que Laurent voyait encore « 1 h » apres COEF_V82.
+  La phrase porte desormais les vraies durees, calculees depuis le pas de la grille — si le script
+  ne passait pas, le texte de repli reste vrai (il ne cite simplement aucun nombre). */
+function _astuceDuree_V83(){
+  try{
+    var el=document.getElementById("astuceDuree_V83"); if(!el) return;
+    var pas=pasGrille_V82();
+    el.textContent="Un cr\u00e9neau double \u2014 "+fmtCoefMin_V82(2*pas)+" \u2014 se d\u00e9coupe en 2 parties de "+fmtCoefMin_V82(pas);
+  }catch(e){}
+}
+try{ window.addEventListener("load", _astuceDuree_V83); }catch(e){}
 function minSeance_V82(sess){ try{ return partsOf(sess).reduce(function(a,p){ return a+(minPart_V82(p)||0); },0); }catch(e){ return 0; } }
 /* combien de minutes vaut UNE unite de `dur` pour cette partie : 60 dans le plan (dur = min/60),
    le pas de la grille pour un coefficient. Mesure, jamais devine. */
@@ -3423,10 +3436,10 @@ function tableSeances(sess){
     if(splittable(s)){
       const btn=document.createElement("button"); btn.className="move-btn"; btn.style.marginTop="2px";
       if(parts.length>=2){
-        btn.textContent="⟵ fusionner (2 h)";
+        btn.textContent="⟵ fusionner en "+fmtCoefMin_V82(minSeance_V82(s));   /*TEXTES_COEF_V83*/
         btn.addEventListener("click",()=>{ setParts(s,[{type:parts[0].type,dur:total}]); renderChapters(); });
       } else {
-        btn.textContent="découper en 2 (1 h / 1 h)";
+        btn.textContent="découper en 2 × "+fmtCoefMin_V82(uniteMin_V82(parts[0]));   /*TEXTES_COEF_V83*/
         btn.addEventListener("click",()=>{ setParts(s,[{type:parts[0].type,dur:1},{type:"TD",dur:1}]); renderChapters(); });
       }
       cell.appendChild(btn);
