@@ -1124,6 +1124,25 @@ function renderSuivi(){ fillReel();
   const eff=function(id){return sv[id]||(rs[id]?'done':null)||(propose(id)?'done':'todo');};
   const isReel=function(id){return !sv[id] && !!rs[id];};
   const isPropose=function(id){return !sv[id] && !rs[id] && propose(id);};
+  /*COULEURS_CHAPITRE_V83 — « les couleurs par chapitre (fait / en cours / a faire) », promis depuis
+    longtemps, jamais pose. RIEN DE NEUF N'EST INVENTE : l'etat d'une capacite reste `eff(id)` (marque a
+    la main > reel importe > date de la progression), l'ecrivain unique reste `setSuivi`, et les couleurs
+    sont celles qui existent deja (--todo / --wip / --done, via .tag-todo/.tag-wip/.tag-done).
+    Il ne manquait que la REMONTEE au bloc.
+    Regle d'agregation, stricte sur « fait » : un chapitre n'est VERT que si TOUTES ses capacites sont
+    faites ; il est ORANGE des qu'une seule est faite ou en cours ; GRIS sinon. Un chapitre vide est gris.
+    La puce va AUSSI sur le theme : les themes a chapitre unique ne gagnent pas de pli
+    (SUIVI_CHAPITRES_V79) et seraient sinon les seuls sans couleur. */
+  const _etatBloc_V83=function(ids){
+    var n=(ids&&ids.length)||0, d=0, w=0;
+    for(var i=0;i<n;i++){ var v=eff(ids[i]); if(v==='done')d++; else if(v==='wip')w++; }
+    return { etat:(n&&d===n)?'done':((d||w)?'wip':'todo'), done:d, n:n };
+  };
+  const _LBL_V83={todo:'\u00e0 faire',wip:'en cours',done:'fait'};
+  const _puce_V83=function(ids){ var e=_etatBloc_V83(ids);
+    return '<span class="tag-'+e.etat+'" title="'+_LBL_V83[e.etat]+' \u2014 '+e.done+'/'+e.n+' faite'+(e.done>1?'s':'')+'">\u25cf</span> '; };
+  const _fait_V83=function(ids){ var e=_etatBloc_V83(ids);
+    return ' <span class="small tag-'+e.etat+'">\u00b7 '+e.done+'/'+e.n+' faite'+(e.done>1?'s':'')+'</span>'; };
   const ord={};S.forEach((s,i)=>ord[s.id]=i);
   const allCaps=capsOfProg(p);
   const cnt={todo:0,wip:0,done:0}; allCaps.forEach(id=>{cnt[eff(id)]++;});
@@ -1207,12 +1226,13 @@ function renderSuivi(){ fillReel();
           <button data-v="done" class="${v==='done'?'on':''}" onclick="setSuivi('${id}','done')">fait</button>
         </span></div>`; };
     const _ntheme=t.chapters.reduce((n,ch)=>n+ch.caps.length,0);
-    h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary><b>${esc(t.label)}</b>${_nbc(_ntheme)}</summary>`;
+    const _capsTh_V83=t.chapters.reduce(function(a,ch){return a.concat(ch.caps);},[]);   /*COULEURS_CHAPITRE_V83*/
+    h+=`<details class="tree" data-mem="th:${esc(t.label)}"><summary>${_puce_V83(_capsTh_V83)}<b>${esc(t.label)}</b>${_nbc(_ntheme)}${_fait_V83(_capsTh_V83)}</summary>`;
     if(t.chapters.length<=1){ t.chapters.forEach(ch=>ch.caps.forEach(id=>{ h+=_ligneCap(id); })); }
     else t.chapters.forEach(ch=>{
       const _cod=ch.label||ch.code;
       const _ti=_titreChap_V79[_cod]||_titreChap_V79[ch.code];
-      h+=`<details class="tree" data-mem="ch:${esc(t.label)}|${esc(_cod)}"><summary><span class="code">${esc(_cod)}</span>${_ti?' · '+esc(_ti):''}${_nbc(ch.caps.length)}</summary>`;
+      h+=`<details class="tree" data-mem="ch:${esc(t.label)}|${esc(_cod)}"><summary>${_puce_V83(ch.caps)}<span class="code">${esc(_cod)}</span>${_ti?' · '+esc(_ti):''}${_nbc(ch.caps.length)}${_fait_V83(ch.caps)}</summary>`;   /*COULEURS_CHAPITRE_V83*/
       ch.caps.forEach(id=>{ h+=_ligneCap(id); });
       h+=`</details>`;
     });
