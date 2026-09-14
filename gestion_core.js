@@ -979,6 +979,47 @@ function renderCalendrier(){
     h += `<p class="muted">Aucun jour férié ni pont ne tombe sur un jour de cours de cette classe.</p>`;
   }
   h += `<p class="hint">${ecartes ? ecartes + " autre" + (ecartes > 1 ? "s jours ôtés ne tombent" : " jour ôté ne tombe") + " pas sur un créneau de cette classe. " : ""}${horsPart ? `<b>${horsPart} tombe${horsPart > 1 ? "nt" : ""} sur un créneau de cette classe mais <u>hors de votre part</u>` + ((cCal && (cCal.du || cCal.au)) ? ` (${cCal.du ? _dateFr(cCal.du) : "début"} → ${cCal.au ? _dateFr(cCal.au) : "fin"} exclu)` : ``) + ` : ce n'est pas vous qui les perdez.</b> ` : ``}Les jours fériés de week-end ou de vacances n'apparaissent jamais ici.</p></div>`;
+  /* ===== HORAIRES_V81 — Laurent, 14/09 : « ajoute-la a une table modifiable a la main
+     et affiche-la dans dates de cours ». La table vit dans base_grille.js ; cette carte
+     ne fait que la LIRE. Si base_grille.js n'est pas charge, la carte ne s'affiche pas
+     du tout — jamais d'horaires inventes. ===== */
+  try{
+    var _SO = (window.BASE_GRILLE && window.BASE_GRILLE.sonneries) || null;
+    if(_SO && _SO.matin && _SO.apresmidi){
+      var _lib = {cours:"COURS", interclasse:"Interclasse", recreation:"R\u00e9cr\u00e9ation", midi:"Midi"};
+      var _n = Math.max(_SO.matin.length, _SO.apresmidi.length);
+      var _cell = function(x){
+        if(!x) return '<td></td><td></td>';
+        var fort = (x.t==="cours");
+        var lab  = _lib[x.t]||x.t;
+        var pl   = esc(x.deb)+" \u2013 "+esc(x.fin);
+        return '<td>'+(fort?('<b>'+esc(lab)+'</b>'):('<span class="muted">'+esc(lab)+'</span>'))+'</td>'
+             + '<td>'+(fort?('<b>'+pl+'</b>'):('<span class="muted">'+pl+'</span>'))+'</td>';
+      };
+      var _pas = (window.BASE_GRILLE.pas||55), _itc = (window.BASE_GRILLE.interclasse||5);
+      var _p2  = window.BASE_GRILLE.pause2nde || null;
+      h += '<div class="card"><div class="row" style="justify-content:space-between;align-items:center">'
+         + '<h3 style="margin:0">\ud83d\udd14 Horaires de sonneries</h3>'
+         + '<span class="pill">table modifiable \u2014 <code>base_grille.js</code></span></div>'
+         + '<table><thead><tr><th colspan="2">Matin</th><th colspan="2">Apr\u00e8s-midi</th></tr></thead><tbody>';
+      for(var _i=0;_i<_n;_i++){
+        h += '<tr>'+_cell(_SO.matin[_i])+_cell(_SO.apresmidi[_i])+'</tr>';
+      }
+      h += '</tbody></table>'
+         + '<p class="hint"><b>Une heure de cours fait '+_pas+' min</b>, l\'interclasse '+_itc+' min. '
+         + 'Ce que l\'administration appelle 1 h / 1,5 h / 2 h sont des <b>coefficients appliqu\u00e9s \u00e0 '
+         + _pas+' min</b> : un \u00ab 2 h \u00bb, ce sont '+_pas+' min <b>deux fois</b>, chacune commen\u00e7ant \u00e0 son '
+         + 'horaire de sonnerie, soit <b>'+(2*_pas)+' min de cours</b> \u2014 la pause entre les deux est \u00e0 la '
+         + 'charge de l\'enseignant.'
+         + (_p2 ? (' En <b>Seconde</b>, arrangement avec la SVT : une pause de '+_p2.duree
+                   +' min, de h+'+_p2.debMin+' \u00e0 h+'+_p2.finMin+'.') : '')
+         + '</p>'
+         + '<p class="hint">Source : '+esc(_SO.source)+'. Pour corriger une sonnerie, '
+         + '\u00e9ditez <code>base_grille.js</code> \u2014 cette page ne fait que la lire.</p>'
+         + '</div>';
+    }
+  }catch(e){}
+
   el.innerHTML=h;
 }
 
