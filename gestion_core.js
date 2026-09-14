@@ -3015,6 +3015,17 @@ function _constrEnsIndex(){   /* SOCLE_ENSSCI_V40 */
 function constrApply(js){
   var c=activeClass(); if(!c){alert("Choisis d’abord une classe.");return;}
   var data; try{ data=JSON.parse(js); }catch(e){ alert("Fichier boKeys illisible."); return; }
+  /*CLE_PAR_CLASSE_V83 — la garde du chemin MANUEL. `constrAutoImport_V63` et `_seancesConstr_V66`
+    verifiaient deja `data.classe` avant de prendre un plan ; les DEUX entrees manuelles — le bouton
+    « depuis cet appareil » (constrImportLS, qui peut retomber sur la cle generique) et « importer un
+    fichier » — ne verifiaient rien et posaient le plan d'une autre classe SANS UN MOT.
+    On ne refuse pas : copier volontairement le plan de TG7 sur TG5 est un geste legitime quand les
+    deux suivent la meme progression. On DEMANDE, en nommant les deux classes par leur nom
+    (afficher `nom`, garder `code`). Repondre non n'ecrit rien du tout. */
+  if(data && data.classe && data.classe!==c.id){
+    var _autre=((state.classes||[]).filter(function(x){return x.id===data.classe;})[0]||{}).libelle||data.classe;
+    if(!confirm("Ce plan a \u00e9t\u00e9 construit pour \u00ab "+_autre+" \u00bb, et la classe ouverte est \u00ab "+(c.libelle||c.id)+" \u00bb.\n\nL\u2019appliquer quand m\u00eame \u00e0 "+(c.libelle||c.id)+" ?")) return;
+  }
   var rows=(data&&data.capacites)||[];
   var p=progOf(c); if(!p){ alert("Pas de programme pour cette classe."); return; }
   var caps={}; capsOfProg(p).forEach(function(id){ caps[id]=1; });

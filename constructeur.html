@@ -4028,8 +4028,21 @@ function _payloadBoKeys_V63(){
           n:rows.length, capacites:rows, n_seances:seances.length, seances:seances};
 }
 function _ecrireExportLocal_V63(js){
-  try{ localStorage.setItem("boKeys_export_"+level, js);
-       if(__MENUCTX&&__MENUCTX.classe){ localStorage.setItem("boKeys_export_"+level+"__"+__MENUCTX.classe, js); } }catch(e){}
+  /*CLE_PAR_CLASSE_V83 — lot B2 de l'AUDIT_en_dur_v81, mandat de Laurent du 14/09 : « virer le dur qui
+    peut etre en dynamique ». AVANT : on ecrivait TOUJOURS la cle generique `boKeys_export_<niveau>`,
+    et EN PLUS la cle par classe quand on la connaissait. Un niveau porte plusieurs classes
+    (TENS-4 / TENS-5 / TENS-6 = TG5 / TG6 / TG7) : la DERNIERE classe enregistree devenait donc le
+    repli de toutes les autres du niveau. C'est l'affaire TG6/TG7, et c'etait un « en dur » deguise —
+    une adresse de rangement qui ne distingue pas ce qu'elle range.
+    DESORMAIS : classe connue -> on n'ecrit QUE sa cle. La cle generique n'est plus ecrite que dans le
+    seul cas ou elle a un sens : un plan construit SANS classe (payload `classe:null`), repli legitime
+    pour tout le niveau.
+    RIEN N'EST SUPPRIME : une cle generique deja posee sur l'appareil reste en place ; elle porte son
+    champ `classe`, et les lecteurs l'ecartent d'eux-memes des qu'elle nomme une autre classe. */
+  try{
+    if(__MENUCTX && __MENUCTX.classe){ localStorage.setItem("boKeys_export_"+level+"__"+__MENUCTX.classe, js); }
+    else { localStorage.setItem("boKeys_export_"+level, js); }
+  }catch(e){}
 }
 var _exportAutoTimer_V63=null;
 function exporterBoKeysAuto_V63(){
