@@ -2901,19 +2901,48 @@ function renderConstr(){
    +'<a class="mini primary" style="text-decoration:none;display:inline-block" href="constructeur.html'+q+'&mode=frise" title="Progression datée sur l\'année">🗓 Ouvrir la frise (dates)</a>'
    +'<a class="mini" style="text-decoration:none;display:inline-block" href="constructeur.html'+q+'&mode=arbre" title="Découpage du programme en séances">🌳 Ouvrir l\'arbre (séances)</a>'
    +'</div></div>'
-   +'<div class="card">'
-   +'<div><b>Reporter dans le Suivi</b></div>'
-   +'<p class="hint" style="margin:6px 0">Dans la frise, bouton « ⬇ Exporter les boKeys datés ». Récupère-les ici pour cocher automatiquement le <b>Suivi</b> de la classe active.</p>'
+   +'<div class="card"><div><b>Reporter dans le Suivi</b></div>'
+   +'<p class="hint" style="margin:6px 0">Ces boutons ont déménagé dans <b>« Mon cahier de textes »</b> — c\'est lui qu\'ils remplissent.</p>'
+   +'</div>';   /*MENU_CONSTRUCTEUR_V82 : le pont vit desormais dans le Suivi (ids uniques, un seul proprietaire)*/
+}
+
+/* ===================== MENU_CONSTRUCTEUR_V82 — LE PONT boKeys -> SUIVI, DANS LE SUIVI =====================
+   Laurent, 14/09, deux consignes qui se percutaient : « un clic sur constructeur doit mener directement
+   au constructeur » (donc la page intermediaire disparait) et « dans Plus il faut enlever tous les
+   anciens » (donc Previsionnel, ou la v81 voulait mettre ces boutons, disparait aussi).
+   Or ces controles ne sont PAS un vieil outil : c'est le pont vivant qui coche le Suivi. Ils descendent
+   donc la ou ils travaillent. Ids inchanges : un seul proprietaire a l'ecran a la fois. */
+function cartePontBoKeys_V82(){
+  return '<div><b>⤵ Reporter le plan dans ce cahier</b></div>'
+   +'<p class="hint" style="margin:6px 0">Dans le constructeur, bouton « ⬇ Exporter les boKeys datés ». '
+   +'Récupérez-les ici pour cocher automatiquement le suivi de la classe active.</p>'
    +'<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'
-   +'<button id="constrImportLS">⤵ Importer depuis la frise (cet appareil)</button>'
+   +'<button id="constrImportLS">⤵ Importer depuis le constructeur (cet appareil)</button>'
    +'<button id="constrImportFile">📂 Importer un fichier boKeys…</button>'
    +'<input type="file" id="constrFileIn" accept="application/json" style="display:none">'
    +'<span id="constrInfo" class="small muted"></span>'
-   +'</div></div>';
-  document.getElementById("constrImportLS").onclick=function(){constrImportLS();};
-  document.getElementById("constrImportFile").onclick=function(){document.getElementById("constrFileIn").click();};
-  document.getElementById("constrFileIn").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){constrApply(r.result);};r.readAsText(f);};
+   +'</div>';
 }
+function brancherPontBoKeys_V82(){
+  var a=document.getElementById("constrImportLS"), b=document.getElementById("constrImportFile"),
+      f=document.getElementById("constrFileIn");
+  if(a) a.onclick=function(){constrImportLS();};
+  if(b) b.onclick=function(){f&&f.click();};
+  if(f) f.onchange=function(e){var x=e.target.files[0];if(!x)return;var r=new FileReader();r.onload=function(){constrApply(r.result);};r.readAsText(x);};
+}
+var _renderSuivi_L82 = renderSuivi;
+renderSuivi = function(){
+  var r = _renderSuivi_L82.apply(this, arguments);
+  try{
+    var el=document.getElementById("p-suivi");
+    if(el && !el.querySelector("#constrImportLS") && activeClass()){
+      var d=document.createElement("div"); d.className="card";
+      d.innerHTML=cartePontBoKeys_V82(); el.appendChild(d); brancherPontBoKeys_V82();
+    }
+  }catch(e){ try{ console.error("[MENU_CONSTRUCTEUR_V82]",e); }catch(_){} }
+  return r;
+};
+/* ===================== fin MENU_CONSTRUCTEUR_V82 ===================== */
 function constrLevelToken(c){
   var pr=c?(c.programme||""):"";
   if(pr==="tale|pc|sti") return "Tsti";
