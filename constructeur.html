@@ -269,7 +269,8 @@ table.seances select{padding:2px 6px;border-radius:6px;font-size:12px}
 <body>
 <script>document.write('<script src="base_edt.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_edt.js relu a chaque ouverture, jamais le cache--><!--BASE_DANS_CONSTRUCTEUR_V53-->
 <script>document.write('<script src="base_horaires.js?v='+Date.now()+'"><\/script>')</script><!--GRILLE_V81 / RENOMMAGE_V82 : les horaires du lycee, source unique des replis de duree-->
-<script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
+<script>document.write('<script src="base_dates.js?v='+Date.now()+'"><\/script>')</script><!--CACHE_BASE_V63 : base_dates.js relu a chaque ouverture, jamais le cache-->
+<script>document.write('<script src="base_niveaux.js?v='+Date.now()+'"><\/script>')</script><!--NIVEAUX_V85 : le service d'un niveau, grave une fois. Le coefficient est LU, plus redevine.--><!--DATES_DEPUIS_BASE_V58 : le calendrier vient de la base-->
 <script src="classes_annee.js?v=202609141721"></script>
 <script src="store.js?v=202609141721"></script>
 <script src="pcmajo_ui.js?v=202609141721"></script>
@@ -4330,11 +4331,35 @@ function _maxCreneau_V64(se){
   try{ creneauxAnnee_V61().forEach(function(s){ if(s.min>m && (se.salleLibre || !!s.tp===tp)) m=s.min; }); }catch(e){}
   return m||1e9;
 }
+/* NIVEAUX_V85 : le code du niveau affiche. `level` est declare plus haut dans CE meme
+   bloc <script> (un seul, de la ligne ~2000 a la ligne ~5585) — le garde `typeof` est la
+   pour le cas ou la page serait chargee autrement, pas pour masquer une erreur. */
+function _niveauCourant_V85(){
+  try{ if(typeof level!=="undefined" && level) return level; }catch(e){}
+  return null;
+}
 function _dureeCreneau_V64(tk){
   var tp=(tk==="TP"||tk==="TP \u00e9valu\u00e9"), cnt={}, any={}, best=0, bmin=0, abest=0, amin=0;
   try{ creneauxAnnee_V61().forEach(function(s){ if(!s.min) return; any[s.min]=(any[s.min]||0)+1; if(!!s.tp===tp) cnt[s.min]=(cnt[s.min]||0)+1; }); }catch(e){}
   Object.keys(cnt).forEach(function(m){ if(cnt[m]>best){ best=cnt[m]; bmin=+m; } });
   if(bmin) return bmin;
+  /* NIVEAUX_V85 — LE COEFFICIENT EST LU, PLUS REDEVINE.
+     Ce qui precede (bmin) reste prioritaire : les creneaux REELS de la classe, du BON type,
+     passent avant tout modele. Ce qui suivait ne meritait pas ce rang :
+       • `amin` = la duree la plus frequente de N'IMPORTE QUEL type de creneau de la classe
+         (on demande un TP, il repond la duree d'un cours) ;
+       • la table `TYPES_V33` donne « Cours = coef 2 = 110 » et « TP = coef 2 = 110 » a TOUS
+         les niveaux — faux pour cinq des sept : un cours de Seconde vaut 55 (1 h), un TP de
+         Seconde 85 (1 h 30), un cours de STI2D ou d'ens. scientifique 55.
+     Le modele, lui, le sait parce que c'est ECRIT dans `base_niveaux.js`. Il ne repond que
+     sur « Cours » / « TP » / « TP evalue » ; TD, Activite et DS gardent le comportement
+     d'origine (non tranches par Laurent). Et s'il ne sait pas, il rend `null` : on retombe
+     exactement sur l'ancien chemin. */
+  try{
+    var _dmod = (window.MODELE_NIVEAUX && window.MODELE_NIVEAUX.dureeSeance)
+              ? window.MODELE_NIVEAUX.dureeSeance(_niveauCourant_V85(), tk) : null;
+    if(_dmod) return _dmod;
+  }catch(e){}
   Object.keys(any).forEach(function(m){ if(any[m]>abest){ abest=any[m]; amin=+m; } });
   return amin || (TYPEMAP_V33[tk]||{dur:pasGrille_V82()}).dur;   /*COEF_V82 : plus de 60 en dur*/
 }

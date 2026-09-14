@@ -314,12 +314,58 @@
     return rapport;
   }
 
+
+  /* =========================================================================
+     5. LE PONT ECRAN -> NIVEAU (NIVEAUX_V85).
+     Les ecrans nomment un niveau par un code court (`level` dans le
+     constructeur) : 2nde · 1spe · Tspe · 1sti · Tsti · 1ens · Tens.
+     ⚠ MESURE, PAS SUPPOSITION : on a d'abord essaye de reutiliser le champ
+     `key` que portent les arbres de `DATA_OTHER.TREES`. Il ne peut PAS servir
+     de pont — mesure sur `constructeur.html` le 14/09 : `Tsti` n'a AUCUN `key`,
+     et les deux ens. scientifique en portent un d'une autre convention
+     (`1ens|ens|gen`, `Tens|ens|gen`). Le pont est donc grave ici, au seul
+     endroit qui declare les niveaux, et nulle part ailleurs.
+     ========================================================================= */
+  var CODES = {
+    "2nde": "2nde|pc|gen",
+    "1spe": "1ere|pc|gen",
+    "Tspe": "tale|pc|gen",
+    "1sti": "1ere|pc|sti",
+    "Tsti": "tale|pc|sti",
+    "1ens": "1ere|pc|ens",
+    "Tens": "tale|pc|ens"
+  };
+  function niveauDeCode(code) { return NIVEAUX[CODES[code]] || null; }
+
+  /* Combien de minutes dure UNE seance de ce type dans ce niveau — LU dans la
+     declaration, jamais redevine. C'est ce qui remplace la table plate des
+     ecrans, qui donnait 110 a tout le monde : un cours de Seconde vaut 55, un
+     TP de Seconde 85, un cours de STI2D ou d'ens. scientifique 55.
+     Renvoie `null` des qu'on ne sait pas — le modele n'invente rien :
+       • type hors « Cours » / « TP » / « TP evalue » (TD, Activite, DS : non
+         tranches par Laurent, l'ecran garde son comportement) ;
+       • code de niveau inconnu ;
+       • modules du meme role en desaccord sur leur duree (n'arrive dans aucun
+         des sept niveaux aujourd'hui, et le banc le verifie). */
+  function dureeSeance(code, type) {
+    var N = niveauDeCode(code);
+    if (!N) return null;
+    var role = (type === "TP" || type === "TP \u00e9valu\u00e9") ? "TP"
+             : (type === "Cours") ? "Cours" : null;
+    if (!role) return null;
+    var vus = {};
+    N.modules.forEach(function (m) { if (m.role === role) vus[m.minutes()] = 1; });
+    var k = Object.keys(vus);
+    return (k.length === 1) ? +k[0] : null;
+  }
+
   root.MODELE_NIVEAUX = {
-    version: "MODELE_NIVEAUX_V84",
+    version: "MODELE_NIVEAUX_V85",   /*NIVEAUX_V85 : le modele est branche*/
     places: places, placeDe: placeDe, placeSupposee: placeSupposee,
     servicesMidi: servicesMidi, emprise: emprise,
     emplacementsTP2nde: emplacementsTP2nde, emplacementsTP2h: emplacementsTP2h,
     NIVEAUX: NIVEAUX, DECLARATIONS: DECLARATIONS,
+    CODES: CODES, niveauDeCode: niveauDeCode, dureeSeance: dureeSeance,   /*NIVEAUX_V85*/
     instancier: instancier, volumeHebdo: volumeHebdo,
     fichesDepuisBaseEdt: fichesDepuisBaseEdt, dureeDeCours: dureeDeCours,
     verifier: verifier
