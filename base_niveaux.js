@@ -373,13 +373,254 @@
     return (k.length === 1) ? +k[0] : null;
   }
 
+
+  /* =========================================================================
+     6. LES CONSTRUCTEURS DE SEANCES (SEANCES_V85)
+
+     Laurent, 14/09 : « les seances doivent etre faconnees par des constructeurs
+     qui sont ensuite instanciees. » C'est le geste deja fait pour les niveaux
+     (`Niveau` declare, `instancier()` fabrique une `ClasseReelle` qui en herite) :
+     on le fait maintenant pour les seances.
+
+       MODULE            declare un service, en coefficients. Ne connait pas le temps.
+       CONSTRUCTEUR      faconne des seances : leur duree, leur nombre, leur lien.
+       INSTANCIER        les POSE sur une emprise reelle, avec leurs heures.
+
+     Ce que le constructeur pose depend de l'EMPRISE, pas d'un coefficient — c'est
+     exactement sa regle R-B : « lorsque 2h administration ca devient deux seances
+     LIEES ». Le declencheur est le creneau de 2 h, pas le volume de la semaine.
+
+     ★ LES TROIS FORMES, ET ELLES VIENNENT TOUTES DE LUI :
+       une place   (55)   -> UNE seance. « un cours = UNE place, n'oblige a rien »
+       deux places (110)  -> DEUX seances de 55 LIEES (R-B). Jamais une seance de 110.
+       Seconde, TP (180)  -> 85 + intercours 10 + 85, DEUX GROUPES qui s'echangent
+                             les salles SVT<->PC (R-D). 85 = (180 - 10) / 2 : un
+                             RESTE, pas un coefficient.
+
+     ★ L'INTERCOURS DE SECONDE EST PRIS A CHEVAL SUR LA FRONTIERE, 5 MIN DE CHAQUE
+     COTE. `base_edt.js` n'a rien de faux : il porte deux emprises administratives
+     de 1 h 30 qui se touchent (09:00-10:30 et 10:30-12:00), et `officiel` = une
+     EMPRISE (R4). La seance du premier groupe se colle au DEBUT de son emprise,
+     celle du second se colle a la FIN de la sienne.
+
+     ON N'INVENTE RIEN : une emprise qui ne tombe dans aucune forme est SIGNALEE,
+     jamais recalee. C'est le cas que Laurent doit voir, pas que le code doit
+     maquiller.
+     ========================================================================= */
+  var TP2NDE = { SEANCE: 85, INTERCOURS: 10, MOTIF: "echange SVT<->PC" };
+
+  /* --- LES OBJETS POSES ------------------------------------------------- */
+  function Seance(o) {
+    this.role   = o.role;                 /* "Cours" | "TP" */
+    this.debut  = o.debut;
+    this.min    = o.min;
+    this.groupe = o.groupe || null;       /* "G1" | "G2" | null */
+    this.lien   = o.lien   || null;       /* "liee" (R-B) | "groupe" (R-D) | null */
+    this.rang   = o.rang   || 1;
+  }
+  Seance.prototype.fin = function () { return hhmm(min(this.debut) + this.min); };
+  Seance.prototype.estLiee = function () { return this.lien === "liee"; };
+  Seance.prototype.libelle = function () {
+    return this.role + " " + this.debut + "-" + this.fin() + " (" + this.min + " min)"
+         + (this.groupe ? " " + this.groupe : "");
+  };
+
+  function Intercours(o) {
+    this.debut = o.debut; this.min = o.min; this.motif = o.motif || null;
+  }
+  Intercours.prototype.fin = function () { return hhmm(min(this.debut) + this.min); };
+  Intercours.prototype.libelle = function () {
+    return "intercours " + this.debut + "-" + this.fin() + " (" + this.min + " min"
+         + (this.motif ? ", " + this.motif : "") + ")";
+  };
+
+  /* --- LE CONSTRUCTEUR --------------------------------------------------- */
+  function ConstructeurDeSeances(o) {
+    this.forme      = o.forme;            /* "simple" | "liees" | "groupes" */
+    this.role       = o.role;
+    this.duree      = o.duree;            /* minutes d'UNE seance */
+    this.nb         = o.nb || 1;
+    this.intercours = o.intercours || 0;
+    this.motif      = o.motif || null;
+    this.lien       = o.lien || null;
+  }
+  ConstructeurDeSeances.prototype.emprise = function () {
+    return this.nb * this.duree + (this.nb - 1) * this.intercours;
+  };
+  /* POSE les seances sur une emprise reelle. La PREMIERE se colle au debut, la
+     DERNIERE se colle a la fin : c'est ce qui place l'intercours a cheval. */
+  ConstructeurDeSeances.prototype.instancier = function (debut, fin) {
+    var d = min(debut), f = (fin != null) ? min(fin) : (d + this.emprise());
+    var total = f - d, out = [], i;
+    if (total !== this.emprise()) {
+      return { ok: false, seances: [],
+               signale: "emprise de " + total + " min, ce constructeur en veut " + this.emprise() };
+    }
+    for (i = 0; i < this.nb; i++) {
+      var deb = (i === this.nb - 1) ? (f - this.duree)
+                                    : (d + i * (this.duree + this.intercours));
+      if (i > 0) {
+        var pf = min(out[out.length - 1].debut) + out[out.length - 1].min;
+        if (deb > pf) out.push(new Intercours({ debut: hhmm(pf), min: deb - pf, motif: this.motif }));
+      }
+      out.push(new Seance({ role: this.role, debut: hhmm(deb), min: this.duree, rang: i + 1,
+                            groupe: (this.forme === "groupes") ? ("G" + (i + 1)) : null,
+                            lien: this.lien }));
+    }
+    return { ok: true, seances: out, signale: null, debut: hhmm(d), fin: hhmm(f), total: total };
+  };
+
+  /* --- QUEL CONSTRUCTEUR POUR QUELLE EMPRISE ----------------------------- */
+  /* On ne devine pas : on reconnait une des trois formes qu'il a posees, ou on
+     signale. `estSeconde` decide la forme du TP, parce que le 85 n'existe que la. */
+  function constructeurPour(role, total, estSeconde) {
+    var pas = PAS();
+    if (estSeconde && role === "TP" && total === 2 * TP2NDE.SEANCE + TP2NDE.INTERCOURS) {
+      return new ConstructeurDeSeances({ forme: "groupes", role: "TP", duree: TP2NDE.SEANCE,
+        nb: 2, intercours: TP2NDE.INTERCOURS, motif: TP2NDE.MOTIF, lien: "groupe" });
+    }
+    if (Math.abs(total - 2 * pas) <= 10) {          /* 110, 115, 120 : « 2 h administration » */
+      return new ConstructeurDeSeances({ forme: "liees", role: role, duree: pas, nb: 2,
+        intercours: total - 2 * pas, lien: "liee" });
+    }
+    if (Math.abs(total - pas) <= 5) {               /* une place : 55, 60 recopie */
+      return new ConstructeurDeSeances({ forme: "simple", role: role, duree: pas, nb: 1 });
+    }
+    if (estSeconde && role === "TP" && total === TP2NDE.SEANCE) {
+      return new ConstructeurDeSeances({ forme: "simple", role: "TP", duree: TP2NDE.SEANCE, nb: 1 });
+    }
+    return null;
+  }
+
+
+  /* --- LE CALAGE AUTOMATIQUE (CALAGE_V85, corrige le 14/09 au soir) -------
+     Laurent : « c'est a toi de faire en sorte qu'automatiquement ca se cale
+     bien », puis, quand le modele avait cale sur la GRILLE : « ma seconde
+     commence a 13h et suit la sequence attendue en seconde donc 85 mn plus 10
+     plus 85 ».
+
+     ⚠⚠ CE QUI SE CALE, C'EST LA SEQUENCE, PAS LE DEPART. Le depart saisi est
+     une DONNEE : on ne le deplace jamais. La 2de GT3 commence bel et bien a
+     13:00, en dehors des neuf places, et c'est JUSTE. Ce que le modele impose
+     tout seul, c'est ce qui suit : 85 + intercours 10 + 85, a partir de la.
+
+     ★ LA v85 S'ETAIT TROMPEE ICI : elle avait cale GT3 de 13:00 vers 13:30 pour
+     la faire tomber sur S1+S2+S3. C'etait deplacer sa donnee pour l'accorder a
+     une regle qu'il n'avait pas posee. Les quatre blocs de trois places restent
+     CALCULES et RENSEIGNES (`surGrille`), mais ils ne corrigent plus rien : un
+     bloc hors grille est une information, jamais une erreur.
+
+     LES BLOCS VALIDES NE SONT PAS ECRITS : ils sont CALCULES depuis les places.
+     Trois places consecutives (chaque interstice <= 10 min) dont l'emprise vaut
+     exactement 180. La grille en donne quatre, et pas une de plus :
+        M1+M2+M3  08:00-11:00      S1+S2+S3  13:30-16:30
+        M2+M3+M4  09:00-12:00      S2+S3+S4  14:30-17:30
+     M3+M4+M5 ne vaut que 175 (aucune recreation dedans) et M5->S1 est la coupure
+     du midi : aucun bloc ne l'enjambe. C'est ce que Laurent avait pressenti en
+     disant « S1 pour 13h30 c'est vrai que ca pose probleme ».
+     ------------------------------------------------------------------------ */
+  var BLOCS180 = null;
+  function blocsValides2nde() {
+    if (BLOCS180) return BLOCS180;
+    var p = places(), out = [], i, j, ok, attendu = 2 * TP2NDE.SEANCE + TP2NDE.INTERCOURS;
+    for (i = 0; i + 2 < p.length; i++) {
+      ok = true;
+      for (j = i; j < i + 2; j++) {
+        if (min(p[j + 1].debut) - min(p[j].fin) > 10) { ok = false; break; }
+      }
+      if (!ok) continue;
+      if (min(p[i + 2].fin) - min(p[i].debut) !== attendu) continue;
+      out.push({ codes: p[i].code + "+" + p[i + 1].code + "+" + p[i + 2].code,
+                 deb: min(p[i].debut), fin: min(p[i + 2].fin) });
+    }
+    return (BLOCS180 = out);
+  }
+  /* Ce bloc coincide-t-il avec trois places de la grille ? INFORMATION SEULE :
+     on ne deplace rien. Neuf Secondes sur dix disent oui, la GT3 dit non, et
+     c'est un fait sur son emploi du temps, pas un defaut a corriger. */
+  function surGrille(deb, fin) {
+    var v = blocsValides2nde(), i;
+    for (i = 0; i < v.length; i++) if (v[i].deb === deb && v[i].fin === fin) return v[i].codes;
+    return null;
+  }
+
+  /* --- L'EMPRISE D'UN CRENEAU -------------------------------------------- */
+  /* `officiel` porte une EMPRISE (R4) ; le `carnet` porte une duree vecue. */
+  function empriseDe(c) {
+    var o = c && c.officiel;
+    if (o && o.debut && o.fin) return { deb: min(o.debut), fin: min(o.fin), source: "officiel" };
+    var d = min(c.debut);
+    return { deb: d, fin: d + (+c.duree || 0), source: c.source || "carnet" };
+  }
+
+  /* --- LES BLOCS DE TP DE SECONDE, POUR LES DIX -------------------------- */
+  /* « lorsque les deux groupes passent l'un apres l'autre, il faut mettre des
+     seances de 85 mn avec un intercours de 10 mn, et systematique. » */
+  function estSecondePC(c) { return String(c.niveau) === "2de" || String(c.famille) === "PC2de"; }
+  function seSuivent(a, b) {
+    var ea = empriseDe(a), eb = empriseDe(b);
+    return eb.deb >= ea.fin - TP2NDE.INTERCOURS && eb.deb <= ea.fin + TP2NDE.INTERCOURS;
+  }
+  function blocsTP2nde(annee) {
+    var b = root.BASE_EDT && root.BASE_EDT[annee], par = {}, out = [];
+    if (!b) return out;
+    Object.keys(b).forEach(function (prof) {
+      (b[prof] || []).forEach(function (c) {
+        if (!c || c.type !== "TP" || !estSecondePC(c)) return;
+        var k = c.nom + "|" + c.jour;
+        (par[k] = par[k] || []).push(c);
+      });
+    });
+    Object.keys(par).forEach(function (k) {
+      var g = par[k].slice().sort(function (x, y) { return min(x.debut) - min(y.debut); });
+      var base = { classe: g[0].nom, jour: g[0].jour };
+      if (g.length !== 2) {
+        out.push({ classe: base.classe, jour: base.jour, ok: false, seances: [],
+                   signale: g.length + " creneau(x) de TP, attendu 2 (G1 puis G2)" }); return;
+      }
+      if (!seSuivent(g[0], g[1])) {
+        out.push({ classe: base.classe, jour: base.jour, ok: false, seances: [],
+                   signale: "les deux groupes ne se suivent pas : la regle 85+10+85 ne s'applique pas" }); return;
+      }
+      var deb = empriseDe(g[0]).deb, fin = empriseDe(g[1]).fin;
+      /* CALAGE_V85 : LE DEPART EST UNE DONNEE, ON NE LE BOUGE PAS. C'est la SEQUENCE
+         qu'on impose : 85 + intercours 10 + 85 a partir du depart saisi. Si la fin
+         saisie ne s'y accorde pas, on ajuste la FIN et on le DIT. */
+      var saisi = hhmm(deb) + "-" + hhmm(fin);
+      var attendu = 2 * TP2NDE.SEANCE + TP2NDE.INTERCOURS;   /* 180 */
+      var ajuste = null;
+      if (fin - deb !== attendu) {
+        ajuste = { de: saisi, vers: hhmm(deb) + "-" + hhmm(deb + attendu),
+                   ecart: (fin - deb) - attendu,
+                   motif: "sequence de Seconde imposee : 85 + 10 + 85" };
+        fin = deb + attendu;
+      }
+      var K = constructeurPour("TP", fin - deb, true);
+      if (!K) {
+        out.push({ classe: base.classe, jour: base.jour, ok: false, seances: [], ajuste: ajuste,
+                   signale: "bloc de " + (fin - deb) + " min : aucune forme connue" }); return;
+      }
+      var r = K.instancier(hhmm(deb), hhmm(fin));
+      out.push({ classe: base.classe, jour: base.jour, ok: r.ok, seances: r.seances,
+                 debut: r.debut, fin: r.fin, total: r.total, signale: r.signale,
+                 surGrille: surGrille(deb, fin), ajuste: ajuste,
+                 source: empriseDe(g[0]).source });
+    });
+    out.sort(function (x, y) { return (x.classe < y.classe ? -1 : 1); });
+    return out;
+  }
+
   root.MODELE_NIVEAUX = {
-    version: "MODELE_NIVEAUX_V85",   /*NIVEAUX_V85 : le modele est branche*/
+    version: "MODELE_NIVEAUX_V85_SEQUENCE",   /*CALAGE_V85 : la SEQUENCE se cale, le depart saisi ne bouge pas*/
     places: places, placeDe: placeDe, placeSupposee: placeSupposee,
     servicesMidi: servicesMidi, emprise: emprise,
     emplacementsTP2nde: emplacementsTP2nde, emplacementsTP2h: emplacementsTP2h,
     NIVEAUX: NIVEAUX, DECLARATIONS: DECLARATIONS,
     CODES: CODES, niveauDeCode: niveauDeCode, dureeSeance: dureeSeance,   /*NIVEAUX_V85*/
+    TP2NDE: TP2NDE, Seance: Seance, Intercours: Intercours,   /*SEANCES_V85*/
+    ConstructeurDeSeances: ConstructeurDeSeances, constructeurPour: constructeurPour,
+    empriseDe: empriseDe, blocsTP2nde: blocsTP2nde,
+    blocsValides2nde: blocsValides2nde, surGrille: surGrille,   /*CALAGE_V85*/
     instancier: instancier, volumeHebdo: volumeHebdo,
     fichesDepuisBaseEdt: fichesDepuisBaseEdt, dureeDeCours: dureeDeCours,
     verifier: verifier
