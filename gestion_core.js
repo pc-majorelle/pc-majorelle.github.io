@@ -1065,9 +1065,15 @@ function renderSeances(){
   el.innerHTML=h;
   /* PLAN_PASSE_V86 : « scroller la fenetre pour descendre au niveau date ancienne / dates a venir ».
      Uniquement quand le panneau est A L'ECRAN — switchTab pose `.on` AVANT d'appeler le rendu, donc
-     l'ouverture de l'onglet passe ; un rendu de fond (panneau masque) ne fait pas sauter sa page. */
+     l'ouverture de l'onglet passe ; un rendu de fond (panneau masque) ne fait pas sauter sa page.
+     ⚠ SAUT INSTANTANE, PAS `behavior:"smooth"` — mesure faite sur le site en ligne le 15/09 :
+     dans un onglet qui n'est pas au premier plan (`document.visibilityState === "hidden"`), le
+     navigateur ANNULE un defilement anime et la page reste en haut, sans rien dire. Un onglet ouvert
+     en arriere-plan, ou une session restauree, tombait donc dans ce trou. Le saut instantane, lui,
+     aboutit dans les deux cas — et pour aller a une frontiere, glisser le long de quatre-vingt-dix
+     lignes n'apportait rien. */
   try{ if(el.classList.contains("on")){ const _f=document.getElementById("plAuj_V86");
-    if(_f && _f.scrollIntoView) _f.scrollIntoView({block:"center",behavior:"smooth"}); } }catch(e){}
+    if(_f && _f.scrollIntoView) _f.scrollIntoView({block:"center"}); } }catch(e){}
 }
 
 /* ---------- C. PRÉVISIONNEL ---------- */
