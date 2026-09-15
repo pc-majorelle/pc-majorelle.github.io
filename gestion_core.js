@@ -1035,16 +1035,39 @@ function renderSeances(){
   if(S.length){
     h+=`<table><thead><tr><th>#</th><th>Date</th><th>Créneau</th><th>Séance (constructeur)</th><th>Capacités de la séance</th></tr></thead><tbody>`;
     const pv=prevOf(c.id); const bySeance={}; Object.keys(pv).forEach(cap=>{(bySeance[pv[cap]]=bySeance[pv[cap]]||[]).push(cap);});
+    /* ===== PLAN_PASSE_V86 (15/09/2026) — Laurent : « colorer les numeros de creneaux ou les dates
+       deja passes, et scroller la fenetre au niveau dates anciennes / dates a venir ».
+       Une seance est PASSEE si sa date est strictement anterieure a aujourd'hui : celle du jour reste
+       a venir, elle n'a pas encore eu lieu quand il ouvre sa page le matin. Meme convention que
+       `confirmerJusquAujourdhui()` (< aujourd'hui) — on ne cree pas une seconde definition du passe.
+       `new Date()` est deja decale par pcmajo_test.js (?testdate=AAAA-MM-JJ) : rien de plus pour le banc.
+       AUCUNE DONNEE N'EST TOUCHEE : c'est de l'habillage, `state` n'est ni lu ni ecrit ici. */
+    const _auj_V86=iso(new Date());
+    let _nPasse_V86=0,_front_V86=false;
     S.forEach((s,i)=>{
       const caps=_idsDeSeanceConstr_V63(c,SC[s.id]).slice(); (bySeance[s.id]||[]).forEach(function(k){ if(caps.indexOf(k)<0) caps.push(k); });   /* PONT_CAHIER_V63 : toutes les capacites de la seance, pas seulement la premiere occurrence */
-      h+=`<tr><td class="muted">${i+1}</td><td>${frDate(s.date)}</td><td>${esc(s.jour)} ${s.debut?esc(s.debut):""} · ${s.duree}′ ${s.ci!=null&&c.creneaux[s.ci]&&c.creneaux[s.ci].quinzaine?("· quinz."+c.creneaux[s.ci].quinzaine):""}</td>
+      const _passe_V86=(s.date<_auj_V86);
+      if(_passe_V86) _nPasse_V86++;
+      /* La frontiere ne se pose QUE s'il y a du passe au-dessus d'elle : en debut d'annee, une barre
+         collee en haut du tableau ne renseignerait rien. */
+      if(!_passe_V86 && !_front_V86 && _nPasse_V86>0){ _front_V86=true;
+        h+=`<tr class="plfront" id="plAuj_V86"><td colspan="5">▼ aujourd’hui · ${frDate(_auj_V86)} — ce qui suit est à venir</td></tr>`; }
+      h+=`<tr${_passe_V86?' class="plpasse"':''}><td class="muted">${i+1}</td><td>${frDate(s.date)}</td><td>${esc(s.jour)} ${s.debut?esc(s.debut):""} · ${s.duree}′ ${s.ci!=null&&c.creneaux[s.ci]&&c.creneaux[s.ci].quinzaine?("· quinz."+c.creneaux[s.ci].quinzaine):""}</td>
         <td>${_celluleConstr_V63(SC[s.id])}</td>
         <td>${caps.length?caps.map(x=>`<span class="badge" title="${esc(NODES[x]?.t||x)}">${libCap_V63(x)}</span>`).join(" "):"<span class='muted small'>—</span>"}</td></tr>`;
     });
+    /* PLAN_PASSE_V86 : tout est passe (annee revolue, ou fin d'annee) — la frontiere se pose en bas. */
+    if(_nPasse_V86>0 && !_front_V86){ _front_V86=true;
+      h+=`<tr class="plfront" id="plAuj_V86"><td colspan="5">▼ aujourd’hui · ${frDate(_auj_V86)} — toutes les séances de ce plan sont passées</td></tr>`; }
     h+=`</tbody></table>`;
   }
   h+=`</div>`;
   el.innerHTML=h;
+  /* PLAN_PASSE_V86 : « scroller la fenetre pour descendre au niveau date ancienne / dates a venir ».
+     Uniquement quand le panneau est A L'ECRAN — switchTab pose `.on` AVANT d'appeler le rendu, donc
+     l'ouverture de l'onglet passe ; un rendu de fond (panneau masque) ne fait pas sauter sa page. */
+  try{ if(el.classList.contains("on")){ const _f=document.getElementById("plAuj_V86");
+    if(_f && _f.scrollIntoView) _f.scrollIntoView({block:"center",behavior:"smooth"}); } }catch(e){}
 }
 
 /* ---------- C. PRÉVISIONNEL ---------- */
@@ -1839,7 +1862,16 @@ function nivLabel(c){var n=c.niveau,f=c.filiere||'gen';if(n==='2nde')return'2de'
 function wkVacNameAt(d){for(var i=0;i<VAC.length;i++){if(VAC[i].d1&&d>=VAC[i].d0&&d<VAC[i].d1)return VAC[i].nom;}return null;}
 function wkBuildWeeks(){var weeks=[],first=0,idx=0,firstSet=false;var d=new Date(R0);d.setDate(d.getDate()-((d.getDay()+6)%7));var end=new Date(R1);while(d<=end){var lundi=new Date(d);var vacNames={},off=[],anySchool=false;for(var k=0;k<5;k++){var dd=new Date(lundi);dd.setDate(dd.getDate()+k);if(dd<R0||dd>R1)continue;if(inVacances(dd)){var vn=wkVacNameAt(dd);if(vn)vacNames[vn]=1;continue;}if(OFF[iso(dd)]){off.push({jour:WK_JOURS[k],nom:OFF[iso(dd)].nom});continue;}var wd=dd.getDay();if(wd===0||wd===6)continue;anySchool=true;}if(!firstSet&&anySchool){first=idx;firstSet=true;}weeks.push({no:0,lundi:iso(lundi),vac:Object.keys(vacNames),off:off,anySchool:anySchool});d.setDate(d.getDate()+7);idx++;}var no=0;weeks.forEach(function(w){if(w.anySchool){no++;w.no=no;}});return{weeks:weeks,first:first};}
 var WKV=null,WKV_annee=null,WK_cur=0;
-function wkEnsure(){if(WKV_annee!==ANNEE||!WKV){WKV=wkBuildWeeks();WKV_annee=ANNEE;WK_cur=WKV.first;}if(WK_cur==null||WK_cur<0||WK_cur>=WKV.weeks.length)WK_cur=WKV.first;}
+/* ===== SEMAINE_OUVRE_AUJOURDHUI_V86 (15/09/2026) — Laurent : « Quand on ouvre Ma semaine, affiche
+   directement la semaine en cours, comme si on avait appuye sur le bouton Aujourd'hui. »
+   Le calage se fait a la CONSTRUCTION du calendrier (et au changement d'annee), PAS a chaque rendu :
+   sinon wkNav() et wkReset() seraient annules a l'ecran et il ne pourrait plus naviguer.
+   Aujourd'hui hors de l'annee affichee (2025-2026 selectionnee) -> repli sur WKV.first, exactement ce
+   que le bouton dit deja quand il est inactif. Le week-end -> le lundi qui suit, regle du bouton V72.
+   ⚠ On N'APPELLE PAS wkIndexAujourdhui() ici : il appelle wkEnsure(), donc il bouclerait. */
+function _wkIndexLundi_V86(L){ if(!WKV||!WKV.weeks) return -1; for(var i=0;i<WKV.weeks.length;i++){ if(WKV.weeks[i].lundi===L) return i; } return -1; }
+function _wkOuverture_V86(){ if(!WKV||!WKV.weeks||!WKV.weeks.length) return 0; var i=_wkIndexLundi_V86(wkLundiAujourdhui()); return i>=0?i:WKV.first; }
+function wkEnsure(){if(WKV_annee!==ANNEE||!WKV){WKV=wkBuildWeeks();WKV_annee=ANNEE;WK_cur=_wkOuverture_V86();/*SEMAINE_OUVRE_AUJOURDHUI_V86*/}if(WK_cur==null||WK_cur<0||WK_cur>=WKV.weeks.length)WK_cur=_wkOuverture_V86();/*SEMAINE_OUVRE_AUJOURDHUI_V86*/}
 function wkTimes(){var s=new Set();(state.classes||[]).forEach(function(c){(c.creneaux||[]).forEach(function(cr){if(cr.jour&&cr.debut)s.add(cr.debut);});});var a=Array.from(s).sort();return a.length?a:['08:00','09:00','10:00','11:00','13:30','14:30','15:30','16:30'];}
 /*WKPLAN_V25 — pont date -> séance : remplit la grille Semaine avec le contenu daté des cahiers (séance exacte si dispo, sinon chapitre en cours), au lieu de « à programmer ». */
 var _WKPROG={};

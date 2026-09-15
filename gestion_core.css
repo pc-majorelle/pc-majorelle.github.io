@@ -78,6 +78,14 @@
   .s3 button.on[data-v=done]{background:var(--done);color:#04220f}
   .tag-todo{color:var(--todo)} .tag-wip{color:var(--wip)} .tag-done{color:var(--done)}
   .hint{font-size:.82rem;color:var(--muted);margin:4px 0 12px}
+  /* PLAN_PASSE_V86 : dans « Mon plan », le passe s'estompe et la frontiere aujourd'hui / a venir se
+     voit. Habillage pur — aucune donnee n'est touchee. La couleur du passe est --todo, celle que la
+     page emploie deja pour « pas encore fait / inactif » : pas de teinte neuve a maintenir. */
+  tr.plpasse>td{opacity:.60}
+  tr.plpasse>td:first-child,tr.plpasse>td:nth-child(2){color:var(--todo);font-weight:600;opacity:1}
+  tr.plfront>td{background:rgba(74,163,255,.10);border-top:2px solid var(--accent);
+    border-bottom:2px solid var(--accent);color:var(--accent);font-weight:600;
+    font-size:.80rem;letter-spacing:.03em;text-align:center;padding:6px 9px}
   .creneau{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
   .del{color:var(--warn);border-color:var(--warn)}
   code.k{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:.8rem}
