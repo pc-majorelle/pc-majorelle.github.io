@@ -1472,7 +1472,29 @@ charge(); maj(); accueil();
   function carte(){ var c = app.querySelectorAll(".card"), i, h;
     for(i=c.length-1;i>=0;i--){ h=c[i].querySelector("h2"); if(h && /^Ton carnet/.test(h.textContent)) return c[i]; }
     return null; }
+  /* PORTE_ELEVE_V47 (Laurent, 20/09/2026 : « une liste deroulante de classe […] il ne doit pas y en avoir cote eleves »).
+     Sans lien de classe valide, les couches d'avant (v44/v45) offraient des listes : niveau, chapitre, CLASSE. Un eleve
+     n'a rien a choisir : sa classe vient de sa page de classe. Hors mode test (reserve au prof), toute liste est
+     remplacee par une porte vers la page de classe. Le mode test (?test=1, prof reel) garde les listes. */
+  function porte(){
+    try{ if(window.PCTest && window.PCTest.arme) return false; }catch(e){}
+    if(!app.querySelector("#niv, #chap, #cls")) return false;
+    var m = /[?&]c=([a-z]{4,8}-[a-z]{4,8}-[a-z]{4,8})(?:&|#|$)/.exec(location.search), base = "https://pcmajorelle.alwaysdata.net/eleve";
+    app.innerHTML = m
+      ? '<div class="card center"><h2>Le rituel n’arrive pas à joindre ta classe</h2>'
+        + '<p class="sub">Pas de réseau, ou le service est momentanément indisponible. Rien n’est perdu : ton carnet est sur cet appareil.</p>'
+        + '<button class="btn" type="button" data-porte47-re style="margin-top:12px">Réessayer</button>'
+        + '<p class="sub" style="margin-top:12px"><a href="' + base + '/' + m[1] + '">Retour à la page de ma classe</a></p></div>'
+      : '<div class="card center"><h2>Le rituel s’ouvre depuis la page de ta classe</h2>'
+        + '<p class="sub">C’est elle qui sait ce que vous avez vu en classe aujourd’hui. Entre le code de ta classe (trois mots), '
+        + 'puis touche « Réviser ce soir ».</p>'
+        + '<a class="btn" href="' + base + '" style="display:inline-block;margin-top:12px;text-decoration:none">Aller à la page de ma classe</a></div>';
+    var st47 = document.getElementById("stitre"); if(st47) st47.textContent = "";
+    var re = app.querySelector("[data-porte47-re]"); if(re) re.onclick = function(){ location.reload(); };
+    return true;
+  }
   function poser(){
+    if(porte()) return;
     var c = carte(); if(!c || c.querySelector("[data-raz47]")) return;
     var z = document.createElement("div"); z.setAttribute("data-raz47","");
     z.style.cssText = "margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);font-size:14px";
