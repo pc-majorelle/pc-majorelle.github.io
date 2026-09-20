@@ -446,3 +446,46 @@ window.PCAide = (function(){
   window.PCVersions={ lire:lire, cles:cles, garder:garder, libelle:libelle };
 })();
 /* ============================== fin VERSIONS_V64 ============================== */
+
+/* ============================== THEME_LIEN_ET_RETOUR_V98 ==============================
+   MAITRE v98, 20/09/2026 — deux demandes de Laurent, telephone en main :
+   (1) « que ce soit theme du site et toujours accessible » : la page de classe (service v2, AUTRE origine) ne partage pas
+       le stockage de ce site. Elle passe donc le theme dans le lien : ?theme=<id>. On le lit, on le GARDE (PCTheme.set),
+       les pages suivantes le retrouvent. Identifiant inconnu (ex. « nuit », « auto ») : ignore, rien ne change.
+   (2) « il faut partout un bouton retour qui ramene a l'ecran precedent » : bouton rond « ‹ », fixe, en bas a GAUCHE
+       (a l'oppose de « ? » et du pinceau). Ordre : (a) la page a un ecran interieur a quitter -> window.PCRetour() rend true ;
+       (b) sinon l'ecran precedent du navigateur ; (c) sinon un repli : la page de classe pour les pages eleve, l'accueil sinon.
+   Cache a l'impression. Pas de bouton sur index.html (rien derriere). */
+(function(){
+  if(window.PC_RETOUR_V98) return; window.PC_RETOUR_V98 = true;
+  try{
+    var m = /[?&]theme=([a-z]+)/.exec(location.search);
+    if(m && window.PCTheme && PCTheme.THEMES[m[1]] && PCTheme.cur() !== m[1]) PCTheme.set(m[1]);
+  }catch(e){}
+  var SERVICE_ELEVE = "https://pcmajorelle.alwaysdata.net/eleve";
+  var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  if(page === "index.html" || page === "") return;
+  var pageEleve = /^(test_du_soir|exerciseur_resolution|premiers_pas_eleve|revision|carte_mentale|maquette_socle|activites_web)/.test(page);
+  function repli(){ return pageEleve ? SERVICE_ELEVE : "index.html"; }
+  function retour(){
+    try{ if(typeof window.PCRetour === "function" && window.PCRetour() === true) return; }catch(e){}
+    if(history.length > 1 && document.referrer){ history.back(); return; }
+    location.href = repli();
+  }
+  function poser(){
+    if(document.getElementById("pcRetourBtn")) return;
+    var css = document.createElement("style"); css.id = "pcRetourCss"; css.textContent =
+      "#pcRetourBtn{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;width:46px;height:46px;"
+      + "border-radius:50%;border:1px solid var(--line,#ccc);background:var(--card,#fff);color:var(--ink,#222);"
+      + "font:600 26px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.18);padding:0 2px 4px 0}"
+      + "@media print{#pcRetourBtn{display:none!important}}";
+    document.head.appendChild(css);
+    var b = document.createElement("button"); b.id = "pcRetourBtn"; b.type = "button";
+    b.title = "Retour"; b.setAttribute("aria-label", "Retour"); b.textContent = "\u2039";
+    b.addEventListener("click", retour);
+    document.body.appendChild(b);
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", poser); else poser();
+  window.PCRetourBouton = { retour: retour, repli: repli };
+})();
+/* ============================== fin THEME_LIEN_ET_RETOUR_V98 ============================== */

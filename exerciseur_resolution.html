@@ -49,7 +49,7 @@ h2.ttl{font-size:1.25rem;font-weight:650;margin:.2rem 0}
 </style></head><body>
 <div class="top"><div class="eyebrow">Exerciseur · automatismes de résolution (sans IA, hors ligne)</div>
 <h1>Déterminer une grandeur — étape par étape</h1>
-<p>On repère d'abord le symbole de la grandeur cherchée, puis on applique la <b>même opération aux deux membres</b> — multiplier/diviser, mais aussi <b>ajouter/retrancher un terme</b> — jusqu'à l'écrire seule <b>à gauche</b>. La grandeur de l'opération apparaît en <span style="color:#2563eb;font-weight:700">bleu</span> ; ce qui se simplifie est <span style="text-decoration:line-through;text-decoration-color:#c0392b">barré</span>. « Aide » guide, « S'entraîner » gère la difficulté.</p></div>
+<p>On repère d'abord le symbole de la grandeur cherchée, puis on applique la <b>même opération aux deux membres</b> — multiplier/diviser, mais aussi <b>ajouter/retrancher un terme</b> — jusqu'à l'écrire seule <b>à gauche</b>. La grandeur de l'opération apparaît en <span style="color:#2563eb;font-weight:700">bleu</span> ; ce qui se simplifie est <span style="text-decoration:line-through;text-decoration-color:#c0392b">barré</span>. <span id="phraseMenu">« Aide » guide, « S'entraîner » gère la difficulté.</span></p></div>
 <div class="layout"><nav class="menu" id="menu"></nav>
 <main class="panel" id="panel"><div class="empty">← « S'entraîner » ou choisis un problème.</div></main></div>
 <script>
@@ -674,8 +674,12 @@ function lvlName(d){return d===1?'facile':(d===2?'standard':'approfondi');}
 var selNiv='all';
 /*NIVEAU_ELEVE_V69 : niveau de l'eleve = plafond. Jeton (revision.html) -> valeur du selecteur. */
 var nivVerrou=false;
+var nivImpose=false;   /*NIVEAU_IMPOSE_V98 : ?niveau=<jeton de la page de classe v2> impose le niveau ET l'entree directe en entrainement. */
 (function(){
   function paramOf(k){var m=new RegExp('[?&]'+k+'=([^&#]*)').exec(location.search);return m?decodeURIComponent(m[1]):null;}
+  /*NIVEAU_IMPOSE_V98 : ce parametre L'EMPORTE sur toute session gardee. Jeton inconnu = ignore, la page reste ce qu'elle est. ens. sci. : plafond Seconde (Laurent, 20/09/2026). */
+  var __j=paramOf('niveau');var __t={'2nde':'2de','spe1':'1re','speT':'Tale','sti1':'1STI','stiT':'TSTI','ens1':'2de','ensT':'2de'};
+  if(__j&&Object.prototype.hasOwnProperty.call(__t,__j)){selNiv=__t[__j];nivVerrou=true;nivImpose=true;return;}
   function nivDeCode(code){if(!code)return null;var c=String(code).toUpperCase();
     if(/^2G/.test(c)||/^2NDE/.test(c))return '2de';
     if(/^1PC/.test(c))return '1re';
@@ -694,7 +698,8 @@ var nivVerrou=false;
 })();
 function nivOK(r){if(selNiv==='all')return true;var n=r.niv;if(selNiv==='2de')return n==='2de';if(selNiv==='1re')return n==='2de'||n==='1re';if(selNiv==='Tale')return n==='2de'||n==='1re'||n==='Tale';if(selNiv==='1STI')return n==='2de'||n==='1STI';if(selNiv==='TSTI')return n==='2de'||n==='1STI'||n==='TSTI';return true;}
 function setNiv(v){selNiv=v;buildMenu();}
-function buildMenu(){var h='<button class="train" onclick="startSession()">🎯 S\'entraîner (difficulté auto)</button>';
+function buildMenu(){if(nivImpose){var __m=document.getElementById('menu');__m.innerHTML='';__m.style.display='none';return;}  /*NIVEAU_IMPOSE_V98 : ni liste, ni bouton, ni catalogue */
+  var h='<button class="train" onclick="startSession()">🎯 S\'entraîner (difficulté auto)</button>';
   var __o='<option value="all">Tous niveaux</option><option value="2de">Seconde (tronc commun)</option><option value="1re">1re spé PC</option><option value="Tale">Tale spé PC</option><option value="1STI">1re STI2D</option><option value="TSTI">Tale STI2D</option>'.replace('value="'+selNiv+'"','value="'+selNiv+'" selected');h+=nivVerrou?'<div class="nivsel" style="margin:.4rem 0">Niveau : <b>'+({'2de':'Seconde','1re':'1re spé PC','Tale':'Tale spé PC','1STI':'1re STI2D','TSTI':'Tale STI2D'}[selNiv]||selNiv)+'</b> <span style="opacity:.7">et niveaux précédents</span></div>':'<div class="nivsel" style="margin:.4rem 0">Niveau : <select onchange="setNiv(this.value)">'+__o+'</select></div>';  /*NIVEAU_ELEVE_V69*/
   var groups={};REL.forEach(function(r){if(!nivOK(r))return;(groups[r.grp]=groups[r.grp]||[]).push(r);});
   Object.keys(groups).forEach(function(g){h+='<h2>'+g+'</h2>';groups[g].forEach(function(r){
@@ -711,7 +716,7 @@ function sessionResult(){session.done++;if(!session.usedAide&&session.wrong===0)
 // ===== interaction =====
 function render(){var r=cur,e=stack[stack.length-1];var fin=isFinal(e),isoR=isIsolatedRight(e);var uname=r.names[r.unk];
   var h='';
-  if(session.on)h+='<div class="sbar">🎯 Entraînement · niveau <b>'+session.level+' ('+lvlName(session.level)+')</b> · réussis : <b>'+session.done+'</b>'+(session.streak?' · série '+session.streak:'')+'<button class="quit" onclick="quitSession()">quitter</button></div>';
+  if(session.on)h+='<div class="sbar"><span>🎯 Entraînement · '+(nivImpose?'difficulté : <b>'+lvlName(session.level)+'</b>':'niveau <b>'+session.level+' ('+lvlName(session.level)+')</b>')+' · réussis : <b>'+session.done+'</b>'+(session.streak?' · série '+session.streak:'')+'</span>'+(nivImpose?'':'<button class="quit" onclick="quitSession()">quitter</button>')+'</div>';  /*NIVEAU_IMPOSE_V98 : pas de sortie vers un catalogue qui n'existe pas */
   var compdef=r.composites?(' &nbsp;avec '+Object.keys(r.composites).map(function(k){return '<b>'+disp(k)+' = '+pretty(r.composites[k])+'</b>';}).join(' et ')):'';
   h+='<h2 class="ttl">Déterminer '+uname+'</h2><div class="ctx">'+r.ctx+' Relation : <b>'+pretty(r.eq)+'</b>'+compdef+'.</div>';
   h+='<div class="chain">';chain.forEach(function(l){h+=renderEq(l);if(l.op)h+='<div class="eqline op">'+l.op+'</div>';});
@@ -793,6 +798,7 @@ function undo(){if(stack.length>1){if(chain[chain.length-2]&&chain[chain.length-
 function restart(){if(session.on){loadExo(cur);session.usedAide=false;session.wrong=0;session.counted=false;}else loadExo(cur);}
 function quitSession(){session.on=false;document.getElementById('panel').innerHTML='<div class="empty">← « S\'entraîner » ou choisis un problème.</div>';}
 buildMenu();
+if(nivImpose){var __p=document.getElementById('phraseMenu');if(__p)__p.textContent='« Aide » guide ; la difficulté s\'ajuste toute seule.';startSession();}  /*NIVEAU_IMPOSE_V98*/
 window.__API={REL:REL,buildEq:buildEq,isFinal:isFinal,isIsolated:isIsolated,isIsolatedRight:isIsolatedRight,aideOp:aideOp,metric:metric,computeDiff:computeDiff,applyMul:applyMul,applyAdd:applyAdd,simpEq:simpEq,session:session,startSession:startSession,pickSession:pickSession,doOp:doOp,doAdd:doAdd,doSwap:doSwap,doSubst:doSubst,doSqrt:doSqrt,doDistribute:doDistribute,applySubst:applySubst,applyDistribute:applyDistribute,hasGroup:hasGroup,applySqrt:applySqrt,squareReady:squareReady,applyNeg:applyNeg,applyInverse:applyInverse,doNeg:doNeg,doInv:doInv,pick:pick,identify:identify,nextOp:function(){return aideOp(stack[stack.length-1]);},top:function(){return stack[stack.length-1];},getState:function(){return {identified:identified,fin:isFinal(stack[stack.length-1]),unk:cur&&cur.unk};}};
 </script><style>
 /* THEME_PARTAGE_V37 : cette page nomme son fond --paper la ou le kit commun pose --bg.
