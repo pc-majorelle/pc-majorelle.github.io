@@ -148,6 +148,13 @@ window.PCTheme = (function(){
 window.PCAide = (function(){
   "use strict";
   var MOIS=["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+  /* AIDE_ELEVE_V107 — Laurent, 23/09 : sur une page élève, le « ? » montrait la date de la page, « qui est
+     connecté », l'année de travail et les versions du constructeur et du carnet — « des renseignements utiles
+     mais pas judicieux de laisser aux élèves ». Sur une page élève (même liste que THEME_LIEN_ET_RETOUR_V98,
+     plus eleve.html et reviser_*), le panneau ne montre QUE l'aide de la page pour l'élève ; sans aide pour la
+     page, pas de bouton. Les pages enseignant ne changent pas. */
+  var ELEVE=/^(eleve\.html|test_du_soir|exerciseur_resolution|premiers_pas_eleve|revision|reviser|carte_mentale|maquette_socle|activites_web)/
+            .test((location.pathname.split("/").pop()||"index.html").toLowerCase());
   function fr(d){
     if(!d || isNaN(d.getTime())) return "date inconnue";
     var h=String(d.getHours()).padStart(2,"0"), m=String(d.getMinutes()).padStart(2,"0");
@@ -189,6 +196,7 @@ window.PCAide = (function(){
     return '<li>'+esc(nom)+' : <b>'+esc(txt)+'</b></li>';
   }
   function html(){
+    if(ELEVE) return (PAGE && PAGE.html) ? PAGE.html : "";      /* AIDE_ELEVE_V107 */
     var o=origine();
     var s='<h4>Cette page</h4><ul>'
       +'<li>'+esc(nomPage())+' — publiée le <b>'+esc(datePage())+'</b></li>'
@@ -217,7 +225,10 @@ window.PCAide = (function(){
       }catch(e){ DONNEES[t[1]]=null; }
     });
   }
-  function render(){ var p=document.getElementById("pcAidePop"); if(p) p.innerHTML=html(); }
+  function render(){ var p=document.getElementById("pcAidePop"); if(p) p.innerHTML=html(); montrer(); }
+  function montrer(){   /* AIDE_ELEVE_V107 : page élève sans aide -> pas de bouton */
+    var b=document.getElementById("pcAideBtn"); if(b) b.hidden = ELEVE && !(PAGE && PAGE.html);
+  }
 
   function inject(){
     if(document.getElementById("pcAideBtn")) return;
@@ -234,11 +245,13 @@ window.PCAide = (function(){
     document.body.appendChild(btn); document.body.appendChild(pop);
     btn.addEventListener("click",function(e){ e.stopPropagation(); render(); pop.classList.toggle("open"); });
     document.addEventListener("click",function(e){ if(pop.classList.contains("open")&&!pop.contains(e.target)&&e.target!==btn) pop.classList.remove("open"); });
-    lireDates();
+    montrer();
+    if(!ELEVE) lireDates();
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",inject); else inject();
 
-  return { page:function(p){ PAGE=p||null; render(); }, session:session, origine:origine, datePage:datePage, rafraichir:render };
+  return { page:function(p){ PAGE=p||null; render(); }, session:session, origine:origine, datePage:datePage, rafraichir:render,
+           eleve:ELEVE };
 })();
 /* ============================== fin PIED_VERSION_V63 ============================== */
 
@@ -333,6 +346,7 @@ window.PCAide = (function(){
       return "<ul><li>Tes réponses et tes boîtes de révision se gardent <b>automatiquement</b>, dans ce navigateur, sur cet appareil.</li><li>Ton niveau, s'il t'a été demandé, est mémorisé de la même façon.</li><li>Rien à envoyer, pas de compte : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
     },
     "revision_sti2d_tale.html": function(){ return AIDES["revision.html"](); },
+    "test_du_soir_v47.html": function(){ return AIDES["test_du_soir_v45.html"](); },   /* AIDE_ELEVE_V107 : la page servie */
     "test_du_soir_v45.html": function(){
       var h="<ul><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage — et tes coches de « Tes chapitres » (par défaut, c'est le calendrier de ta classe qui coche ; « Revenir au calendrier » efface tes coches).</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
       if(role==="prof") h+="<h4>Enseignant</h4><ul><li>En mode test, « ⚐ signaler cette question » garde une liste dans ce navigateur ; « Voir le rapport à copier » te donne le texte à coller dans la conversation du projet.</li></ul>";
@@ -430,6 +444,7 @@ window.PCAide = (function(){
     return s;
   }
   function poser(){
+    if(window.PCAide && PCAide.eleve) return;     /* AIDE_ELEVE_V107 : les versions ne s'affichent pas sur une page élève */
     var pop=document.getElementById("pcAidePop"); if(!pop) return;
     if(pop.querySelector("#pcVersions")) return;
     var h=html(); if(!h) return;
