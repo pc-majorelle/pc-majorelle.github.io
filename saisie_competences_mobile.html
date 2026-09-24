@@ -71,6 +71,12 @@
   .foot .btn{flex:1}
   .hint{font-size:12px;color:var(--muted);margin:6px 0 0}
   .msg{font-size:13px;margin-top:8px}
+  /* GRILLE_SANS_ANCIEN_V112 : le rond « ‹ » (pcmajo_ui.js) et le pinceau étaient posés SUR la barre du bas (Exporter,
+     Effacer) et sur tout bouton arrivé en bas de l'écran : un clic « à côté » renvoyait à l'accueil de l'ancien site.
+     Ici ils montent au-dessus de la barre, et la page garde la place qu'il faut sous son dernier bouton. */
+  body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+  #pcRetourBtn,.themebtn{bottom:calc(76px + env(safe-area-inset-bottom))!important}
+  .themepop{bottom:calc(130px + env(safe-area-inset-bottom))!important}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -84,7 +90,7 @@
 </style>
 </head>
 <body>
-<header><a href="gestion.html" class="home" aria-label="Mon gestionnaire">‹ Gestionnaire</a><!--ACCUEIL_GESTION_V67--><b>Grille TP</b><span class="moy" id="moy">—</span></header>
+<header><!--GRILLE_SANS_ANCIEN_V112 : plus de lien vers l'ancien gestionnaire (Laurent, 24/09 : « à éviter absolument »)--><b>Grille TP</b><span class="moy" id="moy">—</span></header>
 
 <div class="card">
   <h2>Évaluation</h2>
@@ -305,6 +311,12 @@ function doExport(){
 }
 
 load(); renderHead(); renderAll();
+/* GRILLE_SANS_ANCIEN_V112 : cette page s'ouvre depuis le menu ＋ du service v2, dans un nouvel onglet. Le « ‹ » ne mène
+   JAMAIS à l'ancien site : l'écran précédent s'il y en a un, sinon le service v2. */
+window.PCRetour = function(){
+  if(history.length > 1 && document.referrer && document.referrer.indexOf(location.origin) !== 0){ history.back(); return true; }
+  location.href = "https://pcmajorelle.alwaysdata.net/"; return true;
+};
 </script>
 <script src="fflate.min.js?v=202609141810"></script>
 <script>/*QR_GRILLE_V66 : la grille arrive par l'adresse (#g=deflate+base64url), posee par le QR code du gestionnaire.
