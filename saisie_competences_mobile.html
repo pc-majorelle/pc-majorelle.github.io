@@ -280,7 +280,11 @@ el("file").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(
 
 function importState(o){
   if(o._saisie){ var s=o._saisie; st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
-    if(Array.isArray(s.criteres))st.criteres=s.criteres; if(Array.isArray(s.eleves))st.eleves=s.eleves; if(s.bareme)st.bareme=s.bareme; }
+    if(Array.isArray(s.criteres))st.criteres=s.criteres; if(s.bareme)st.bareme=s.bareme;
+    if(Array.isArray(s.eleves)){ /*ELEVES_DU_PC_V113 : la liste vient du PC (service v2, onglet « Élèves ») ; les niveaux deja
+      saisis sur ce telephone pour un eleve de meme nom sont gardes (les ids de criteres sont propres a chaque grille).*/
+      var avant={}; st.eleves.forEach(function(e){avant[keyOf(e)]=e;});
+      st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",niv:(o&&o.niv)||e.niv||{}};}); } }
   else if(o.evalComp){ var arr=o.evalComp.__ACTIVE__||o.evalComp[Object.keys(o.evalComp)[0]]||[]; var ev=arr[0];
     if(ev){ st.titre=ev.titre||st.titre; st.date=ev.date||st.date;
       st.criteres=(ev.criteres||[]).map(function(c){return {id:c.id||cid(),label:c.label||"",comp:c.comp||"REA",coeff:c.coeff!=null?c.coeff:1,bo:c.bo};});
