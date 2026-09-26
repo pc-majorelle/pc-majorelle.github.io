@@ -195,10 +195,11 @@ function regAjouter(label,eleves){ label=String(label||"").trim(); if(!label||la
   if(Array.isArray(eleves)&&eleves.length){ c.eleves=eleves; c.maj=new Date().toISOString(); }
   saveReg(); return c; }
 /* PHOTOS_SAISIE_V118 : les photos, à part (elles pèsent) — { "<classe>": { "<nom|prenom>": "data:image/…" } } ; jamais dans le QR,
-   jamais exportées ; elles arrivent par le lien « Ouvrir sur cet appareil » du PC (paquet avec `photo`) ou, plus tard, par un fichier. */
+   jamais exportées ; elles arrivent par le lien « Ouvrir sur cet appareil » du PC (paquet avec `photo`) ou par le fichier
+   « 📦 Photos pour le téléphone » de la page Élèves (PHOTOS_TELEPHONE_V119, `importerPhotos`). */
 var LSP="grille_tp_photos_v118"; var photos;
 function loadPhotos(){ try{var s=localStorage.getItem(LSP); photos=s?JSON.parse(s):null;}catch(e){photos=null;} if(!photos||typeof photos!=="object")photos={}; }
-function savePhotos(){ try{localStorage.setItem(LSP,JSON.stringify(photos));}catch(e){ flash("Les photos n'ont pas pu être gardées (mémoire du navigateur pleine)."); } }
+function savePhotos(){ try{localStorage.setItem(LSP,JSON.stringify(photos)); return true;}catch(e){ flash("Les photos n'ont pas pu être gardées (mémoire du navigateur pleine)."); return false; } }
 function photoDe(e){ var c=photos[st.classe]; return (c&&c[keyOf(e)])||""; }
 function poserPhotos(classe,eleves){ if(!classe)return 0; var n=0; eleves.forEach(function(e){ if(e.photo){ if(!photos[classe])photos[classe]={}; photos[classe][keyOf(e)]=e.photo; n++; } });
   if(n)savePhotos(); return n; }
@@ -354,7 +355,28 @@ el("file").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(
   r.onload=function(){ try{ importState(JSON.parse(r.result)); }catch(e){ flash("Fichier illisible."); } };
   r.readAsText(f); ev.target.value=""; });
 
+/* PHOTOS_TELEPHONE_V119 : le fichier « 📦 Photos pour le téléphone » de la page Élèves du PC
+   {_type:"grille_tp_photos", classe, eleves:[{nom,prenom,groupe,photo}]} — une fois par classe. Les photos vont au magasin
+   à part (jamais QR, export ni `st`) ; la classe entre au registre, avec sa liste si ce téléphone n'en avait pas.
+   La grille en cours n'est pas remplacée (sa liste ne change que si c'est cette classe et qu'elle est vide). */
+function importerPhotos(o){
+  var cl=String(o.classe||"").trim(), els=Array.isArray(o.eleves)?o.eleves:[];
+  if(!cl||!els.length){ flash("Fichier de photos vide ou sans classe."); return; }
+  var c=regAjouter(cl,null), liste=els.filter(function(e){return e&&(e.nom||e.prenom);})
+    .map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:{}};}), entree=false;
+  if(!(c.eleves||[]).length&&liste.length){ regAjouter(cl,liste); entree=true; }
+  var avant=JSON.stringify(photos[cl]||{}), anc=photos[cl];
+  photos[cl]={}; var n=poserPhotos(cl,els); var garde=true;
+  if(!n){ if(anc)photos[cl]=anc; else delete photos[cl]; }
+  else{ try{ localStorage.setItem(LSP,JSON.stringify(photos)); }catch(e){ garde=false; if(anc)photos[cl]=anc; else delete photos[cl]; } }
+  if(st.classe===cl && !st.eleves.some(function(e){return e.nom||e.prenom;}) && liste.length){ st.eleves=liste.map(function(e){return {nom:e.nom,prenom:e.prenom,groupe:e.groupe,niv:{}};}); save(); }
+  renderHead(); renderAll();
+  if(!garde){ flash("Les photos de <b>"+esc(cl)+"</b> n'ont pas pu être gardées : la mémoire de ce navigateur est pleine. Oublie une ancienne classe (bouton sous la liste) puis réimporte."); return; }
+  flash("📦 <b>"+esc(cl)+"</b> : "+n+" photo(s) gardée(s) sur ce téléphone"+(entree?", et la liste de "+liste.length+" élève(s)":"")+
+    (st.classe===cl?".":". Choisis la classe en haut pour les voir."));
+}
 function importState(o){
+  if(o&&o._type==="grille_tp_photos"){ importerPhotos(o); return; }
   /* CLASSES_TELEPHONE_V118 : le paquet du PC porte `_classes` (les classes du prof, libellés seuls) → elles entrent au registre. */
   if(Array.isArray(o._classes)) o._classes.forEach(function(l){ regAjouter(l,null); });
   if(o._saisie){ var s=o._saisie, avantCl=st.classe; regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
