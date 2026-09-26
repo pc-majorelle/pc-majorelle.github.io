@@ -103,6 +103,10 @@
     <div style="flex:1;min-width:120px"><label>Classe</label><select id="classe"></select>
       <div class="row" id="autreClasse" style="display:none;margin-top:6px;flex-wrap:nowrap"><input type="text" id="autreNom" placeholder="ex. 2de G3" style="flex:1"><button class="btn" id="autreOk">OK</button></div>
       <p class="hint" id="classeHint" style="display:none"><button class="del2" id="oubliClasse" style="font-size:12px;color:var(--muted);text-decoration:underline">oublier cette classe</button></p></div>
+    <!-- PHOTOS_TELEPHONE_V119b (Laurent, 26/09 : « il n'y a pas importer seul ») : un bouton à lui, en haut, pour le fichier
+         « 📦 Photos pour le téléphone » de la page Élèves ; sans filtre de type (certains téléphones grisent un .json reçu par mail). -->
+    <div style="flex-basis:100%"><button class="btn" id="impPhotos" style="width:100%">📦 Importer les photos d'une classe</button>
+      <input type="file" id="filePhotos" style="display:none"></div>
     <div style="flex:1;min-width:120px"><label>Date</label><input type="date" id="date"></div>
   </div>
   <div style="margin-top:8px"><label>Titre du TP</label><input type="text" id="titre" placeholder="ex. Masse volumique d'un solide"></div>
@@ -156,7 +160,7 @@
   <button class="btn acc" id="exp">Exporter</button>
   <button class="btn" id="imp">Importer</button>
   <button class="btn" id="clr">Effacer</button>
-  <input type="file" id="file" accept="application/json" style="display:none">
+  <input type="file" id="file" accept=".json,application/json,text/plain" style="display:none">
 </div>
 <div class="card" id="msgcard" style="display:none"><div class="msg" id="msg"></div></div>
 
@@ -349,8 +353,14 @@ document.addEventListener("click",function(ev){ var t=ev.target;
     var last=el("grid").querySelector("tbody tr:last-child .nom"); if(last)last.focus(); return; }
   if(t.id==="exp"){ doExport(); return; }
   if(t.id==="imp"){ el("file").click(); return; }
+  if(t.id==="impPhotos"){ el("filePhotos").click(); return; }
   if(t.id==="clr"){ if(confirm("Effacer toute la saisie en cours ? (les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
 });
+el("filePhotos").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
+  r.onload=function(){ var o=null; try{ o=JSON.parse(r.result); }catch(e){}
+    if(o&&o._type==="grille_tp_photos") importerPhotos(o);
+    else flash("Ce fichier n'est pas un fichier de photos. Sur le PC : page <b>Élèves</b> de la classe → <b>📦 Photos pour le téléphone</b>."); };
+  r.readAsText(f); ev.target.value=""; });
 el("file").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
   r.onload=function(){ try{ importState(JSON.parse(r.result)); }catch(e){ flash("Fichier illisible."); } };
   r.readAsText(f); ev.target.value=""; });
