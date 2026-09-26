@@ -95,7 +95,11 @@
 <div class="card">
   <h2>Évaluation</h2>
   <div class="row" style="gap:10px">
-    <div style="flex:1;min-width:120px"><label>Classe</label><input type="text" id="classe" placeholder="ex. 2de G3"></div>
+    <!-- CLASSES_TELEPHONE_V118 (Laurent, 25/09 : « proposer les classes par une liste déroulante ») : la classe se choisit ;
+         les classes et leurs listes vivent dans CE téléphone (localStorage), nourries par chaque QR reçu du PC. -->
+    <div style="flex:1;min-width:120px"><label>Classe</label><select id="classe"></select>
+      <div class="row" id="autreClasse" style="display:none;margin-top:6px;flex-wrap:nowrap"><input type="text" id="autreNom" placeholder="ex. 2de G3" style="flex:1"><button class="btn" id="autreOk">OK</button></div>
+      <p class="hint" id="classeHint" style="display:none"><button class="del2" id="oubliClasse" style="font-size:12px;color:var(--muted);text-decoration:underline">oublier cette classe</button></p></div>
     <div style="flex:1;min-width:120px"><label>Date</label><input type="date" id="date"></div>
   </div>
   <div style="margin-top:8px"><label>Titre du TP</label><input type="text" id="titre" placeholder="ex. Masse volumique d'un solide"></div>
@@ -168,7 +172,44 @@ function fresh(){ return { classe:"", titre:"", date:"",
   bareme:{A:1,B:0.75,C:0.5,D:0.25}, eleves:[] }; }
 function load(){ try{var s=localStorage.getItem(LS); st=s?JSON.parse(s):fresh();}catch(e){st=fresh();}
   if(!Array.isArray(st.criteres))st.criteres=[]; if(!Array.isArray(st.eleves))st.eleves=[]; if(!st.bareme)st.bareme={A:1,B:0.75,C:0.5,D:0.25}; }
-function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} }
+function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); }
+
+/* CLASSES_TELEPHONE_V118 : le registre des classes de CE téléphone — { classes: { "<libellé>": { eleves:[{nom,prenom,niv}], maj } } }.
+   Il se nourrit (a) de chaque QR reçu du PC (`_saisie.classe` + `_saisie.eleves`, et `_classes` = toutes les classes du prof,
+   sans élève), (b) de la liste collée ici, (c) d'une classe tapée (« ＋ autre classe… »). Rien ne sort du téléphone.
+   La grille en cours (`st`) reste unique : changer de classe échange sa liste d'élèves (les niveaux saisis suivent la
+   classe qu'on quitte, dans le registre) ; critères, barème, titre et date restent. */
+var LSC="grille_tp_classes_v118";
+var reg;
+function loadReg(){ try{var s=localStorage.getItem(LSC); reg=s?JSON.parse(s):null;}catch(e){reg=null;}
+  if(!reg||typeof reg!=="object"||!reg.classes||typeof reg.classes!=="object")reg={classes:{}}; }
+function saveReg(){ try{localStorage.setItem(LSC,JSON.stringify(reg));}catch(e){} }
+function regClasses(){ return Object.keys(reg.classes).sort(function(a,b){return a.localeCompare(b,"fr");}); }
+function regAjouter(label,eleves){ label=String(label||"").trim(); if(!label||label==="__autre__")return null;
+  var c=reg.classes[label]; if(!c){c=reg.classes[label]={eleves:[],maj:""};}
+  if(Array.isArray(eleves)&&eleves.length){ c.eleves=eleves; c.maj=new Date().toISOString(); }
+  saveReg(); return c; }
+function regMiroir(){ if(!reg||!st||!st.classe)return; var c=regAjouter(st.classe,null); if(!c)return;
+  c.eleves=st.eleves.map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};}); c.maj=new Date().toISOString(); saveReg(); }
+function renderClasses(){ var s=el("classe"), cls=regClasses(), cur=st.classe&&reg.classes[st.classe]?st.classe:"";
+  var h='<option value="">— choisir la classe —</option>';
+  cls.forEach(function(c){ var n=(reg.classes[c].eleves||[]).length;
+    h+='<option value="'+esc(c)+'"'+(c===cur?" selected":"")+'>'+esc(c)+(n?" ("+n+")":"")+'</option>'; });
+  h+='<option value="__autre__">＋ autre classe…</option>'; s.innerHTML=h; s.value=cur;
+  el("autreClasse").style.display="none"; el("classeHint").style.display=cur?"block":"none"; }
+function choisirClasse(label){ label=String(label||"").trim();
+  if(!label){ st.classe=""; save(); renderClasses(); return; }
+  var c=regAjouter(label,null), sansClasse=!st.classe, garde=st.eleves.filter(function(e){return e.nom||e.prenom;});
+  st.classe=label;
+  if(sansClasse && !(c.eleves||[]).length && garde.length){ /* la liste affichée n'avait PAS de classe : elle prend celle-ci */
+    flash("Classe <b>"+esc(label)+"</b> : la liste affichée ("+garde.length+" élève(s)) lui est rattachée."); }
+  else{ st.eleves=(c.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};});
+    flash(st.eleves.length ? "Classe <b>"+esc(label)+"</b> : "+st.eleves.length+" élève(s) retrouvés dans ce téléphone."
+      : "Classe <b>"+esc(label)+"</b> : aucune liste dans ce téléphone — scanne le QR de la grille sur le PC (il porte la liste) ou colle-la ci-dessous."); }
+  save(); renderClasses(); renderGrid(); renderProf(); }
+function oublierClasse(){ var c=st.classe; if(!c||!reg.classes[c])return;
+  if(!confirm("Oublier la classe « "+c+" » et sa liste sur ce téléphone ?"))return;
+  delete reg.classes[c]; saveReg(); st.classe=""; save(); renderClasses(); flash("Classe <b>"+esc(c)+"</b> oubliée sur ce téléphone (la grille affichée est gardée)."); }
 function el(id){return document.getElementById(id);}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
@@ -217,8 +258,11 @@ function renderGrid(){
     h+='<td class="note'+(n.part?" part":"")+'">'+n.txt+(n.part?" *":"")+'</td>';
     h+='<td><button class="del2" data-del="'+ri+'" aria-label="supprimer">✕</button></td></tr>';
   });
-  h+='</tbody>'; t.innerHTML=h; updMoy();
+  h+='</tbody>'; t.innerHTML=h; updMoy(); majOptionClasse();
 }
+function majOptionClasse(){ /* CLASSES_TELEPHONE_V118 : l'effectif entre parenthèses suit la liste affichée */
+  if(!st.classe)return; var n=st.eleves.filter(function(e){return e.nom||e.prenom;}).length;
+  Array.prototype.forEach.call(el("classe").options,function(o){ if(o.value===st.classe)o.textContent=st.classe+(n?" ("+n+")":""); }); }
 function renderProf(){
   var t=el("prof"); var cats=CATS.map(function(c){return c[0];}).filter(function(k){return st.criteres.some(function(cr){return cr.comp===k;});});
   var h='<thead><tr><th class="el">Élève</th>';
@@ -233,7 +277,7 @@ function renderProf(){
 }
 function updMoy(){ var sn=0,cn=0; st.eleves.forEach(function(e){var n=note(e);if(n.val!=null){sn+=n.val;cn++;}});
   el("moy").textContent=cn?("moy "+(sn/cn).toFixed(1).replace(".",",")):"—"; }
-function renderHead(){ el("classe").value=st.classe||""; el("titre").value=st.titre||""; el("date").value=st.date||"";
+function renderHead(){ renderClasses(); el("titre").value=st.titre||""; el("date").value=st.date||"";
   el("bA").value=st.bareme.A; el("bB").value=st.bareme.B; el("bC").value=st.bareme.C; el("bD").value=st.bareme.D; }
 function renderAll(){ renderCrits(); renderGrid(); renderProf(); }
 function refreshDeps(){ renderGrid(); renderProf(); }
@@ -245,7 +289,7 @@ function critById(id){ return st.criteres.find(function(c){return c.id===id;}); 
 function flash(m){ el("msgcard").style.display="block"; el("msg").innerHTML=m; }
 
 document.addEventListener("input",function(ev){ var t=ev.target;
-  if(t.id==="classe"){st.classe=t.value;save();}
+  if(t.id==="classe"||t.id==="autreNom"){ /* CLASSES_TELEPHONE_V118 : le <select> se traite sur `change`, le nom tapé sur OK */ }
   else if(t.id==="titre"){st.titre=t.value;save();}
   else if(t.id==="date"){st.date=t.value;save();}
   else if(/^b[ABCD]$/.test(t.id)){ var v=parseFloat(String(t.value).replace(",",".")); st.bareme[t.id[1]]=isNaN(v)?0:v; save(); refreshDeps(); }
@@ -254,9 +298,14 @@ document.addEventListener("input",function(ev){ var t=ev.target;
   else if(t.dataset.nom!=null){ var e=st.eleves[+t.dataset.nom]; var pl=parseLine(t.value)||{nom:t.value,prenom:""}; e.nom=pl.nom;e.prenom=pl.prenom;save();renderProf(); }
 });
 document.addEventListener("change",function(ev){ var t=ev.target;
+  if(t.id==="classe"){ if(t.value==="__autre__"){ el("autreClasse").style.display="flex"; el("classeHint").style.display="none"; el("autreNom").focus(); }
+    else choisirClasse(t.value); return; }
   if(t.dataset.cat!=null){ var c=critById(t.dataset.cat); if(c){c.comp=t.value;save();renderCrits();refreshDeps();} }
 });
+el("autreNom").addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); el("autreOk").click(); } });
 document.addEventListener("click",function(ev){ var t=ev.target;
+  if(t.id==="autreOk"){ var nomC=el("autreNom").value.trim(); el("autreNom").value=""; if(nomC)choisirClasse(nomC); else renderClasses(); return; }
+  if(t.id==="oubliClasse"){ oublierClasse(); return; }
   if(t.id==="addCrit"){ st.criteres.push({id:cid(),label:"",comp:"REA",coeff:1}); save(); renderCrits(); refreshDeps(); return; }
   var dc=t.dataset&&t.dataset.delc; if(dc){ st.criteres=st.criteres.filter(function(c){return c.id!==dc;});
     st.eleves.forEach(function(e){ if(e.niv)delete e.niv[dc]; }); save(); renderCrits(); refreshDeps(); return; }
@@ -272,18 +321,24 @@ document.addEventListener("click",function(ev){ var t=ev.target;
     var last=el("grid").querySelector("tbody tr:last-child .nom"); if(last)last.focus(); return; }
   if(t.id==="exp"){ doExport(); return; }
   if(t.id==="imp"){ el("file").click(); return; }
-  if(t.id==="clr"){ if(confirm("Effacer toute la saisie en cours ?")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
+  if(t.id==="clr"){ if(confirm("Effacer toute la saisie en cours ? (les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
 });
 el("file").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
   r.onload=function(){ try{ importState(JSON.parse(r.result)); }catch(e){ flash("Fichier illisible."); } };
   r.readAsText(f); ev.target.value=""; });
 
 function importState(o){
-  if(o._saisie){ var s=o._saisie; st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
+  /* CLASSES_TELEPHONE_V118 : le paquet du PC porte `_classes` (les classes du prof, libellés seuls) → elles entrent au registre. */
+  if(Array.isArray(o._classes)) o._classes.forEach(function(l){ regAjouter(l,null); });
+  if(o._saisie){ var s=o._saisie, avantCl=st.classe; regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
     if(Array.isArray(s.criteres))st.criteres=s.criteres; if(s.bareme)st.bareme=s.bareme;
+    if(!Array.isArray(s.eleves)&&st.classe&&st.classe!==avantCl){ /* CLASSES_TELEPHONE_V118 : QR sans liste pour une AUTRE classe →
+      la liste connue de cette classe sur ce téléphone (ou rien), jamais celle de la classe quittée */
+      var rc=regAjouter(st.classe,null); st.eleves=(rc.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};}); }
     if(Array.isArray(s.eleves)){ /*ELEVES_DU_PC_V113 : la liste vient du PC (service v2, onglet « Élèves ») ; les niveaux deja
       saisis sur ce telephone pour un eleve de meme nom sont gardes (les ids de criteres sont propres a chaque grille).*/
-      var avant={}; st.eleves.forEach(function(e){avant[keyOf(e)]=e;});
+      var src=(st.classe&&st.classe!==avantCl)?(((reg.classes[st.classe]||{}).eleves)||[]):st.eleves; /* v118 : de la même classe */
+      var avant={}; src.forEach(function(e){avant[keyOf(e)]=e;});
       st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",niv:(o&&o.niv)||e.niv||{}};}); } }
   else if(o.evalComp){ var arr=o.evalComp.__ACTIVE__||o.evalComp[Object.keys(o.evalComp)[0]]||[]; var ev=arr[0];
     if(ev){ st.titre=ev.titre||st.titre; st.date=ev.date||st.date;
@@ -314,7 +369,10 @@ function doExport(){
   flash("Exporté : <b>"+esc(name)+"</b>. Dans le gestionnaire : choisis la classe → onglet Compétences → Importer.");
 }
 
-load(); renderHead(); renderAll();
+loadReg(); load();
+/* CLASSES_TELEPHONE_V118 : une classe tapée avant la v118 (champ libre) entre au registre avec sa liste. */
+if(st.classe&&!reg.classes[st.classe]) regMiroir();
+renderHead(); renderAll();
 /* GRILLE_SANS_ANCIEN_V112 : cette page s'ouvre depuis le menu ＋ du service v2, dans un nouvel onglet. Le « ‹ » ne mène
    JAMAIS à l'ancien site : l'écran précédent s'il y en a un, sinon le service v2. */
 window.PCRetour = function(){
