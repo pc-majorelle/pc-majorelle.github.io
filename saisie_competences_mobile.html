@@ -434,6 +434,19 @@ loadReg(); loadPhotos(); load();
 /* CLASSES_TELEPHONE_V118 : une classe tapée avant la v118 (champ libre) entre au registre avec sa liste. */
 if(st.classe&&!reg.classes[st.classe]) regMiroir();
 renderHead(); renderAll();
+/* CLASSE_PAR_ADRESSE_V120 (26/09 : « mets-les en cohérence avec la classe choisie ») : le service v2 ouvre cette page
+   avec ?classe=<libellé> — la classe de sa barre. La page s'ouvre sur elle (sa liste, ses photos), comme si on l'avait
+   choisie dans la liste « Classe ». Un QR (#g=…) lu ensuite garde le dernier mot. Le paramètre est retiré de l'adresse. */
+(function(){
+  try{
+    var m=/[?&]classe=([^&#]*)/.exec(location.search||""); if(!m) return;
+    var lab=decodeURIComponent(m[1].replace(/\+/g," ")).trim();
+    var reste=(location.search||"").replace(/^\?/,"").split("&").filter(function(x){ return x && x.indexOf("classe=")!==0; }).join("&");
+    try{ history.replaceState(null,"",location.pathname+(reste?"?"+reste:"")+location.hash); }catch(e){}
+    if(!lab||lab==="__autre__"||lab===st.classe) return;
+    choisirClasse(lab);
+  }catch(e){}
+})();
 /* GRILLE_SANS_ANCIEN_V112 : cette page s'ouvre depuis le menu ＋ du service v2, dans un nouvel onglet. Le « ‹ » ne mène
    JAMAIS à l'ancien site : l'écran précédent s'il y en a un, sinon le service v2. */
 window.PCRetour = function(){
