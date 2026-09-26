@@ -130,10 +130,12 @@
 
 <div class="card">
   <h2>Notation par élève</h2>
+  <!-- GROUPES_A_LA_VOLEE_V118 (Laurent, 26/09) : « Classe · G1 · G2 », à la volée, préréglé sur le groupe du TP reçu par QR -->
+  <div class="row" id="vueBar" style="margin:0 0 8px;display:none"></div>
   <div class="wrap"><table id="grid"></table></div>
   <div style="margin-top:10px">
-    <label>Coller une liste (un élève par ligne — « Nom Prénom » ou « Nom, Prénom »)</label>
-    <textarea id="paste" placeholder="Durand Alice&#10;Bernard Hugo&#10;Petit, Léa"></textarea>
+    <label>Coller une liste (un élève par ligne — « Nom Prénom » ou « Nom, Prénom », « G1 » en fin de ligne pour le groupe)</label>
+    <textarea id="paste" placeholder="Durand Alice G1&#10;Bernard Hugo G2&#10;Petit, Léa"></textarea>
     <div class="row" style="margin-top:6px">
       <button class="btn" id="addPaste">Charger la liste</button>
       <button class="btn" id="addOne">+ un élève</button>
@@ -165,7 +167,7 @@ var LVLCOL={A:["#4caf6d","#0f3d20"],B:["#e0a53a","#3a2a06"],C:["#e8853a","#3a1e0
 var st, cc=0;
 
 function cid(){ cc++; return "c"+Date.now().toString(36)+cc; }
-function fresh(){ return { classe:"", titre:"", date:"",
+function fresh(){ return { classe:"", titre:"", date:"", vue:"",
   criteres:[ {id:cid(),label:"Analyser / proposer une démarche",comp:"ANA",coeff:1},
              {id:cid(),label:"Réaliser / mesurer",comp:"REA",coeff:1},
              {id:cid(),label:"Valider / conclure",comp:"VAL",coeff:1} ],
@@ -190,7 +192,7 @@ function regAjouter(label,eleves){ label=String(label||"").trim(); if(!label||la
   if(Array.isArray(eleves)&&eleves.length){ c.eleves=eleves; c.maj=new Date().toISOString(); }
   saveReg(); return c; }
 function regMiroir(){ if(!reg||!st||!st.classe)return; var c=regAjouter(st.classe,null); if(!c)return;
-  c.eleves=st.eleves.map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};}); c.maj=new Date().toISOString(); saveReg(); }
+  c.eleves=st.eleves.map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};}); c.maj=new Date().toISOString(); saveReg(); }
 function renderClasses(){ var s=el("classe"), cls=regClasses(), cur=st.classe&&reg.classes[st.classe]?st.classe:"";
   var h='<option value="">— choisir la classe —</option>';
   cls.forEach(function(c){ var n=(reg.classes[c].eleves||[]).length;
@@ -203,7 +205,7 @@ function choisirClasse(label){ label=String(label||"").trim();
   st.classe=label;
   if(sansClasse && !(c.eleves||[]).length && garde.length){ /* la liste affichée n'avait PAS de classe : elle prend celle-ci */
     flash("Classe <b>"+esc(label)+"</b> : la liste affichée ("+garde.length+" élève(s)) lui est rattachée."); }
-  else{ st.eleves=(c.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};});
+  else{ st.eleves=(c.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};});
     flash(st.eleves.length ? "Classe <b>"+esc(label)+"</b> : "+st.eleves.length+" élève(s) retrouvés dans ce téléphone."
       : "Classe <b>"+esc(label)+"</b> : aucune liste dans ce téléphone — scanne le QR de la grille sur le PC (il porte la liste) ou colle-la ci-dessous."); }
   save(); renderClasses(); renderGrid(); renderProf(); }
@@ -244,14 +246,24 @@ function renderCrits(){
   el("crits").innerHTML=h;
 }
 
+/* GROUPES_A_LA_VOLEE_V118 : la vue « Classe » ou un groupe ; les indices (data-r, data-nom, data-del) restent ceux de st.eleves */
+function groupesDe(){ var g={}; st.eleves.forEach(function(e){ if(e.groupe)g[e.groupe]=1; }); return Object.keys(g).sort(); }
+function vus(){ var out=[]; st.eleves.forEach(function(e,i){ if(!st.vue||e.groupe===st.vue)out.push([e,i]); }); return out; }
+function renderVue(){ var g=groupesDe(), bar=el("vueBar");
+  if(!g.length){ bar.style.display="none"; if(st.vue){st.vue="";} return; }
+  if(st.vue&&g.indexOf(st.vue)<0){ st.vue=""; }
+  var h=[["","Classe"]].concat(g.map(function(x){return [x,x];})).map(function(c){
+    return '<button class="btn'+(c[0]===st.vue?" acc":"")+'" data-vue="'+esc(c[0])+'" aria-pressed="'+(c[0]===st.vue)+'">'+esc(c[1])+'</button>'; }).join("");
+  bar.innerHTML=h+'<span class="hint" style="margin:0">'+vus().length+' élève(s)</span>'; bar.style.display="flex"; }
 function renderGrid(){
-  var t=el("grid"), cr=st.criteres;
+  var t=el("grid"), cr=st.criteres; renderVue();
   var h='<thead><tr><th class="el">Élève</th>';
   cr.forEach(function(c,i){ h+='<th title="'+esc(c.label)+'"><span class="chd" style="background:'+(CATCOL[c.comp]||"#888")+'">C'+(i+1)+'</span><br><span style="font-weight:400">'+catDisp(c.comp)+' ×'+(+c.coeff)+'</span></th>'; });
   h+='<th>Note</th><th></th></tr></thead><tbody>';
-  if(!st.eleves.length){ h+='<tr><td class="el" colspan="'+(cr.length+3)+'"><span class="hint">Aucun élève — colle une liste ci-dessous.</span></td></tr>'; }
-  st.eleves.forEach(function(e,ri){
-    h+='<tr><td class="el"><input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom"></td>';
+  var vis=vus();
+  if(!vis.length){ h+='<tr><td class="el" colspan="'+(cr.length+3)+'"><span class="hint">'+(st.eleves.length?"Aucun élève dans ce groupe.":"Aucun élève — colle une liste ci-dessous.")+'</span></td></tr>'; }
+  vis.forEach(function(p){ var e=p[0], ri=p[1];
+    h+='<tr><td class="el"><input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom">'+(e.groupe&&!st.vue?' <span class="hint" style="margin:0">'+esc(e.groupe)+'</span>':'')+'</td>';
     cr.forEach(function(c){ var lv=(e.niv||{})[c.id]||"";
       h+='<td><button class="cyc" data-r="'+ri+'" data-c="'+c.id+'" data-lv="'+lv+'">'+(lv||"·")+'</button></td>'; });
     var n=note(e);
@@ -268,23 +280,25 @@ function renderProf(){
   var h='<thead><tr><th class="el">Élève</th>';
   cats.forEach(function(k){ h+='<th><span class="chd" style="background:'+CATCOL[k]+'">'+catDisp(k)+'</span></th>'; });
   h+='</tr></thead><tbody>';
-  if(!st.eleves.length||!cats.length){ h+='<tr><td class="el" colspan="'+(cats.length+1)+'"><span class="hint">—</span></td></tr>'; }
-  st.eleves.forEach(function(e){ h+='<tr><td class="el">'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'</td>';
+  var vis=vus();
+  if(!vis.length||!cats.length){ h+='<tr><td class="el" colspan="'+(cats.length+1)+'"><span class="hint">—</span></td></tr>'; }
+  vis.forEach(function(p){ var e=p[0]; h+='<tr><td class="el">'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'</td>';
     cats.forEach(function(k){ var fr=profCat(e,k); var nv=fracToNiv(fr);
       h+='<td>'+(fr!=null?('<span class="pill">'+pastilleTxt(nv)+'</span> <span class="hint" style="margin:0">'+Math.round(fr*100)+'%</span>'):'<span class="hint" style="margin:0">·</span>')+'</td>'; });
     h+='</tr>'; });
   h+='</tbody>'; t.innerHTML=h;
 }
-function updMoy(){ var sn=0,cn=0; st.eleves.forEach(function(e){var n=note(e);if(n.val!=null){sn+=n.val;cn++;}});
-  el("moy").textContent=cn?("moy "+(sn/cn).toFixed(1).replace(".",",")):"—"; }
+function updMoy(){ var sn=0,cn=0; vus().forEach(function(p){var n=note(p[0]);if(n.val!=null){sn+=n.val;cn++;}});
+  el("moy").textContent=cn?("moy "+(sn/cn).toFixed(1).replace(".",",")+(st.vue?" "+st.vue:"")):"—"; }
 function renderHead(){ renderClasses(); el("titre").value=st.titre||""; el("date").value=st.date||"";
   el("bA").value=st.bareme.A; el("bB").value=st.bareme.B; el("bC").value=st.bareme.C; el("bD").value=st.bareme.D; }
 function renderAll(){ renderCrits(); renderGrid(); renderProf(); }
 function refreshDeps(){ renderGrid(); renderProf(); }
 
-function parseLine(l){ l=l.trim(); if(!l)return null;
-  if(l.indexOf(",")>=0){ var p=l.split(","); return {nom:p[0].trim(),prenom:(p[1]||"").trim(),niv:{}}; }
-  var parts=l.split(/\s+/); var nom=parts.shift(); return {nom:nom,prenom:parts.join(" "),niv:{}}; }
+function parseLine(l){ l=l.trim(); if(!l)return null; var groupe="";
+  var mg=/\s*[,;]?\s*(G\d)\s*$/i.exec(l); if(mg){ groupe=mg[1].toUpperCase(); l=l.slice(0,mg.index).trim(); }   /* v118b : « … G1 » en fin de ligne */
+  if(l.indexOf(",")>=0){ var p=l.split(","); return {nom:p[0].trim(),prenom:(p[1]||"").trim(),groupe:groupe,niv:{}}; }
+  var parts=l.split(/\s+/); var nom=parts.shift(); return {nom:nom,prenom:parts.join(" "),groupe:groupe,niv:{}}; }
 function critById(id){ return st.criteres.find(function(c){return c.id===id;}); }
 function flash(m){ el("msgcard").style.display="block"; el("msg").innerHTML=m; }
 
@@ -295,7 +309,7 @@ document.addEventListener("input",function(ev){ var t=ev.target;
   else if(/^b[ABCD]$/.test(t.id)){ var v=parseFloat(String(t.value).replace(",",".")); st.bareme[t.id[1]]=isNaN(v)?0:v; save(); refreshDeps(); }
   else if(t.dataset.lab!=null){ var c=critById(t.dataset.lab); if(c){c.label=t.value;save();} }
   else if(t.dataset.coef!=null){ var c2=critById(t.dataset.coef); if(c2){var x=parseInt(t.value,10);c2.coeff=(isNaN(x)||x<0)?0:x;save();refreshDeps();} }
-  else if(t.dataset.nom!=null){ var e=st.eleves[+t.dataset.nom]; var pl=parseLine(t.value)||{nom:t.value,prenom:""}; e.nom=pl.nom;e.prenom=pl.prenom;save();renderProf(); }
+  else if(t.dataset.nom!=null){ var e=st.eleves[+t.dataset.nom]; var pl=parseLine(t.value)||{nom:t.value,prenom:""}; e.nom=pl.nom;e.prenom=pl.prenom; if(pl.groupe)e.groupe=pl.groupe; save();renderProf(); }
 });
 document.addEventListener("change",function(ev){ var t=ev.target;
   if(t.id==="classe"){ if(t.value==="__autre__"){ el("autreClasse").style.display="flex"; el("classeHint").style.display="none"; el("autreNom").focus(); }
@@ -306,6 +320,7 @@ el("autreNom").addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev
 document.addEventListener("click",function(ev){ var t=ev.target;
   if(t.id==="autreOk"){ var nomC=el("autreNom").value.trim(); el("autreNom").value=""; if(nomC)choisirClasse(nomC); else renderClasses(); return; }
   if(t.id==="oubliClasse"){ oublierClasse(); return; }
+  if(t.dataset&&t.dataset.vue!=null){ st.vue=t.dataset.vue; save(); renderGrid(); renderProf(); return; }
   if(t.id==="addCrit"){ st.criteres.push({id:cid(),label:"",comp:"REA",coeff:1}); save(); renderCrits(); refreshDeps(); return; }
   var dc=t.dataset&&t.dataset.delc; if(dc){ st.criteres=st.criteres.filter(function(c){return c.id!==dc;});
     st.eleves.forEach(function(e){ if(e.niv)delete e.niv[dc]; }); save(); renderCrits(); refreshDeps(); return; }
@@ -332,14 +347,15 @@ function importState(o){
   if(Array.isArray(o._classes)) o._classes.forEach(function(l){ regAjouter(l,null); });
   if(o._saisie){ var s=o._saisie, avantCl=st.classe; regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
     if(Array.isArray(s.criteres))st.criteres=s.criteres; if(s.bareme)st.bareme=s.bareme;
+    if(typeof s.groupe==="string") st.vue=s.groupe;   /* GROUPES_A_LA_VOLEE_V118 : le groupe du TP prérègle la vue */
     if(!Array.isArray(s.eleves)&&st.classe&&st.classe!==avantCl){ /* CLASSES_TELEPHONE_V118 : QR sans liste pour une AUTRE classe →
       la liste connue de cette classe sur ce téléphone (ou rien), jamais celle de la classe quittée */
-      var rc=regAjouter(st.classe,null); st.eleves=(rc.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",niv:e.niv||{}};}); }
+      var rc=regAjouter(st.classe,null); st.eleves=(rc.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};}); }
     if(Array.isArray(s.eleves)){ /*ELEVES_DU_PC_V113 : la liste vient du PC (service v2, onglet « Élèves ») ; les niveaux deja
       saisis sur ce telephone pour un eleve de meme nom sont gardes (les ids de criteres sont propres a chaque grille).*/
       var src=(st.classe&&st.classe!==avantCl)?(((reg.classes[st.classe]||{}).eleves)||[]):st.eleves; /* v118 : de la même classe */
       var avant={}; src.forEach(function(e){avant[keyOf(e)]=e;});
-      st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",niv:(o&&o.niv)||e.niv||{}};}); } }
+      st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:(o&&o.niv)||e.niv||{}};}); } }
   else if(o.evalComp){ var arr=o.evalComp.__ACTIVE__||o.evalComp[Object.keys(o.evalComp)[0]]||[]; var ev=arr[0];
     if(ev){ st.titre=ev.titre||st.titre; st.date=ev.date||st.date;
       st.criteres=(ev.criteres||[]).map(function(c){return {id:c.id||cid(),label:c.label||"",comp:c.comp||"REA",coeff:c.coeff!=null?c.coeff:1,bo:c.bo};});
@@ -357,7 +373,7 @@ function doExport(){
   var ev={ id:"mob"+Date.now().toString(36), titre:st.titre||"", date:st.date||"",
     criteres:st.criteres.map(function(c){return {id:c.id,label:c.label,comp:c.comp,coeff:c.coeff,bo:c.bo};}), niveaux:{} };
   var eleves=[];
-  st.eleves.forEach(function(e){ if(!(e.nom||e.prenom))return; var k=keyOf(e); eleves.push({nom:e.nom,prenom:e.prenom});
+  st.eleves.forEach(function(e){ if(!(e.nom||e.prenom))return; var k=keyOf(e); eleves.push({nom:e.nom,prenom:e.prenom,groupe:e.groupe||""});
     if(e.niv&&Object.keys(e.niv).length)ev.niveaux[k]=e.niv; });
   var payload={ _type:"gestion_notation_competences", version:"v19-mobile-criteres",
     _classeLabel:st.classe||"", _eleves:eleves, baremeComp:st.bareme,
