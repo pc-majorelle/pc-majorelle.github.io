@@ -63,6 +63,9 @@
   .note{font-weight:700;white-space:nowrap}
   .note.part{color:var(--B)}
   .nom{border:0;background:transparent;color:var(--ink);font-size:14px;width:8.2em;padding:2px 0}
+  /* PHOTOS_SAISIE_V118 : la photo devant le nom pendant la saisie (reçue par le lien « Ouvrir sur cet appareil » du PC, ou par un fichier) */
+  .ph{width:56px;height:72px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px}
+  td.el .cel{display:flex;align-items:center;gap:4px}
   .del2{border:0;background:transparent;color:var(--muted);font-size:16px;cursor:pointer;padding:0 2px}
   .pill{display:inline-block;min-width:1.6em;text-align:center;border-radius:5px;font-size:12px;font-weight:700;padding:1px 5px}
   .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
@@ -191,6 +194,14 @@ function regAjouter(label,eleves){ label=String(label||"").trim(); if(!label||la
   var c=reg.classes[label]; if(!c){c=reg.classes[label]={eleves:[],maj:""};}
   if(Array.isArray(eleves)&&eleves.length){ c.eleves=eleves; c.maj=new Date().toISOString(); }
   saveReg(); return c; }
+/* PHOTOS_SAISIE_V118 : les photos, à part (elles pèsent) — { "<classe>": { "<nom|prenom>": "data:image/…" } } ; jamais dans le QR,
+   jamais exportées ; elles arrivent par le lien « Ouvrir sur cet appareil » du PC (paquet avec `photo`) ou, plus tard, par un fichier. */
+var LSP="grille_tp_photos_v118"; var photos;
+function loadPhotos(){ try{var s=localStorage.getItem(LSP); photos=s?JSON.parse(s):null;}catch(e){photos=null;} if(!photos||typeof photos!=="object")photos={}; }
+function savePhotos(){ try{localStorage.setItem(LSP,JSON.stringify(photos));}catch(e){ flash("Les photos n'ont pas pu être gardées (mémoire du navigateur pleine)."); } }
+function photoDe(e){ var c=photos[st.classe]; return (c&&c[keyOf(e)])||""; }
+function poserPhotos(classe,eleves){ if(!classe)return 0; var n=0; eleves.forEach(function(e){ if(e.photo){ if(!photos[classe])photos[classe]={}; photos[classe][keyOf(e)]=e.photo; n++; } });
+  if(n)savePhotos(); return n; }
 function regMiroir(){ if(!reg||!st||!st.classe)return; var c=regAjouter(st.classe,null); if(!c)return;
   c.eleves=st.eleves.map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};}); c.maj=new Date().toISOString(); saveReg(); }
 function renderClasses(){ var s=el("classe"), cls=regClasses(), cur=st.classe&&reg.classes[st.classe]?st.classe:"";
@@ -211,7 +222,7 @@ function choisirClasse(label){ label=String(label||"").trim();
   save(); renderClasses(); renderGrid(); renderProf(); }
 function oublierClasse(){ var c=st.classe; if(!c||!reg.classes[c])return;
   if(!confirm("Oublier la classe « "+c+" » et sa liste sur ce téléphone ?"))return;
-  delete reg.classes[c]; saveReg(); st.classe=""; save(); renderClasses(); flash("Classe <b>"+esc(c)+"</b> oubliée sur ce téléphone (la grille affichée est gardée)."); }
+  delete reg.classes[c]; saveReg(); if(photos[c]){ delete photos[c]; savePhotos(); } st.classe=""; save(); renderClasses(); flash("Classe <b>"+esc(c)+"</b> oubliée sur ce téléphone (la grille affichée est gardée)."); }
 function el(id){return document.getElementById(id);}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
@@ -263,7 +274,8 @@ function renderGrid(){
   var vis=vus();
   if(!vis.length){ h+='<tr><td class="el" colspan="'+(cr.length+3)+'"><span class="hint">'+(st.eleves.length?"Aucun élève dans ce groupe.":"Aucun élève — colle une liste ci-dessous.")+'</span></td></tr>'; }
   vis.forEach(function(p){ var e=p[0], ri=p[1];
-    h+='<tr><td class="el"><input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom">'+(e.groupe&&!st.vue?' <span class="hint" style="margin:0">'+esc(e.groupe)+'</span>':'')+'</td>';
+    var ph=photoDe(e);
+    h+='<tr><td class="el"><span class="cel">'+(ph?'<img class="ph" src="'+esc(ph)+'" alt="">':'')+'<input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom">'+(e.groupe&&!st.vue?' <span class="hint" style="margin:0">'+esc(e.groupe)+'</span>':'')+'</span></td>';
     cr.forEach(function(c){ var lv=(e.niv||{})[c.id]||"";
       h+='<td><button class="cyc" data-r="'+ri+'" data-c="'+c.id+'" data-lv="'+lv+'">'+(lv||"·")+'</button></td>'; });
     var n=note(e);
@@ -351,6 +363,7 @@ function importState(o){
     if(!Array.isArray(s.eleves)&&st.classe&&st.classe!==avantCl){ /* CLASSES_TELEPHONE_V118 : QR sans liste pour une AUTRE classe →
       la liste connue de cette classe sur ce téléphone (ou rien), jamais celle de la classe quittée */
       var rc=regAjouter(st.classe,null); st.eleves=(rc.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};}); }
+    if(Array.isArray(s.eleves)&&st.classe){ var nph=poserPhotos(st.classe,s.eleves); if(nph)flash(nph+" photo(s) gardée(s) dans ce navigateur pour "+esc(st.classe)+"."); }
     if(Array.isArray(s.eleves)){ /*ELEVES_DU_PC_V113 : la liste vient du PC (service v2, onglet « Élèves ») ; les niveaux deja
       saisis sur ce telephone pour un eleve de meme nom sont gardes (les ids de criteres sont propres a chaque grille).*/
       var src=(st.classe&&st.classe!==avantCl)?(((reg.classes[st.classe]||{}).eleves)||[]):st.eleves; /* v118 : de la même classe */
@@ -385,7 +398,7 @@ function doExport(){
   flash("Exporté : <b>"+esc(name)+"</b>. Dans le gestionnaire : choisis la classe → onglet Compétences → Importer.");
 }
 
-loadReg(); load();
+loadReg(); loadPhotos(); load();
 /* CLASSES_TELEPHONE_V118 : une classe tapée avant la v118 (champ libre) entre au registre avec sa liste. */
 if(st.classe&&!reg.classes[st.classe]) regMiroir();
 renderHead(); renderAll();
