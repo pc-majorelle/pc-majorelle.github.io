@@ -60,6 +60,12 @@
  .cc.o{background:var(--warnbg);color:var(--warn);border-color:var(--warn)}
  .cc.r{background:var(--badbg);color:var(--bad);border-color:var(--bad)}
  .cc.n{color:var(--muted)}
+ /* CARNET_BARRE_V134 */
+ .barre134{display:flex;height:22px;border-radius:11px;overflow:hidden;margin:6px 0 4px;border:1px solid var(--line)}
+ .barre134 button{border:0;padding:0;margin:0;cursor:pointer;min-width:6px}
+ .barre134 button.sel{outline:3px solid var(--ink);outline-offset:-3px}
+ .resume134{font-size:13px;color:var(--muted)}.resume134 b{color:var(--ink)}
+ .raz134{background:var(--okbg);color:var(--ok);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}
  .leg{margin-top:10px;font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
  .leg b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:middle}
  .stats{display:flex;gap:8px;margin-top:12px}
@@ -1375,12 +1381,44 @@ charge(); maj(); accueil();
       + '<span><b style="background:var(--bad)"></b>à revoir</span>'
       + '<span><b style="background:var(--new)"></b>pas encore révisé</span></div>';
   }
+  /* CARNET_BARRE_V134 : un toucher sur une couleur montre ses notions ; un second les replie */
+  if(!window.__b134lie){ window.__b134lie = true;
+    try{ if(localStorage.getItem("pcmajo_raz_v134")){ window.__raz134 = true; localStorage.removeItem("pcmajo_raz_v134"); } }catch(e){}
+    document.addEventListener("click", function(e){
+      var b = e.target.closest ? e.target.closest("[data-b134]") : null; if(!b) return;
+      var k = b.getAttribute("data-b134"), L = document.getElementById("liste134"), G = window.__b134 || {};
+      var deja = b.classList.contains("sel");
+      Array.prototype.forEach.call(document.querySelectorAll("[data-b134]"), function(x){ x.classList.remove("sel"); });
+      if(!L) return;
+      if(deja){ L.innerHTML = ""; return; }
+      b.classList.add("sel");
+      L.innerHTML = '<div style="margin-top:6px">' + (G[k] || []).map(pastille).join("") + '</div>';
+    });
+  }
   function carnetV46(){
     var E = ensembles(), h = "";
     if(E.jour.length) h += '<div class="hint" style="margin:10px 0 3px">Vu le ' + esc(dateFr(dateDuJour())) + '</div><div>'
       + E.jour.map(pastille).join("") + '</div>';
-    if(E.anciennes.length) h += '<div class="hint" style="margin:12px 0 3px">Déjà vu en classe</div><div>'
-      + E.anciennes.map(pastille).join("") + '</div>';
+    /* CARNET_BARRE_V134 (Laurent, 04/10 20:37 « ça n'est pas un peu lourd cette liste de capacités affichées ? » ; 20:39
+       « ou par des infobulles sur la barre de couleur ? ») : le déjà-vu tient en UNE barre de couleur ; une infobulle
+       (survol) dit chaque couleur ; un toucher sur une couleur montre ses notions dessous (au téléphone, pas de survol). */
+    if(E.anciennes.length){
+      var G = {v: [], o: [], r: [], n: []}, NOMS = {v: "acquise", o: "fragile", r: "à revoir", n: "pas encore révisée"},
+          FOND = {v: "var(--ok)", o: "var(--warn)", r: "var(--bad)", n: "var(--new)"};
+      E.anciennes.forEach(function(c){ G[coul(boite(c.ref))].push(c); });
+      var PLUR = {v: "acquises", o: "fragiles", r: "à revoir", n: "pas encore révisées"};
+      function pl(k, n){ return n + " " + (n > 1 ? PLUR[k] : NOMS[k]); }
+      h += '<div class="hint" style="margin:12px 0 3px">Déjà vu en classe : ' + E.anciennes.length + ' notion' + (E.anciennes.length > 1 ? 's' : '') + '</div>'
+        + '<div class="barre134" role="group" aria-label="Ton carnet en couleurs">'
+        + ["v", "o", "r", "n"].filter(function(k){ return G[k].length; }).map(function(k){
+            return '<button type="button" data-b134="' + k + '" title="' + pl(k, G[k].length) + ' — touche pour les voir" aria-label="'
+              + pl(k, G[k].length) + '" style="flex:' + G[k].length + ' 1 0;background:' + FOND[k] + '"></button>'; }).join("")
+        + '</div><div class="resume134">' + ["v", "o", "r", "n"].filter(function(k){ return G[k].length; })
+            .map(function(k){ return '<b>' + G[k].length + '</b> ' + (G[k].length > 1 ? PLUR[k] : NOMS[k]); }).join(" · ")
+        + '</div><div id="liste134"></div>';
+      window.__b134 = G;
+    }
+    if(window.__raz134){ h = '<div class="raz134">Carnet remis à zéro : les notions vues en classe restent, ta progression repart de zéro.</div>' + h; }
     if(!h) h = '<p class="sub">Rien n’a encore été vu en classe : ton carnet se remplira au fil des cours.</p>';
     return h + legende();
   }
@@ -1635,6 +1673,7 @@ charge(); maj(); accueil();
     z.querySelector("[data-raz47-non]").onclick = function(){ z.parentNode.removeChild(z); poser(); };
     oui.onclick = function(){ if(!ck.checked) return;
       cibles().forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+      try{ localStorage.setItem("pcmajo_raz_v134", "1"); }catch(e){}     /* CARNET_BARRE_V134 : le carnet le dira une fois */
       location.reload(); };          /* le carnet vit aussi en memoire : on repart d'une page neuve */
   }
   try{ new MutationObserver(poser).observe(app, {childList:true, subtree:true}); }catch(e){}
