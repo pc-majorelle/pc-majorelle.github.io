@@ -1180,7 +1180,8 @@ charge(); maj(); accueil();
       localStorage.setItem(CLE + JETON, JSON.stringify({
         niveau: x.niveau, libelle: x.libelle || "", abordees: x.abordees,
         derniere_seance: x.derniere_seance || null, au: x.au || "",
-        chapitres: (x.chapitres || []).map(function(c){ return { code: c.code, titre: c.titre }; })
+        chapitres: (x.chapitres || []).map(function(c){ return { code: c.code, titre: c.titre }; }),
+        perso: !!x.perso, cartes: x.perso ? (x.cartes || []) : undefined          /* PERSO_V133 */
       }));
     }catch(e){}
   }
@@ -1421,10 +1422,14 @@ charge(); maj(); accueil();
       peutJouer = nJour > 0;
       if(peutJouer){
         var t = titresDuJour();
-        annonce = 'Ce soir : ce que tu as vu le <b>' + esc(dateFr(d)) + '</b> — ' + E.jour.length
+        annonce = (X.perso                                                    /* PERSO_V133 */
+          ? 'Ce soir : ton chapitre <b>' + esc(t[0] || '') + '</b> — '
+          : 'Ce soir : ce que tu as vu le <b>' + esc(dateFr(d)) + '</b> — ') + E.jour.length
           + ' notion' + (E.jour.length > 1 ? 's' : '') + '.';   /* QUESTION_DU_JOUR_V47 : le titre n'est plus donne, il est DEMANDE (Laurent, 20/09/2026) */
       } else {
-        annonce = '<b>Rien de nouveau ce soir.</b> '
+        annonce = X.perso                                                     /* PERSO_V133 */
+          ? '<b>Aucun chapitre du moment.</b> Dans ton espace, ajoute le chapitre que tu fais en classe ou choisis-le.'
+          : '<b>Rien de nouveau ce soir.</b> '
           + (d ? 'Le dernier cours (' + esc(dateFr(d)) + ') n’a pas apporté de notion à réviser ici.'
                : 'Aucun cours n’est encore terminé.');
       }
@@ -1447,6 +1452,8 @@ charge(); maj(); accueil();
     var pied = [];
     if(ETAT === "garde" && X.au) pied.push('hors ligne — données du ' + esc(dateFr(X.au)));
     if(E.muettes) pied.push(E.vues + ' notions vues en classe, ' + (E.vues - E.muettes) + ' avec des questions');
+    if(X.perso) pied.push('<a href="' + SERVICE.replace(/\/api\/classe\/$/, '/perso/') + encodeURIComponent(JETON)
+      + '">Mon espace : mes chapitres</a>');                                  /* PERSO_V133 */
 
     app.innerHTML =
       '<div class="pilote" id="v46pilote"><label>' + annonce + '</label>'   /* SANS_ONGLETS_V47 (Laurent, 20/09/2026) : les deux boutons sont deja sur la page de classe, on ne les repete pas ici */
@@ -1469,14 +1476,26 @@ charge(); maj(); accueil();
     });
     var go = document.getElementById("go");
     if(go) go.onclick = function(){ file = tirageV46(); i = 0; sess = { revues: 0 };
-      if(MODE === "jour" && titresDuJour().length) questionDuJour(); else carte(); };
+      if(MODE === "jour" && !X.perso && titresDuJour().length) questionDuJour(); else carte(); };   /* PERSO_V133 */
     var va = document.getElementById("versAcquis");
     if(va) va.onclick = function(){ MODE = "acquis"; window.accueil(); };
     if(panneau) app.appendChild(panneau);
   }
 
   /* ---------------------------------------------------------------- la bascule */
+  /* PERSO_V133 (Laurent, 04/10/2026) : un ESPACE PERSONNEL (une eleve de 3e, sans professeur au service) porte ses
+     propres cartes dans l'extrait (`x.cartes`, au format du corpus) : elles deviennent le corpus de son niveau. Les
+     cartes ecartees sont retirees, et les capacites restees sans carte, comme au chargement du corpus. */
+  function corpusPerso(x){
+    if(!x || !x.perso || !Array.isArray(x.cartes)) return;
+    RECO[x.niveau] = x.cartes.map(function(c){
+      var d = {}; for(var k in c) d[k] = c[k];
+      d.questions = (c.questions || []).filter(function(q){ return q && !q.ecartee; });
+      return d;
+    }).filter(function(c){ return c.ref && c.questions.length; });
+  }
   function installer(x, etat){
+    corpusPerso(x);
     if(!valide(x) || !RECO[x.niveau]) return false;      /* niveau sans corpus : on reste en v45 */
     X = x; ETAT = etat;
     window.accueil = accueilV46;
