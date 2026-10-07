@@ -414,7 +414,7 @@ function importState(o){
 }
 function cap(s){ s=String(s||""); return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
 
-function doExport(){
+function paquetExport(){ /* RESULTATS_V145 : le paquet d'« Exporter », aussi envoyé au PC par « 📤 Envoyer au PC » */
   var ev={ id:"mob"+Date.now().toString(36), titre:st.titre||"", date:st.date||"",
     criteres:st.criteres.map(function(c){return {id:c.id,label:c.label,comp:c.comp,coeff:c.coeff,bo:c.bo};}), niveaux:{} };
   var eleves=[];
@@ -424,10 +424,12 @@ function doExport(){
     _classeLabel:st.classe||"", _eleves:eleves, baremeComp:st.bareme,
     evalComp:{ "__ACTIVE__":[ev] },
     _saisie:{ classe:st.classe, titre:st.titre, date:st.date, criteres:st.criteres, eleves:st.eleves, bareme:st.bareme } };
+  return payload; }
+function doExport(){ var payload=paquetExport();
   var name=("grille_"+(st.classe||"classe")+"_"+(st.titre||"tp")).replace(/[^\w\-]+/g,"_").toLowerCase()+".json";
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
-  flash("Exporté : <b>"+esc(name)+"</b>. Dans le gestionnaire : choisis la classe → onglet Compétences → Importer.");
+  flash("Exporté : <b>"+esc(name)+"</b>. Sur le PC : page <b>Résultats des TP</b> de la classe → <b>📄 Importer un fichier</b> (ou, plus direct, <b>📥 Recevoir du téléphone</b>).");
 }
 
 loadReg(); loadPhotos(); load();
@@ -468,6 +470,89 @@ window.PCRetour = function(){
     try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
     flash("Grille <b>reçue du gestionnaire</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce téléphone.");
   }catch(e){ flash("Grille reçue illisible : "+(e&&e.message?e.message:e)); }
+})();
+</script>
+<script>/*RELAIS_V145 : « 📱 Envoyer au téléphone » (page Élèves du service, sur le PC). L'adresse du QR porte #relais=<id>.<clé> :
+  le paquet CHIFFRÉ (AES-GCM) est retiré une seule fois au service (qui n'en lit rien), la clé — dans le fragment, jamais
+  envoyée — le déchiffre ICI, puis il entre comme le fichier « 📦 Photos pour le téléphone » (importerPhotos). Le fragment est
+  effacé de l'adresse aussitôt lu : un rechargement ne redemande rien.*/
+(function(){
+  var SERVICE_RELAIS="https://pcmajorelle.alwaysdata.net/api/relais/";
+  var m=/[#&]relais=([A-Za-z0-9_\-]{22})\.([A-Za-z0-9_\-]{43})/.exec(location.hash||""); if(!m) return;
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  function octets(b64){ var b=b64.replace(/-/g,"+").replace(/_/g,"/"); while(b.length%4) b+="=";
+    var bin=atob(b), u=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+  var sub=window.crypto&&window.crypto.subtle;
+  if(!sub){ flash("Ce navigateur ne sait pas déchiffrer l'envoi du PC : utilise le fichier « 📦 Fichier » (bouton Importer)."); return; }
+  flash("📱 Réception de la classe envoyée par le PC…");
+  fetch(SERVICE_RELAIS+m[1],{credentials:"omit",cache:"no-store"}).then(function(r){
+    if(r.status===404) throw new Error("ce QR a déjà servi ou a expiré (dix minutes) : sur le PC, refais « 📱 Envoyer au téléphone »");
+    if(!r.ok) throw new Error("le service répond "+r.status);
+    return r.arrayBuffer();
+  }).then(function(buf){
+    var u=new Uint8Array(buf);
+    if(u.length<29) throw new Error("paquet tronqué");
+    return sub.importKey("raw",octets(m[2]),{name:"AES-GCM"},false,["decrypt"]).then(function(k){
+      return sub.decrypt({name:"AES-GCM",iv:u.slice(0,12)},k,u.slice(12));
+    }).catch(function(){ throw new Error("le paquet ne se déchiffre pas avec ce QR"); });
+  }).then(function(clair){
+    var o=JSON.parse(new TextDecoder().decode(clair));
+    if(!o||o._type!=="grille_tp_photos") throw new Error("ce n'est pas un envoi de classe");
+    importerPhotos(o);
+    var dit=el("msg").innerHTML, cl=String(o.classe||"").trim();
+    /* relecture v145 : la LISTE et les GROUPES du PC remplacent ceux que ce téléphone connaissait (les niveaux déjà saisis
+       pour un élève de même nom sont gardés) — importerPhotos seul ne posait la liste que si la classe n'en avait pas. */
+    var connus={}; ((reg.classes[cl]||{}).eleves||[]).forEach(function(e){connus[keyOf(e)]=e;});
+    var liste=(o.eleves||[]).filter(function(e){return e&&(e.nom||e.prenom);}).map(function(e){var a=connus[keyOf(e)];
+      return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:(a&&a.niv)||{}};});
+    if(liste.length) regAjouter(cl,liste);
+    var enCours=st.eleves.some(function(x){return (x.nom||x.prenom)&&x.niv&&Object.keys(x.niv).length;});
+    if(st.classe===cl){ st.eleves=liste.map(function(e){var a=null; st.eleves.forEach(function(x){if(keyOf(x)===keyOf(e))a=x;});
+        return {nom:e.nom,prenom:e.prenom,groupe:e.groupe,niv:(a&&a.niv)||e.niv||{}};}); save(); renderAll();
+      flash(dit.replace(/ Choisis la classe en haut pour les voir\./,"")+" Liste et groupes mis à jour."); }
+    else if(!enCours){ choisirClasse(cl); flash(dit.replace(/ Choisis la classe en haut pour les voir\./,"")+" Classe choisie : la grille est prête."); }
+    else{ flash(dit.replace(/ Choisis la classe en haut pour les voir\./,"")+" Ta grille en cours ("+esc(st.classe||"sans classe")+") est gardée : choisis <b>"+esc(cl)+"</b> en haut quand tu veux."); }
+    try{ el("msgcard").scrollIntoView({block:"center"}); }catch(e){}
+  }).catch(function(e){ flash("Envoi du PC non reçu : "+(e&&e.message?e.message:e)+"."); try{ el("msgcard").scrollIntoView({block:"center"}); }catch(x){} });
+})();
+</script>
+<script>/*RESULTATS_V145 : « 📥 Recevoir du téléphone » (page Résultats du service, sur le PC). Le QR porte #retour=<id>.<clé> :
+  la page propose d'envoyer LA GRILLE EN COURS (celle de ce téléphone) ; elle est chiffrée ICI (AES-GCM, la clé du QR) et
+  déposée une fois dans la boîte que le PC a ouverte (PUT au service, qui n'en lit rien). Le fragment est effacé aussitôt lu.*/
+(function(){
+  var SERVICE_BOITE="https://pcmajorelle.alwaysdata.net/api/relais/";
+  var m=/[#&]retour=([A-Za-z0-9_\-]{22})\.([A-Za-z0-9_\-]{43})/.exec(location.hash||""); if(!m) return;
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  function octets(b64){ var b=b64.replace(/-/g,"+").replace(/_/g,"/"); while(b.length%4) b+="=";
+    var bin=atob(b), u=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+  var sub=window.crypto&&window.crypto.subtle;
+  var notes=st.eleves.filter(function(e){return (e.nom||e.prenom)&&e.niv&&Object.keys(e.niv).length;}).length;
+  var nb=st.eleves.filter(function(e){return e.nom||e.prenom;}).length;
+  var carte=document.createElement("div"); carte.className="card"; carte.id="envoiPC";
+  carte.style.cssText="position:sticky;top:0;z-index:30;border:2px solid #2fa36b";
+  carte.innerHTML='<div class="msg"><b>📤 Envoyer cette grille au PC ?</b><br>« '+esc(st.titre||"sans titre")+' » — '+esc(st.classe||"classe ?")+
+    ' : '+nb+' élève(s), '+notes+' noté(s), '+st.criteres.length+' critère(s).</div>'+
+    '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn acc" id="envoiPCok">📤 Envoyer au PC</button><button class="btn" id="envoiPCnon">Annuler</button></div>';
+  var tete=document.querySelector(".bar"); if(tete&&tete.parentNode) tete.parentNode.insertBefore(carte, tete.nextSibling); else document.body.insertBefore(carte, document.body.firstChild);
+  try{ carte.scrollIntoView({block:"start"}); }catch(e){}
+  el("envoiPCnon").addEventListener("click",function(){ carte.remove(); });
+  el("envoiPCok").addEventListener("click",function(){
+    var b=this; b.disabled=true; b.textContent="Envoi…";
+    if(!sub){ b.disabled=false; b.textContent="📤 Envoyer au PC"; carte.querySelector(".msg").innerHTML="Ce navigateur ne sait pas chiffrer : utilise « Exporter » puis « 📄 Importer un fichier » sur le PC."; return; }
+    var cle=octets(m[2]), iv=window.crypto.getRandomValues(new Uint8Array(12));
+    sub.importKey("raw",cle,{name:"AES-GCM"},false,["encrypt"]).then(function(k){
+      return sub.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(JSON.stringify(paquetExport())));
+    }).then(function(buf){
+      var c=new Uint8Array(buf), corps=new Uint8Array(12+c.length); corps.set(iv,0); corps.set(c,12);
+      return fetch(SERVICE_BOITE+m[1],{method:"PUT",credentials:"omit",headers:{"Content-Type":"application/octet-stream"},body:corps});
+    }).then(function(r){
+      if(r.status===404) throw new Error("ce QR a déjà servi ou a expiré (dix minutes) : sur le PC, refais « 📥 Recevoir du téléphone »");
+      if(!r.ok) throw new Error("le service répond "+r.status);
+      carte.style.borderColor="#4caf6d";
+      carte.innerHTML='<div class="msg">✔ <b>Grille envoyée au PC</b> : elle apparaît dans la page Résultats. Elle reste aussi sur ce téléphone.</div>';
+    }).catch(function(e){ b.disabled=false; b.textContent="📤 Réessayer";
+      carte.querySelector(".msg").innerHTML="Envoi non fait : "+esc(e&&e.message?e.message:String(e))+"."; });
+  });
 })();
 </script>
 <!-- THEME_CONTRASTE_V38 : kit de thème PARTAGÉ (source unique pcmajo_ui.js). -->
