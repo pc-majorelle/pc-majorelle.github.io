@@ -153,7 +153,9 @@ window.PCAide = (function(){
      mais pas judicieux de laisser aux élèves ». Sur une page élève (même liste que THEME_LIEN_ET_RETOUR_V98,
      plus eleve.html et reviser_*), le panneau ne montre QUE l'aide de la page pour l'élève ; sans aide pour la
      page, pas de bouton. Les pages enseignant ne changent pas. */
-  var ELEVE=/^(eleve\.html|test_du_soir|exerciseur_resolution|premiers_pas_eleve|revision|reviser|carte_mentale|maquette_socle|activites_web)/
+  /* AIDES_V147 (audit v146, manque 8) : l'ancien portail index.html est une page d'eleve (on y tape son code) :
+     sans ca, un eleve arrive par une vieille carte QR voyait « qui est connecte », l'annee, les versions. */
+  var ELEVE=/^(index\.html|eleve\.html|test_du_soir|exerciseur_resolution|premiers_pas_eleve|revision|reviser|carte_mentale|maquette_socle|activites_web)/
             .test((location.pathname.split("/").pop()||"index.html").toLowerCase());
   function fr(d){
     if(!d || isNaN(d.getTime())) return "date inconnue";
@@ -348,12 +350,12 @@ window.PCAide = (function(){
     "revision_sti2d_tale.html": function(){ return AIDES["revision.html"](); },
     "test_du_soir_v47.html": function(){ return AIDES["test_du_soir_v45.html"](); },   /* AIDE_ELEVE_V107 : la page servie */
     "test_du_soir_v45.html": function(){
-      var h="<ul><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage — et tes coches de « Tes chapitres » (par défaut, c'est le calendrier de ta classe qui coche ; « Revenir au calendrier » efface tes coches).</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;
+      var h="<ul><li>Ce que tu revois vient de ce que ton professeur a écrit au cahier ; « Revoir ce qu'on a déjà vu » suit ton carnet (les couleurs donnent la prochaine échéance).</li><li>Chaque réponse est enregistrée <b>automatiquement</b> dans ce navigateur : tes boîtes, ta série, ton dernier passage.</li><li>Pas de compte, rien n'est envoyé : garde le même appareil et ne vide pas l'historique du navigateur.</li></ul>"+NAV;   /* AIDES_V147 */
       if(role==="prof") h+="<h4>Enseignant</h4><ul><li>En mode test, « ⚐ signaler cette question » garde une liste dans ce navigateur ; « Voir le rapport à copier » te donne le texte à coller dans la conversation du projet.</li></ul>";
       return h;
     },
     "saisie_competences_mobile.html": function(){
-      return "<ul><li>Classe, critères, barème, élèves, niveaux A/B/C/D : enregistrés <b>automatiquement</b> dans ce navigateur (une grille à la fois).</li><li><b>Exporter</b> = fichier <code>grille_&lt;classe&gt;_&lt;tp&gt;.json</code>, à réimporter dans le gestionnaire → Compétences (⇄ mobile). <b>Importer</b> recharge un tel fichier ici. <b>Effacer</b> vide la grille.</li></ul>"+NAV;
+      return "<ul><li>Classe, critères, barème, élèves, niveaux A/B/C/D : enregistrés <b>automatiquement</b> dans ce navigateur (une grille à la fois).</li><li><b>📤 Envoyer au PC</b> : sur le PC, page <b>Résultats</b>, scanne le QR, la grille arrive. <b>Exporter</b> = fichier de secours ; <b>Importer</b> recharge un tel fichier ici. <b>Effacer</b> vide la grille.</li></ul>"+NAV;   /* AIDES_V147 */
     },
     "carte_mentale.html": function(){ return "<ul><li>Consultation seule : rien ne s'enregistre ici.</li></ul>"; }
   };
