@@ -1133,6 +1133,12 @@ charge(); maj(); accueil();
 
   function soirDuCours(){
     try{
+      /* SURETE_V152 (G-13 de l'audit) : « le soir d'un jour de cours, chaque carte compte double » n'etait JAMAIS vrai :
+         `PCMAJO_PLAN` n'est pas charge par cette page. L'extrait de la classe (service v2) le dit : la derniere seance
+         terminee est d'aujourd'hui -> c'est le soir du cours. Sans extrait (ancien parcours `?acces=`), l'ancienne lecture. */
+      var dj = window.PCMAJO_SEANCE_DU_JOUR;
+      if(dj){ var n = new Date(), mo = n.getMonth()+1, jo = n.getDate();
+        return dj === (n.getFullYear()+"-"+(mo<10?"0":"")+mo+"-"+(jo<10?"0":"")+jo); }
       var cid = (typeof st==="object" && st) ? st.classe : null;
       var P = window.PCMAJO_PLAN;
       if(!cid || !P || !P.classes || !P.classes[cid]) return false;
@@ -1559,6 +1565,7 @@ charge(); maj(); accueil();
     corpusPerso(x);
     if(!valide(x) || !RECO[x.niveau]) return false;      /* niveau sans corpus : on reste en v45 */
     X = x; ETAT = etat;
+    window.PCMAJO_SEANCE_DU_JOUR = (x.derniere_seance && x.derniere_seance.date) || null;   /* SURETE_V152 : lu par le fond */
     window.accueil = accueilV46;
     window.tirage  = tirageV46;
     window.carnet  = function(){ return carnetV46(); };
@@ -1566,6 +1573,7 @@ charge(); maj(); accueil();
   }
   function desinstaller(){
     X = null;
+    window.PCMAJO_SEANCE_DU_JOUR = null;
     window.accueil = accueilV45; window.tirage = tirageV45; window.carnet = carnetV45;
   }
   function surAccueil(){ return !!document.getElementById("v46pilote") || !!document.getElementById("v46attente"); }

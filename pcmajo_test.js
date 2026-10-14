@@ -77,9 +77,9 @@
   var RealDate = Date;
   var DELTA = 0;
   var DATE_SIM = ARME ? get(K_DATE) : null;
-  if(p && p.has("testdate")){                      // pratique pour un lien direct
-    DATE_SIM = p.get("testdate") || null;
-    if(ARME) set(K_DATE, DATE_SIM);
+  if(ARME && p && p.has("testdate")){              // pratique pour un lien direct — SURETE_V152 : seulement en mode test
+    DATE_SIM = p.get("testdate") || null;            // arme ; sans ?test=1, `?testdate=` decalait l'horloge de n'importe qui,
+    set(K_DATE, DATE_SIM);                           // sans bandeau, et le rituel ecrivait ses echeances au faux jour
   }
 
   function poserDate(iso){

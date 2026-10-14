@@ -181,6 +181,7 @@ function fresh(){ return { classe:"", titre:"", date:"", vue:"",
              {id:cid(),label:"Valider / conclure",comp:"VAL",coeff:1} ],
   bareme:{A:1,B:0.75,C:0.5,D:0.25}, eleves:[] }; }
 function load(){ try{var s=localStorage.getItem(LS); st=s?JSON.parse(s):fresh();}catch(e){st=fresh();}
+  if(!st||typeof st!=="object")st=fresh(); assainir(st);   /* SURETE_V152 (relecture C2 : un « null » range dans localStorage ne casse plus la page) */
   if(!Array.isArray(st.criteres))st.criteres=[]; if(!Array.isArray(st.eleves))st.eleves=[]; if(!st.bareme)st.bareme={A:1,B:0.75,C:0.5,D:0.25}; }
 function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); }
 
@@ -231,6 +232,34 @@ function oublierClasse(){ var c=st.classe; if(!c||!reg.classes[c])return;
   delete reg.classes[c]; saveReg(); if(photos[c]){ delete photos[c]; savePhotos(); } st.classe=""; save(); renderClasses(); flash("Classe <b>"+esc(c)+"</b> oubliée sur ce téléphone (la grille affichée est gardée)."); }
 function el(id){return document.getElementById(id);}
 function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+/* SURETE_V152 (B-7 de l'audit) : ce qui ENTRE dans l'etat depuis l'exterieur (fichier « Importer », QR `#g=`, paquet du relais,
+   ce que ce telephone avait garde) est assaini : un id de critere ne peut etre que `c` + lettres/chiffres (sinon il en recoit
+   un neuf, et les niveaux saisis sous l'ancien le suivent), une competence ne peut etre qu'une des cinq de CATS (`catDisp`
+   la rend telle quelle), un niveau ne peut etre que A, B, C, D ou vide. Un id forge
+   (`"><img onerror=…>`) s'executait a chaque ouverture de la page, qui porte des noms d'eleves. */
+var ID_OK=/^c[0-9a-z]+$/, NIV_OK={A:1,B:1,C:1,D:1};
+function assainir(s){
+  if(!s||typeof s!=="object") return s;
+  var renom={};
+  if(Array.isArray(s.criteres)){
+    s.criteres=s.criteres.filter(function(c){return c&&typeof c==="object";}).map(function(c){
+      var id=(typeof c.id==="string"&&ID_OK.test(c.id))?c.id:null;
+      if(!id){ id=cid(); if(typeof c.id==="string") renom[c.id]=id; }
+      var comp=String(c.comp==null?"REA":c.comp); if(!CATS.some(function(k){return k[0]===comp;})) comp="REA";
+      var o={id:id,label:String(c.label==null?"":c.label),comp:comp,coeff:(isFinite(+c.coeff)?+c.coeff:1)};
+      if(c.bo!=null) o.bo=String(c.bo);
+      return o; });
+  } else if(s.criteres!=null) s.criteres=[];
+  if(Array.isArray(s.eleves)){
+    s.eleves=s.eleves.filter(function(e){return e&&typeof e==="object";}).map(function(e){
+      var niv={}, src=(e.niv&&typeof e.niv==="object")?e.niv:{};
+      Object.keys(src).forEach(function(k){ var v=src[k]; var k2=renom[k]||k; if(!ID_OK.test(k2)) return;
+        niv[k2]=(typeof v==="string"&&NIV_OK[v])?v:""; });
+      e.niv=niv; e.nom=String(e.nom==null?"":e.nom); e.prenom=String(e.prenom==null?"":e.prenom); e.groupe=String(e.groupe==null?"":e.groupe);
+      return e; });
+  } else if(s.eleves!=null) s.eleves=[];
+  return s;
+}
 function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
 function frac(lv){ var b=st.bareme; return (lv&&b[lv]!=null)?b[lv]:null; }
 function catDisp(k){ var f=CATS.find(function(c){return c[0]===k;}); return f?f[1]:k; }
@@ -252,12 +281,12 @@ function renderCrits(){
   var h="";
   st.criteres.forEach(function(cr,i){ var col=CATCOL[cr.comp]||"#888";
     h+='<div class="crit"><div class="r1"><span class="idx" style="background:'+col+'">C'+(i+1)+'</span>'+
-       '<input class="lab" type="text" value="'+esc(cr.label)+'" placeholder="capacité observée" data-lab="'+cr.id+'"></div>'+
-       '<div class="r2"><select data-cat="'+cr.id+'">'+
+       '<input class="lab" type="text" value="'+esc(cr.label)+'" placeholder="capacité observée" data-lab="'+esc(cr.id)+'"></div>'+
+       '<div class="r2"><select data-cat="'+esc(cr.id)+'">'+
          CATS.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===cr.comp?" selected":"")+'>'+c[1]+'</option>';}).join("")+
        '</select>'+
-       '<span class="hint" style="margin:0">poids</span><input class="coef" type="number" min="0" step="1" value="'+(+cr.coeff)+'" data-coef="'+cr.id+'">'+
-       '<button class="del" data-delc="'+cr.id+'" aria-label="supprimer">🗑</button></div></div>';
+       '<span class="hint" style="margin:0">poids</span><input class="coef" type="number" min="0" step="1" value="'+(+cr.coeff)+'" data-coef="'+esc(cr.id)+'">'+
+       '<button class="del" data-delc="'+esc(cr.id)+'" aria-label="supprimer">🗑</button></div></div>';
   });
   if(!st.criteres.length) h='<p class="hint">Aucun critère — ajoute-en avec « + un critère ».</p>';
   el("crits").innerHTML=h;
@@ -275,7 +304,7 @@ function renderVue(){ var g=groupesDe(), bar=el("vueBar");
 function renderGrid(){
   var t=el("grid"), cr=st.criteres; renderVue();
   var h='<thead><tr><th class="el">Élève</th>';
-  cr.forEach(function(c,i){ h+='<th title="'+esc(c.label)+'"><span class="chd" style="background:'+(CATCOL[c.comp]||"#888")+'">C'+(i+1)+'</span><br><span style="font-weight:400">'+catDisp(c.comp)+' ×'+(+c.coeff)+'</span></th>'; });
+  cr.forEach(function(c,i){ h+='<th title="'+esc(c.label)+'"><span class="chd" style="background:'+(CATCOL[c.comp]||"#888")+'">C'+(i+1)+'</span><br><span style="font-weight:400">'+esc(catDisp(c.comp))+' ×'+(+c.coeff)+'</span></th>'; });
   h+='<th>Note</th><th></th></tr></thead><tbody>';
   var vis=vus();
   if(!vis.length){ h+='<tr><td class="el" colspan="'+(cr.length+3)+'"><span class="hint">'+(st.eleves.length?"Aucun élève dans ce groupe.":"Aucun élève — colle une liste ci-dessous.")+'</span></td></tr>'; }
@@ -283,7 +312,7 @@ function renderGrid(){
     var ph=photoDe(e);
     h+='<tr><td class="el"><span class="cel">'+(ph?'<img class="ph" src="'+esc(ph)+'" alt="">':'')+'<input class="nom" data-nom="'+ri+'" value="'+(esc(e.nom)+" "+esc(e.prenom)).trim()+'" placeholder="Nom Prénom">'+(e.groupe&&!st.vue?' <span class="hint" style="margin:0">'+esc(e.groupe)+'</span>':'')+'</span></td>';
     cr.forEach(function(c){ var lv=(e.niv||{})[c.id]||"";
-      h+='<td><button class="cyc" data-r="'+ri+'" data-c="'+c.id+'" data-lv="'+lv+'">'+(lv||"·")+'</button></td>'; });
+      h+='<td><button class="cyc" data-r="'+ri+'" data-c="'+esc(c.id)+'" data-lv="'+esc(lv)+'">'+(esc(lv)||"·")+'</button></td>'; });
     var n=note(e);
     h+='<td class="note'+(n.part?" part":"")+'">'+n.txt+(n.part?" *":"")+'</td>';
     h+='<td><button class="del2" data-del="'+ri+'" aria-label="supprimer">✕</button></td></tr>';
@@ -411,6 +440,7 @@ function importState(o){
       keys.forEach(function(k){ if(seen[k])return; var p=k.split("|"); st.eleves.push({nom:cap(p[0]),prenom:cap(p[1]||""),niv:ev.niveaux[k]}); });
       if(o._classeLabel)st.classe=o._classeLabel; } }
   if(o.baremeComp)st.bareme=o.baremeComp;
+  assainir(st);   /* SURETE_V152 : apres tout import, quel que soit le chemin */
   save(); renderHead(); renderAll(); flash("Grille importée.");
 }
 function cap(s){ s=String(s||""); return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
