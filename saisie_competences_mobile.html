@@ -9,7 +9,7 @@
 <style>
   :root{
     --bg:#f4f6f9; --card:#ffffff; --ink:#15202b; --muted:#5c6b7a; --line:#dbe2ea;
-    --accent:#12324a; --accentink:#fff;
+    --accent:#12324a; --onaccent:#fff;   /* CONTRASTE_V152 : ce qui se lit SUR l'accent (le kit de thème la recalcule) */
     --A:#4caf6d; --Ai:#0f3d20; --B:#e0a53a; --Bi:#3a2a06; --C:#e8853a; --Ci:#3a1e06; --D:#e2554f; --Di:#3a1010;
     --APP:#3b82c4; --ANA:#7c5cd0; --REA:#d97a2b; --VAL:#2fa36b; --COM:#c04f7a;
     --shadow:0 1px 2px rgba(20,40,60,.06);
@@ -21,10 +21,10 @@
   html,body{margin:0}
   body{font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;background:var(--bg);color:var(--ink);
     padding:0 10px calc(88px + env(safe-area-inset-bottom)); -webkit-text-size-adjust:100%}
-  header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--accentink);margin:0 -10px 10px;
+  header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--onaccent,#fff);margin:0 -10px 10px;
     padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
   header b{font-size:15px;font-weight:600}
-  header .home{color:var(--accentink);text-decoration:none;font-size:14px;opacity:.92;white-space:nowrap;padding:4px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px}
+  header .home{color:var(--onaccent,#fff);text-decoration:none;font-size:14px;opacity:.92;white-space:nowrap;padding:4px 8px;border:1px solid rgba(255,255,255,.35);border-radius:8px}
   header .home:active{opacity:.7}
   header .moy{font-size:14px;background:rgba(255,255,255,.15);padding:4px 9px;border-radius:8px;white-space:nowrap}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;box-shadow:var(--shadow)}
@@ -37,7 +37,9 @@
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px;cursor:pointer;color:var(--ink);font-size:14px;min-height:40px}
   .btn:active{transform:scale(.98)}
-  .btn.acc{background:var(--accent);color:var(--accentink);border-color:var(--accent)}
+  /* CONTRASTE_V152 (Laurent, 14/10 : « bouton illisible ») : le texte posé SUR l'accent est `--onaccent` (calculée par luminance
+     par pcmajo_ui.js v38), pas `--accentink` — celle-ci est l'accent employé comme TEXTE sur une carte : en Néon, cyan sur cyan. */
+  .btn.acc{background:var(--accent);color:var(--onaccent,#fff);border-color:var(--accent)}
   .crit{border-top:1px solid var(--line);padding:8px 0}
   .crit:first-of-type{border-top:0}
   .crit .r1{display:flex;gap:6px;align-items:center}
