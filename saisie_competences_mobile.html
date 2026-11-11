@@ -159,6 +159,12 @@
   <p class="hint">Moyenne par catégorie (toutes lignes de cette grille) — 🟢 acquis · 🟡 en cours · 🟠 fragile · 🔴 non acquis.</p>
 </div>
 
+<div class="card" id="gardeesCard" style="display:none">
+  <h2>🗂 Grilles gardées sur ce téléphone</h2>
+  <p class="hint">Chaque grille notée est gardée ici, même quand une autre arrive : rouvre-la, ou exporte-la pour le PC.</p>
+  <div id="gardees"></div>
+</div>
+
 <div class="foot">
   <button class="btn acc" id="exp">Exporter</button>
   <button class="btn" id="imp">Importer</button>
@@ -185,7 +191,66 @@ function fresh(){ return { classe:"", titre:"", date:"", vue:"",
 function load(){ try{var s=localStorage.getItem(LS); st=s?JSON.parse(s):fresh();}catch(e){st=fresh();}
   if(!st||typeof st!=="object")st=fresh(); assainir(st);   /* SURETE_V152 (relecture C2 : un « null » range dans localStorage ne casse plus la page) */
   if(!Array.isArray(st.criteres))st.criteres=[]; if(!Array.isArray(st.eleves))st.eleves=[]; if(!st.bareme)st.bareme={A:1,B:0.75,C:0.5,D:0.25}; }
-function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); }
+function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); garder(); }
+
+/* GARDE_V153 (Laurent, 11/11 : « il m'est arrivé de perdre des données ») : chaque grille NOTÉE est gardée dans ce téléphone,
+   à chaque saisie — { "<classe>§<clé>": {classe, cle, titre, date, criteres, bareme, eleves:[{nom,prenom,groupe,niv}], maj} }.
+   La clé : celle du PC (`_saisie.cle`), sinon le titre et la date. Recevoir une autre grille ne perd plus rien : celle qu'on
+   quitte est déjà gardée ; la recevoir de nouveau (ou « Rouvrir ») rend ses niveaux. Au plus 80 grilles (les plus anciennes
+   s'oublient) ; rien ne sort du téléphone. */
+var LSA="grille_tp_gardees_v153", gardees=null, GARDE_MAX=80;
+function loadGardees(){ try{var x=localStorage.getItem(LSA); gardees=x?JSON.parse(x):null;}catch(e){gardees=null;}
+  if(!gardees||typeof gardees!=="object"||Array.isArray(gardees))gardees={}; }
+function cleGarde(o){ var c=String((o&&o.classe)||"").trim(); if(!o)return "";
+  var k=o.cle?String(o.cle):("t:"+String(o.titre||"").trim()+"|"+String(o.date||"")); return (c||"?")+"§"+k; }
+function notes(o){ var ids={}, n=0; (o.criteres||[]).forEach(function(c){ids[c.id]=1;});
+  (o.eleves||[]).forEach(function(e){ if(Object.keys(e.niv||{}).some(function(k){return ids[k]&&e.niv[k];}))n++; }); return n; }
+function garder(){ if(!st||gardees===null)return; if(!notes(st))return;
+  var ids={}; st.criteres.forEach(function(c){ids[c.id]=1;});
+  var g={classe:st.classe||"",cle:st.cle||"",titre:st.titre||"",date:st.date||"",bareme:st.bareme,
+    criteres:st.criteres.map(function(c){return {id:c.id,label:c.label,comp:c.comp,coeff:c.coeff,bo:c.bo};}),
+    eleves:st.eleves.filter(function(e){return e.nom||e.prenom;}).map(function(e){ var niv={};
+      Object.keys(e.niv||{}).forEach(function(k){ if(ids[k]&&e.niv[k])niv[k]=e.niv[k]; });
+      return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:niv}; }), maj:new Date().toISOString()};
+  gardees[cleGarde(st)]=g;
+  var ks=Object.keys(gardees).sort(function(a,b){return String(gardees[b].maj).localeCompare(String(gardees[a].maj));});
+  ks.slice(GARDE_MAX).forEach(function(k){ delete gardees[k]; });
+  try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }
+  catch(e){ ks.slice(Math.max(10,Math.floor(ks.length/2))).forEach(function(k){ if(k!==cleGarde(st)) delete gardees[k]; });
+    try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e2){} }
+  renderGardees(); }
+function retrouver(){ /* la grille arrivée a-t-elle été notée sur ce téléphone ? ses niveaux reviennent (élève de même nom) */
+  var g=gardees&&gardees[cleGarde(st)]; if(!g)return 0; var par={}, n=0;
+  (g.eleves||[]).forEach(function(e){ par[keyOf(e)]=e; });
+  var ids={}; st.criteres.forEach(function(c){ids[c.id]=1;});
+  st.eleves.forEach(function(e){ var a=par[keyOf(e)]; if(!a)return; var pris=0; if(!e.niv)e.niv={};
+    Object.keys(a.niv||{}).forEach(function(k){ if(ids[k]&&!e.niv[k]){ e.niv[k]=a.niv[k]; pris=1; } }); n+=pris; });
+  var connus={}; st.eleves.forEach(function(e){connus[keyOf(e)]=1;});
+  (g.eleves||[]).forEach(function(a){ if(!connus[keyOf(a)]&&Object.keys(a.niv||{}).length)
+    { st.eleves.push({nom:a.nom,prenom:a.prenom,groupe:a.groupe||"",niv:JSON.parse(JSON.stringify(a.niv))}); n++; } });
+  return n; }
+function rattraper(anciens){ /* GARDE_V153 : un critere renomme au hasard (avant ce correctif) et le critere du PC de meme
+   intitulé + categorie : les niveaux saisis sous l'ancien id passent sur celui du PC */
+  var par={}; (anciens||[]).forEach(function(c){ if(c&&c.id&&/^c[0-9a-z]+$/.test(c.id)) par[String(c.label||"").trim().toLowerCase()+"|"+c.comp]=c.id; });
+  var n=0; st.criteres.forEach(function(c){ var o=par[String(c.label||"").trim().toLowerCase()+"|"+c.comp]; if(!o||o===c.id)return;
+    st.eleves.forEach(function(e){ if(e.niv&&e.niv[o]&&!e.niv[c.id]){ e.niv[c.id]=e.niv[o]; n++; } }); }); return n; }
+function renderGardees(){ var z=el("gardees"); if(!z||gardees===null)return;
+  var ks=Object.keys(gardees).sort(function(a,b){return String(gardees[b].maj).localeCompare(String(gardees[a].maj));});
+  el("gardeesCard").style.display=ks.length?"block":"none";
+  z.innerHTML=ks.map(function(k){ var g=gardees[k], ici=(k===cleGarde(st));
+    return '<div class="row" style="justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:6px 0">'+
+      '<div style="flex:1;min-width:150px"><b>'+esc(g.classe||"sans classe")+'</b> — '+esc(g.titre||"sans titre")+
+      (g.date?' <span class="hint" style="margin:0">'+esc(g.date)+'</span>':'')+
+      '<br><span class="hint" style="margin:0">'+notes(g)+' élève(s) noté(s)'+(ici?' · grille affichée':'')+'</span></div>'+
+      (ici?'':'<button class="btn" data-garde-ouvrir="'+esc(k)+'">Rouvrir</button>')+
+      '<button class="btn" data-garde-exp="'+esc(k)+'">Exporter</button>'+
+      '<button class="del2" data-garde-oubli="'+esc(k)+'" title="Oublier cette grille sur ce téléphone">✕</button></div>'; }).join(""); }
+function rouvrir(k){ var g=gardees[k]; if(!g)return; garder();
+  var e0=(g.eleves||[]).map(function(e){return {nom:e.nom,prenom:e.prenom,groupe:e.groupe||"",niv:JSON.parse(JSON.stringify(e.niv||{}))};});
+  st={classe:g.classe||"",cle:g.cle||"",titre:g.titre||"",date:g.date||"",vue:"",criteres:JSON.parse(JSON.stringify(g.criteres||[])),
+    bareme:g.bareme||{A:1,B:0.75,C:0.5,D:0.25},eleves:e0}; assainir(st);
+  if(st.classe) regAjouter(st.classe,null);
+  save(); renderHead(); renderAll(); flash("Grille <b>"+esc(g.titre||"")+"</b> rouverte avec ses niveaux."); }
 
 /* CLASSES_TELEPHONE_V118 : le registre des classes de CE téléphone — { classes: { "<libellé>": { eleves:[{nom,prenom,niv}], maj } } }.
    Il se nourrit (a) de chaque QR reçu du PC (`_saisie.classe` + `_saisie.eleves`, et `_classes` = toutes les classes du prof,
@@ -239,7 +304,7 @@ function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").
    un neuf, et les niveaux saisis sous l'ancien le suivent), une competence ne peut etre qu'une des cinq de CATS (`catDisp`
    la rend telle quelle), un niveau ne peut etre que A, B, C, D ou vide. Un id forge
    (`"><img onerror=…>`) s'executait a chaque ouverture de la page, qui porte des noms d'eleves. */
-var ID_OK=/^c[0-9a-z]+$/, NIV_OK={A:1,B:1,C:1,D:1};
+var ID_OK=/^(?:c[0-9a-z]+|[0-9a-f]{6}-[0-9]{1,4})$/, NIV_OK={A:1,B:1,C:1,D:1};   /* GARDE_V153 : + les ids du service (« e48697-1 ») */
 function assainir(s){
   if(!s||typeof s!=="object") return s;
   var renom={};
@@ -260,6 +325,7 @@ function assainir(s){
       e.niv=niv; e.nom=String(e.nom==null?"":e.nom); e.prenom=String(e.prenom==null?"":e.prenom); e.groupe=String(e.groupe==null?"":e.groupe);
       return e; });
   } else if(s.eleves!=null) s.eleves=[];
+  if(s.cle!=null) s.cle=String(s.cle).slice(0,80);    /* GARDE_V153 : la cle de la grille au PC (« p:s0012 », « l:3 ») */
   return s;
 }
 function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
@@ -384,9 +450,15 @@ document.addEventListener("click",function(ev){ var t=ev.target;
   if(t.id==="addOne"){ st.eleves.push({nom:"",prenom:"",niv:{}}); save(); renderGrid(); renderProf();
     var last=el("grid").querySelector("tbody tr:last-child .nom"); if(last)last.focus(); return; }
   if(t.id==="exp"){ doExport(); return; }
+  if(t.dataset&&t.dataset.gardeOuvrir){ rouvrir(t.dataset.gardeOuvrir); return; }
+  if(t.dataset&&t.dataset.gardeExp){ var gx=gardees[t.dataset.gardeExp]; if(gx){ var sv=st; st=gx; try{ doExport(); } finally { st=sv; } } return; }
+  if(t.dataset&&t.dataset.gardeOubli){ var go=gardees[t.dataset.gardeOubli];
+    if(go&&confirm("Oublier « "+(go.titre||"sans titre")+" » ("+(go.classe||"")+") et ses niveaux sur ce téléphone ?")){
+      delete gardees[t.dataset.gardeOubli]; try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e){}
+      renderGardees(); } return; }
   if(t.id==="imp"){ el("file").click(); return; }
   if(t.id==="impPhotos"){ el("filePhotos").click(); return; }
-  if(t.id==="clr"){ if(confirm("Effacer toute la saisie en cours ? (les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
+  if(t.id==="clr"){ if(confirm("Effacer la saisie affichée ? (elle reste dans « Grilles gardées » ; les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
 });
 el("filePhotos").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
   r.onload=function(){ var o=null; try{ o=JSON.parse(r.result); }catch(e){}
@@ -421,7 +493,12 @@ function importState(o){
   if(o&&o._type==="grille_tp_photos"){ importerPhotos(o); return; }
   /* CLASSES_TELEPHONE_V118 : le paquet du PC porte `_classes` (les classes du prof, libellés seuls) → elles entrent au registre. */
   if(Array.isArray(o._classes)) o._classes.forEach(function(l){ regAjouter(l,null); });
-  if(o._saisie){ var s=o._saisie, avantCl=st.classe; regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
+  var garde_retrouves=0, garde_rattrapes=0;
+  if(o._saisie){ var s=o._saisie, avantCl=st.classe, anciensCrit=st.criteres, autreGrille;
+    garder();   /* GARDE_V153 : la grille qu'on quitte est gardée, avec ses niveaux */
+    regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
+    autreGrille=(typeof s.cle==="string"&&s.cle&&s.cle!==st.cle);
+    st.cle=(typeof s.cle==="string")?s.cle:(autreGrille?"":(st.cle||""));
     if(Array.isArray(s.criteres))st.criteres=s.criteres; if(s.bareme)st.bareme=s.bareme;
     if(typeof s.groupe==="string") st.vue=s.groupe;   /* GROUPES_A_LA_VOLEE_V118 : le groupe du TP prérègle la vue */
     if(!Array.isArray(s.eleves)&&st.classe&&st.classe!==avantCl){ /* CLASSES_TELEPHONE_V118 : QR sans liste pour une AUTRE classe →
@@ -432,7 +509,8 @@ function importState(o){
       saisis sur ce telephone pour un eleve de meme nom sont gardes (les ids de criteres sont propres a chaque grille).*/
       var src=(st.classe&&st.classe!==avantCl)?(((reg.classes[st.classe]||{}).eleves)||[]):st.eleves; /* v118 : de la même classe */
       var avant={}; src.forEach(function(e){avant[keyOf(e)]=e;});
-      st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:(o&&o.niv)||e.niv||{}};}); } }
+      st.eleves=s.eleves.map(function(e){var o=avant[keyOf(e)]; return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:(o&&o.niv)||e.niv||{}};}); }
+    assainir(st); garde_rattrapes=rattraper(anciensCrit); garde_retrouves=retrouver(); }
   else if(o.evalComp){ var arr=o.evalComp.__ACTIVE__||o.evalComp[Object.keys(o.evalComp)[0]]||[]; var ev=arr[0];
     if(ev){ st.titre=ev.titre||st.titre; st.date=ev.date||st.date;
       st.criteres=(ev.criteres||[]).map(function(c){return {id:c.id||cid(),label:c.label||"",comp:c.comp||"REA",coeff:c.coeff!=null?c.coeff:1,bo:c.bo};});
@@ -443,7 +521,9 @@ function importState(o){
       if(o._classeLabel)st.classe=o._classeLabel; } }
   if(o.baremeComp)st.bareme=o.baremeComp;
   assainir(st);   /* SURETE_V152 : apres tout import, quel que soit le chemin */
-  save(); renderHead(); renderAll(); flash("Grille importée.");
+  save(); renderHead(); renderAll();
+  flash("Grille importée."+(garde_retrouves?" Niveaux déjà saisis retrouvés pour "+garde_retrouves+" élève(s).":"")+
+    (garde_rattrapes?" "+garde_rattrapes+" niveau(x) rattaché(s) aux critères du PC.":""));
 }
 function cap(s){ s=String(s||""); return s?s.charAt(0).toUpperCase()+s.slice(1):s; }
 
@@ -465,7 +545,7 @@ function doExport(){ var payload=paquetExport();
   flash("Exporté : <b>"+esc(name)+"</b>. Sur le PC : page <b>Résultats des TP</b> de la classe → <b>📄 Importer un fichier</b> (ou, plus direct, <b>📥 Recevoir du téléphone</b>).");
 }
 
-loadReg(); loadPhotos(); load();
+loadReg(); loadPhotos(); load(); loadGardees(); garder(); renderGardees();   /* GARDE_V153 */
 /* CLASSES_TELEPHONE_V118 : une classe tapée avant la v118 (champ libre) entre au registre avec sa liste. */
 if(st.classe&&!reg.classes[st.classe]) regMiroir();
 renderHead(); renderAll();
@@ -501,7 +581,8 @@ window.PCRetour = function(){
     var o=JSON.parse(fflate.strFromU8(fflate.inflateSync(u8)));
     importState(o);
     try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
-    flash("Grille <b>reçue du gestionnaire</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce téléphone.");
+    var dejaDit=el("msg").innerHTML.replace(/^Grille importée\.\s*/,"");
+    flash("Grille <b>reçue du PC</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce téléphone."+(dejaDit?" "+dejaDit:""));
   }catch(e){ flash("Grille reçue illisible : "+(e&&e.message?e.message:e)); }
 })();
 </script>
