@@ -98,6 +98,23 @@
 <body>
 <header><!--GRILLE_SANS_ANCIEN_V112 : plus de lien vers l'ancien gestionnaire (Laurent, 24/09 : « à éviter absolument »)--><img src="logo/logo-barre.png" alt="" width="32" height="32" style="width:1.4em;height:1.4em;vertical-align:-.3em;border-radius:22%;margin-right:.4em"><b>Grille TP</b><span class="moy" id="moy">—</span></header>
 
+<!-- VERSION_PAGE_V157 : un onglet resté ouvert sur une page ancienne le dit (fragilité n° 2 du 19/11) -->
+<div class="card" id="vieillePage" style="display:none;border:2px solid #e0a53a">
+  <div class="msg"><b>Cette page a été mise à jour.</b> Recharge-la pour continuer avec la nouvelle version (ta saisie est gardée sur ce téléphone).</div>
+  <div class="row" style="margin-top:8px"><button class="btn acc" id="recharger">🔄 Recharger la page</button></div>
+</div>
+<!-- SYNCHRO_V157 : l'état de la synchronisation avec tes autres appareils (le coffre chiffré du service) -->
+<p class="hint" id="synchro" style="display:none;margin:0 2px 8px"></p>
+
+<!-- SYNCHRO_V157 (Laurent, 22/11 : « c'est pas pratique d'avoir à scanner à chaque TP ») : « Mes grilles » passe en haut —
+     les grilles ouvertes sur le PC y arrivent toutes seules (téléphone relié) ; celles notées ici y restent. -->
+<div class="card" id="gardeesCard" style="display:none">
+  <h2>🗂 Mes grilles</h2>
+  <p class="hint" id="gardeesHint">Chaque grille notée est gardée ici, même quand une autre arrive : rouvre-la, ou exporte-la pour le PC.</p>
+  <p class="hint" id="gardeesSynchro"></p>
+  <div id="gardees"></div>
+</div>
+
 <div class="card">
   <h2>Évaluation</h2>
   <div class="row" style="gap:10px">
@@ -117,6 +134,16 @@
 
 <div class="card">
   <h2>Critères évalués</h2>
+  <!-- AIDE_COMPETENCES_V157 (Laurent, 23/11 : « une aide à comprendre ce que signifie chacune des capacité ANA REA etc. avec un
+       exemple succinct ») : les mêmes mots que la page de la grille du service (pages/grille.py, AIDE_COMPETENCES). -->
+  <details id="aideCompetences" style="margin:2px 0 8px"><summary class="hint" style="cursor:pointer;margin:0">❓ Que veulent dire APP, ANA, RÉA, VAL, COM ?</summary>
+  <ul style="margin:6px 0 0;padding-left:18px;font-size:.9rem;line-height:1.45">
+    <li data-comp="APP"><span style="background:#3b82c4;color:#fff;border-radius:6px;padding:1px 7px;font-weight:700">APP</span> <b>S'approprier</b> — comprendre la question posée et rassembler ce qu'il faut pour y répondre : énoncer le problème, extraire l'information utile d'un document, schématiser la situation. <span class="hint" style="display:inline;margin:0">Exemple : relever dans le document la masse volumique de l'aluminium ; schématiser l'éprouvette et le solide.</span></li>
+    <li data-comp="ANA"><span style="background:#7c5cd0;color:#fff;border-radius:6px;padding:1px 7px;font-weight:700">ANA</span> <b>Analyser / raisonner</b> — choisir comment répondre : formuler une hypothèse, proposer une stratégie ou un protocole, prévoir un résultat, estimer un ordre de grandeur. <span class="hint" style="display:inline;margin:0">Exemple : proposer un protocole pour mesurer la masse et le volume du solide.</span></li>
+    <li data-comp="REA"><span style="background:#d97a2b;color:#fff;border-radius:6px;padding:1px 7px;font-weight:700">RÉA</span> <b>Réaliser</b> — mettre la démarche en œuvre : manipuler en sécurité, mesurer, calculer, tracer, utiliser un modèle. <span class="hint" style="display:inline;margin:0">Exemple : peser le solide, mesurer son volume par déplacement d'eau, calculer ρ = m / V.</span></li>
+    <li data-comp="VAL"><span style="background:#2fa36b;color:#fff;border-radius:6px;padding:1px 7px;font-weight:700">VAL</span> <b>Valider</b> — exercer son esprit critique : juger la vraisemblance, comparer à une valeur de référence, estimer une incertitude, repérer les sources d'erreur, proposer une amélioration. <span class="hint" style="display:inline;margin:0">Exemple : comparer la valeur trouvée à celle de l'aluminium et expliquer l'écart (bulle d'air, lecture du volume).</span></li>
+    <li data-comp="COM"><span style="background:#c04f7a;color:#fff;border-radius:6px;padding:1px 7px;font-weight:700">COM</span> <b>Communiquer</b> — présenter sa démarche et ses résultats, à l'écrit comme à l'oral, de façon claire et argumentée, avec le vocabulaire, les unités et les représentations qui conviennent. <span class="hint" style="display:inline;margin:0">Exemple : rédiger la conclusion avec la valeur et son unité ; présenter son résultat à la classe.</span></li>
+  </ul></details>
   <div id="crits"></div>
   <div class="row" style="margin-top:8px"><button class="btn" id="addCrit">+ un critère</button></div>
   <p class="hint">Chaque critère = une capacité observable, sa catégorie (APP/ANA/RÉA/VAL/COM) et son poids (points).</p>
@@ -159,12 +186,6 @@
   <p class="hint">Moyenne par catégorie (toutes lignes de cette grille) — 🟢 acquis · 🟡 en cours · 🟠 fragile · 🔴 non acquis.</p>
 </div>
 
-<div class="card" id="gardeesCard" style="display:none">
-  <h2>🗂 Grilles gardées sur ce téléphone</h2>
-  <p class="hint">Chaque grille notée est gardée ici, même quand une autre arrive : rouvre-la, ou exporte-la pour le PC.</p>
-  <div id="gardees"></div>
-</div>
-
 <div class="foot">
   <button class="btn acc" id="exp">Exporter</button>
   <button class="btn" id="imp">Importer</button>
@@ -173,8 +194,11 @@
 </div>
 <div class="card" id="msgcard" style="display:none"><div class="msg" id="msg"></div></div>
 
+<!-- SYNCHRO_V157 : la synchronisation chiffrée (la même copie que static/grilles_synchro.js du service) -->
+<script src="grilles_synchro.js?v=157"></script>
 <script>
 "use strict";
+var PAGE_VERSION="v157";   /* VERSION_PAGE_V157 : le même mot que saisie_version.txt quand la page est à jour */
 var LS="grille_tp_competences_v19";
 var CATS=[["APP","APP"],["ANA","ANA"],["REA","RÉA"],["VAL","VAL"],["COM","COM"]];
 var CATCOL={APP:"#3b82c4",ANA:"#7c5cd0",REA:"#d97a2b",VAL:"#2fa36b",COM:"#c04f7a"};
@@ -202,23 +226,34 @@ var LSA="grille_tp_gardees_v153", gardees=null, GARDE_MAX=80;
 function loadGardees(){ try{var x=localStorage.getItem(LSA); gardees=x?JSON.parse(x):null;}catch(e){gardees=null;}
   if(!gardees||typeof gardees!=="object"||Array.isArray(gardees))gardees={}; }
 function cleGarde(o){ var c=String((o&&o.classe)||"").trim(); if(!o)return "";
-  var k=o.cle?String(o.cle):("t:"+String(o.titre||"").trim()+"|"+String(o.date||"")); return (c||"?")+"§"+k; }
+  var k=o.cle?String(o.cle):(o.sid?("s:"+o.sid):("t:"+String(o.titre||"").trim()+"|"+String(o.date||""))); return (c||"?")+"§"+k; }
 function notes(o){ var ids={}, n=0; (o.criteres||[]).forEach(function(c){ids[c.id]=1;});
   (o.eleves||[]).forEach(function(e){ if(Object.keys(e.niv||{}).some(function(k){return ids[k]&&e.niv[k];}))n++; }); return n; }
-function garder(){ if(!st||gardees===null)return; if(!notes(st))return;
+function garder(){ if(!st||gardees===null)return;
+  var k0=cleGarde(st);
+  if(!notes(st)&&!gardees[k0])return;   /* SYNCHRO_V157 : une grille déjà gardée le reste même vidée (la case vidée se synchronise) */
+  if(!st.cle&&!st.sid&&window.PCSynchro){ st.sid=PCSynchro.nouvelId(); var k1=cleGarde(st);   /* une grille née ici : son n° */
+    if(gardees[k0]){ gardees[k1]=gardees[k0]; delete gardees[k0]; } try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} }
   var ids={}; st.criteres.forEach(function(c){ids[c.id]=1;});
   var g={classe:st.classe||"",cle:st.cle||"",titre:st.titre||"",date:st.date||"",bareme:st.bareme,
     criteres:st.criteres.map(function(c){return {id:c.id,label:c.label,comp:c.comp,coeff:c.coeff,bo:c.bo};}),
     eleves:st.eleves.filter(function(e){return e.nom||e.prenom;}).map(function(e){ var niv={};
       Object.keys(e.niv||{}).forEach(function(k){ if(ids[k]&&e.niv[k])niv[k]=e.niv[k]; });
       return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:niv}; }), maj:new Date().toISOString()};
-  gardees[cleGarde(st)]=g;
+  ["sid","annee","classe_id"].forEach(function(x){ if(st[x])g[x]=String(st[x]); });
+  var kg=cleGarde(st), avant=gardees[kg];
+  if(window.PCSynchro){ /* SYNCHRO_V157 : ce qui a changé depuis la dernière fois reçoit l'heure de maintenant */
+    var d=PCSynchro.horodater(avant||null,g,PCSynchro.horloge(),Date.parse((avant&&avant.maj)||"")||1);
+    if(avant&&PCSynchro.empreinte(d)===PCSynchro.empreinte(avant)){ renderGardees(); return; }   /* rien de neuf */
+    g._h=d._h; g.derniere=d.derniere; }
+  gardees[kg]=g; synAPousser(kg);
   var ks=Object.keys(gardees).sort(function(a,b){return String(gardees[b].maj).localeCompare(String(gardees[a].maj));});
-  ks.slice(GARDE_MAX).forEach(function(k){ delete gardees[k]; });
-  try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }
-  catch(e){ ks.slice(Math.max(10,Math.floor(ks.length/2))).forEach(function(k){ if(k!==cleGarde(st)) delete gardees[k]; });
-    try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e2){} }
-  renderGardees(); }
+  ks.slice(GARDE_MAX).forEach(function(k){ if(!(SYN.etat&&SYN.etat.sales[k])) delete gardees[k]; });
+  ecrireGardees(); renderGardees(); }
+function ecrireGardees(){ try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }
+  catch(e){ var ks=Object.keys(gardees).sort(function(a,b){return String(gardees[b].maj).localeCompare(String(gardees[a].maj));});
+    ks.slice(Math.max(10,Math.floor(ks.length/2))).forEach(function(k){ if(k!==cleGarde(st)&&!(SYN.etat&&SYN.etat.sales[k])) delete gardees[k]; });
+    try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e2){} } }
 function retrouver(){ /* la grille arrivée a-t-elle été notée sur ce téléphone ? ses niveaux reviennent (élève de même nom) */
   var g=gardees&&gardees[cleGarde(st)]; if(!g)return 0; var par={}, n=0;
   (g.eleves||[]).forEach(function(e){ par[keyOf(e)]=e; });
@@ -237,20 +272,138 @@ function rattraper(anciens){ /* GARDE_V153 : un critere renomme au hasard (avant
 function renderGardees(){ var z=el("gardees"); if(!z||gardees===null)return;
   var ks=Object.keys(gardees).sort(function(a,b){return String(gardees[b].maj).localeCompare(String(gardees[a].maj));});
   el("gardeesCard").style.display=ks.length?"block":"none";
-  z.innerHTML=ks.map(function(k){ var g=gardees[k], ici=(k===cleGarde(st));
+  var hh=el("gardeesHint"); if(hh) hh.innerHTML=SYN.etat?"Les grilles ouvertes sur le PC (onglet Grilles TP) arrivent ici toutes seules : ouvre celle du TP et note.":
+    "Chaque grille notée est gardée ici, même quand une autre arrive : rouvre-la, ou exporte-la pour le PC.";
+  var hs=el("gardeesSynchro"); if(hs) hs.innerHTML=SYN.etat?"🔄 Synchronisées avec ton PC : les niveaux y repartent tout seuls (page « Résultats des TP »).":
+    "Pour qu'elles arrivent ici sans scanner à chaque TP : sur le PC, page d'une grille (onglet Grilles TP) → « 📱 Relier un téléphone », un scan, une fois pour toutes.";
+  z.innerHTML=ks.map(function(k){ var g=gardees[k], ici=(k===cleGarde(st)), n=notes(g), nb=(g.eleves||[]).length;
     return '<div class="row" style="justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding:6px 0">'+
       '<div style="flex:1;min-width:150px"><b>'+esc(g.classe||"sans classe")+'</b> — '+esc(g.titre||"sans titre")+
       (g.date?' <span class="hint" style="margin:0">'+esc(g.date)+'</span>':'')+
-      '<br><span class="hint" style="margin:0">'+notes(g)+' élève(s) noté(s)'+(ici?' · grille affichée':'')+'</span></div>'+
-      (ici?'':'<button class="btn" data-garde-ouvrir="'+esc(k)+'">Rouvrir</button>')+
+      '<br><span class="hint" style="margin:0">'+(n?n+' élève(s) noté(s)':'pas encore notée'+(nb?' · '+nb+' élève(s)':''))+(ici?' · grille affichée':'')+'</span></div>'+
+      (ici?'':'<button class="btn" data-garde-ouvrir="'+esc(k)+'">'+(n?'Rouvrir':'Ouvrir')+'</button>')+
       '<button class="btn" data-garde-exp="'+esc(k)+'">Exporter</button>'+
       '<button class="del2" data-garde-oubli="'+esc(k)+'" title="Oublier cette grille sur ce téléphone">✕</button></div>'; }).join(""); }
 function rouvrir(k){ var g=gardees[k]; if(!g)return; garder();
   var e0=(g.eleves||[]).map(function(e){return {nom:e.nom,prenom:e.prenom,groupe:e.groupe||"",niv:JSON.parse(JSON.stringify(e.niv||{}))};});
+  if(!e0.length&&g.classe&&reg.classes[g.classe]) e0=(reg.classes[g.classe].eleves||[]).filter(function(e){return e&&(e.nom||e.prenom);})   /* SYNCHRO_V157 : grille du PC sans liste */
+    .map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:{}};});
   st={classe:g.classe||"",cle:g.cle||"",titre:g.titre||"",date:g.date||"",vue:"",criteres:JSON.parse(JSON.stringify(g.criteres||[])),
-    bareme:g.bareme||{A:1,B:0.75,C:0.5,D:0.25},eleves:e0}; assainir(st);
+    bareme:g.bareme||{A:1,B:0.75,C:0.5,D:0.25},eleves:e0}; ["sid","annee","classe_id"].forEach(function(x){ if(g[x])st[x]=g[x]; }); assainir(st);
   if(st.classe) regAjouter(st.classe,null);
-  save(); renderHead(); renderAll(); flash("Grille <b>"+esc(g.titre||"")+"</b> rouverte avec ses niveaux."); }
+  save(); renderHead(); renderAll(); flash(notes(g)?"Grille <b>"+esc(g.titre||"")+"</b> rouverte avec ses niveaux.":
+    "Grille <b>"+esc(g.titre||"")+"</b> ouverte"+(SYN.etat?" : note, chaque saisie repart toute seule au PC.":"."));
+  try{ window.scrollTo(0,0); }catch(e){} }
+
+/* SYNCHRO_V157 (MAITRE v157, 22/11/2026 ; Laurent, 19/11 : « Ok pour une synchro auto », la grille chiffrée au service) :
+   ce téléphone et tes autres appareils partagent leurs grilles notées par le COFFRE du service, qui ne garde que des octets
+   chiffrés (grilles_synchro.js). La clé arrive une fois, par le QR « 📱 Relier un téléphone » du PC (#cle=…). Chaque saisie
+   part toute seule ~1,5 s après (et dès que la page passe en arrière-plan) ; à l'ouverture, au retour sur la page et
+   toutes les 30 s, le coffre est relu : ce qui vient d'ailleurs est FUSIONNÉ case par case (la saisie la plus récente
+   gagne) dans « Mes grilles », et dans la grille affichée si c'est elle. Sans réseau, rien ne se perd : la saisie
+   reste ici et repart au retour du réseau. État : localStorage « grille_tp_coffre_v157 » = {cle, depuis, vers, sales,
+   oubliees, h} ; la clé n'en sort que chiffrée, vers un PC à relier (« 📤 Envoyer au PC »). */
+var LSY="grille_tp_coffre_v157", SERVICE_COFFRE="https://pcmajorelle.alwaysdata.net/api/coffre";
+var SYN={etat:null,k:null,coffre:null,minuteur:null,enPousse:false,enTirage:false,dernierTirage:0,quand:"",aRedessiner:false};
+function synCharger(){ try{ var x=JSON.parse(localStorage.getItem(LSY)||"null"); SYN.etat=(x&&typeof x==="object"&&/^[A-Za-z0-9_\-]{43}$/.test(x.cle||""))?x:null; }catch(e){ SYN.etat=null; }
+  if(SYN.etat){ ["vers","sales","oubliees"].forEach(function(k){ if(!SYN.etat[k]||typeof SYN.etat[k]!=="object") SYN.etat[k]={}; });
+    if(window.PCSynchro) PCSynchro.voir(SYN.etat.h||0); } }
+function synSauver(){ if(!SYN.etat)return; if(window.PCSynchro) SYN.etat.h=PCSynchro.voir(0); try{ localStorage.setItem(LSY,JSON.stringify(SYN.etat)); }catch(e){} }
+function synAPousser(k){ if(!SYN.etat)return; SYN.etat.sales[k]=1; synSauver(); synPlanifier(); }
+function synOublier(g){ if(!SYN.etat||!g)return; if(g.sid) SYN.etat.oubliees[g.sid]=SYN.etat.vers[g.sid]||0;
+  Object.keys(SYN.etat.sales).forEach(function(k){ if(gardees[k]===g) delete SYN.etat.sales[k]; }); synSauver(); }
+function synPlanifier(ms){ if(!SYN.etat)return; clearTimeout(SYN.minuteur); SYN.minuteur=setTimeout(synPousser, ms==null?1500:ms); }
+function synHeure(){ var d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
+function synMontrer(quoi,e){ var z=el("synchro"); if(!z)return;
+  if(!SYN.etat){ z.style.display="none"; return; }
+  var t;
+  if(quoi==="envoi") t="🔄 Synchronisation : envoi en cours…";
+  else if(quoi==="erreur") t=(e&&e.reseau)?"⚠ Pas de réseau : ta saisie est gardée sur ce téléphone et partira toute seule au retour du réseau."
+    :"⚠ Synchronisation : "+esc(e&&e.message?e.message:String(e||"?"))+". Ta saisie est gardée sur ce téléphone ; nouvel essai dans 30 s.";
+  else t="🔄 Synchronisé avec tes autres appareils"+(SYN.quand?" — à jour ("+SYN.quand+")":"")+".";
+  z.innerHTML=t; z.style.display="block"; }
+function synBrancher(){ if(!SYN.etat||!window.PCSynchro) return Promise.reject(new Error("synchronisation non activée"));
+  if(SYN.k&&SYN.k.cle===SYN.etat.cle) return Promise.resolve(SYN.k);
+  var cle=SYN.etat.cle;
+  return PCSynchro.cles(cle).then(function(k){ k.cle=cle; SYN.k=k; SYN.coffre=PCSynchro.Coffre(SERVICE_COFFRE,k); return k; }); }
+function synSid(g){ if(g.sid) return Promise.resolve(g.sid);
+  if(g.cle) return SYN.k.sid(String(g.classe||"").trim()+"|"+g.cle);   /* le même n° qu'au PC pour une grille venue d'un QR */
+  return Promise.resolve(PCSynchro.nouvelId()); }
+function synRedessiner(){ var f=document.activeElement;
+  if(f&&/^(INPUT|TEXTAREA|SELECT)$/.test(f.tagName)&&f.type!=="button"){ SYN.aRedessiner=true; return; }
+  renderHead(); renderAll(); renderGardees(); }
+document.addEventListener("focusout",function(){ if(SYN.aRedessiner) setTimeout(function(){ if(SYN.aRedessiner){ SYN.aRedessiner=false; renderHead(); renderAll(); renderGardees(); } },0); });
+function synIntegrer(k,doc){ /* une grille du coffre entre dans « Mes grilles » ; la grille affichée suit, en place */
+  var courant=(k===cleGarde(st));
+  if(courant) garder();          /* la saisie en cours est datée d'abord : elle ne se perd pas dans la fusion */
+  var avant=gardees[k], m=PCSynchro.fusionner(avant||null,doc);
+  if(avant&&PCSynchro.empreinte(m)===PCSynchro.empreinte(avant)) return false;
+  m.maj=new Date().toISOString(); gardees[k]=m;
+  if(courant){ var v=PCSynchro.valeurs(m), vides=st.eleves.filter(function(e){return !(e.nom||e.prenom);});
+    st.titre=v.titre; st.date=v.date; st.bareme=v.bareme; st.criteres=v.criteres;
+    st.eleves=v.eleves.map(function(e){return {nom:e.nom,prenom:e.prenom,groupe:e.groupe||"",niv:e.niv||{}};}).concat(vides);
+    if(m.sid) st.sid=m.sid; if(m.annee&&m.classe_id&&!st.classe_id){ st.annee=m.annee; st.classe_id=m.classe_id; }
+    assainir(st); try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); synRedessiner(); }
+  return true; }
+function synPousser(){
+  if(!SYN.etat||!window.PCSynchro||SYN.enPousse) return;
+  var ks=Object.keys(SYN.etat.sales); if(!ks.length){ synMontrer("ok"); return; }
+  SYN.enPousse=true; synMontrer("envoi");
+  synBrancher().then(function(){
+    var suite=Promise.resolve();
+    ks.forEach(function(k){ suite=suite.then(function(){
+      var g=gardees[k]; if(!g){ delete SYN.etat.sales[k]; return null; }
+      return synSid(g).then(function(sid){
+        if(gardees[k]!==g) return null;                  /* changée entre-temps : elle repartira telle quelle */
+        g.sid=sid; if(k===cleGarde(st)&&!st.sid){ st.sid=sid; try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} }
+        var d=g._h?g:PCSynchro.horodater(null,g,1,Date.parse(g.maj||"")||1);
+        return SYN.coffre.pousser(sid,d,SYN.etat.vers[sid]||0).then(function(r){
+          SYN.etat.vers[sid]=Math.max(SYN.etat.vers[sid]||0,r.v);
+          if(gardees[k]===g){ delete SYN.etat.sales[k]; if(!g._h){ g._h=d._h; g.derniere=d.derniere; } }
+          if(PCSynchro.empreinte(r.doc)!==PCSynchro.empreinte(d)) synIntegrer(k,r.doc);
+        });
+      });
+    }); });
+    return suite;
+  }).then(function(){ SYN.enPousse=false; SYN.quand=synHeure(); ecrireGardees(); synSauver(); renderGardees(); synMontrer("ok");
+      if(Object.keys(SYN.etat.sales).length) synPlanifier(); },
+    function(e){ SYN.enPousse=false; ecrireGardees(); synSauver(); synMontrer("erreur",e); synPlanifier(30000); });
+}
+function synTirer(force){
+  if(!SYN.etat||!window.PCSynchro||SYN.enTirage) return Promise.resolve();
+  if(!force&&Date.now()-SYN.dernierTirage<8000) return Promise.resolve();
+  SYN.enTirage=true; SYN.dernierTirage=Date.now();
+  return synBrancher().then(function(){ return SYN.coffre.tirer(SYN.etat.depuis||0); }).then(function(r){
+    var parSid={}; Object.keys(gardees).forEach(function(k){ if(gardees[k]&&gardees[k].sid) parSid[gardees[k].sid]=k; });
+    Object.keys(r.docs).forEach(function(sid){
+      var x=r.docs[sid]; SYN.etat.vers[sid]=Math.max(SYN.etat.vers[sid]||0,x.v);
+      if(x.illisible) return;
+      if(SYN.etat.oubliees[sid]!=null&&x.v<=SYN.etat.oubliees[sid]) return;
+      delete SYN.etat.oubliees[sid];
+      var d=x.doc, k=parSid[sid];
+      if(!k){ k=cleGarde(d); if(gardees[k]&&gardees[k].sid&&gardees[k].sid!==sid) k=String(d.classe||"?")+"§s:"+sid; }
+      if(gardees[k]&&!gardees[k].sid) gardees[k].sid=sid;
+      synIntegrer(k,d);
+      if(PCSynchro.empreinte(gardees[k])!==PCSynchro.empreinte(d)) SYN.etat.sales[k]=1;
+    });
+    SYN.etat.depuis=Math.max(SYN.etat.depuis||0,r.v);
+    ecrireGardees(); renderGardees(); synSauver();
+    SYN.enTirage=false; SYN.quand=synHeure(); synMontrer(Object.keys(SYN.etat.sales).length?"envoi":"ok");
+    if(Object.keys(SYN.etat.sales).length) synPlanifier(300);
+  }).catch(function(e){ SYN.enTirage=false; synMontrer("erreur",e); });
+}
+function synAdopter(cle){ /* la clé arrive par #cle= (le QR « 📱 Relier un téléphone » du PC, une fois) ; la synchro démarre */
+  cle=String(cle||"");
+  if(!/^[A-Za-z0-9_\-]{43}$/.test(cle)||!window.PCSynchro||!(window.crypto&&window.crypto.subtle)) return false;
+  if(SYN.etat&&SYN.etat.cle===cle) return false;
+  if(SYN.etat&&!confirm("Ce téléphone suit déjà une autre synchronisation. Prendre la nouvelle clé (celle du PC qui montre ce QR) ?")) return false;
+  SYN.etat={cle:cle,depuis:0,vers:{},sales:{},oubliees:{},h:0}; SYN.k=null; SYN.coffre=null;
+  Object.keys(gardees).forEach(function(k){ SYN.etat.sales[k]=1; });   /* ce que ce téléphone garde part au coffre */
+  synSauver();
+  setTimeout(function(){ synMontrer("ok"); synTirer(true).then(function(){ synPlanifier(0); }); },0);
+  return true; }
+function synAvecCle(texte){ /* « 📤 Envoyer au PC » emporte la clé (chiffrée avec le paquet) : le PC qui reçoit est relié */
+  return (SYN.etat&&/\}$/.test(texte))?texte.slice(0,-1)+',"_coffre":'+JSON.stringify(SYN.etat.cle)+'}':texte; }
 
 /* CLASSES_TELEPHONE_V118 : le registre des classes de CE téléphone — { classes: { "<libellé>": { eleves:[{nom,prenom,niv}], maj } } }.
    Il se nourrit (a) de chaque QR reçu du PC (`_saisie.classe` + `_saisie.eleves`, et `_classes` = toutes les classes du prof,
@@ -285,6 +438,8 @@ function renderClasses(){ var s=el("classe"), cls=regClasses(), cur=st.classe&&r
   h+='<option value="__autre__">＋ autre classe…</option>'; s.innerHTML=h; s.value=cur;
   el("autreClasse").style.display="none"; el("classeHint").style.display=cur?"block":"none"; }
 function choisirClasse(label){ label=String(label||"").trim();
+  garder(); regMiroir();   /* GARDE_CLASSE_V157 (fragilité n° 1 du 19/11) : la grille affichée est gardée AVANT que sa liste change */
+  if(label!==st.classe&&!st.cle) st.sid="";   /* une grille née ici, passée à une autre classe, est une autre grille */
   if(!label){ st.classe=""; save(); renderClasses(); return; }
   var c=regAjouter(label,null), sansClasse=!st.classe, garde=st.eleves.filter(function(e){return e.nom||e.prenom;});
   st.classe=label;
@@ -293,7 +448,7 @@ function choisirClasse(label){ label=String(label||"").trim();
   else{ st.eleves=(c.eleves||[]).map(function(e){return {nom:e.nom||"",prenom:e.prenom||"",groupe:e.groupe||"",niv:e.niv||{}};});
     flash(st.eleves.length ? "Classe <b>"+esc(label)+"</b> : "+st.eleves.length+" élève(s) retrouvés dans ce téléphone."
       : "Classe <b>"+esc(label)+"</b> : aucune liste dans ce téléphone — scanne le QR de la grille sur le PC (il porte la liste) ou colle-la ci-dessous."); }
-  save(); renderClasses(); renderGrid(); renderProf(); }
+  save(); renderClasses(); renderGrid(); renderProf(); renderGardees(); }
 function oublierClasse(){ var c=st.classe; if(!c||!reg.classes[c])return;
   if(!confirm("Oublier la classe « "+c+" » et sa liste sur ce téléphone ?"))return;
   delete reg.classes[c]; saveReg(); if(photos[c]){ delete photos[c]; savePhotos(); } st.classe=""; save(); renderClasses(); flash("Classe <b>"+esc(c)+"</b> oubliée sur ce téléphone (la grille affichée est gardée)."); }
@@ -326,6 +481,7 @@ function assainir(s){
       return e; });
   } else if(s.eleves!=null) s.eleves=[];
   if(s.cle!=null) s.cle=String(s.cle).slice(0,80);    /* GARDE_V153 : la cle de la grille au PC (« p:s0012 », « l:3 ») */
+  ["sid","annee","classe_id"].forEach(function(x){ if(s[x]!=null){ s[x]=String(s[x]).slice(0,40); if(!/^[A-Za-z0-9_\-]*$/.test(s[x])) s[x]=""; } });   /* SYNCHRO_V157 */
   return s;
 }
 function keyOf(e){ return (String(e.nom||"").trim().toLowerCase()+"|"+String(e.prenom||"").trim().toLowerCase()); }
@@ -453,12 +609,12 @@ document.addEventListener("click",function(ev){ var t=ev.target;
   if(t.dataset&&t.dataset.gardeOuvrir){ rouvrir(t.dataset.gardeOuvrir); return; }
   if(t.dataset&&t.dataset.gardeExp){ var gx=gardees[t.dataset.gardeExp]; if(gx){ var sv=st; st=gx; try{ doExport(); } finally { st=sv; } } return; }
   if(t.dataset&&t.dataset.gardeOubli){ var go=gardees[t.dataset.gardeOubli];
-    if(go&&confirm("Oublier « "+(go.titre||"sans titre")+" » ("+(go.classe||"")+") et ses niveaux sur ce téléphone ?")){
-      delete gardees[t.dataset.gardeOubli]; try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e){}
+    if(go&&confirm("Oublier « "+(go.titre||"sans titre")+" » ("+(go.classe||"")+") et ses niveaux sur ce téléphone ?"+(SYN.etat?" (tes autres appareils et le coffre la gardent)":""))){
+      synOublier(go); delete gardees[t.dataset.gardeOubli]; try{ localStorage.setItem(LSA,JSON.stringify(gardees)); }catch(e){}
       renderGardees(); } return; }
   if(t.id==="imp"){ el("file").click(); return; }
   if(t.id==="impPhotos"){ el("filePhotos").click(); return; }
-  if(t.id==="clr"){ if(confirm("Effacer la saisie affichée ? (elle reste dans « Grilles gardées » ; les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
+  if(t.id==="clr"){ if(confirm("Effacer la saisie affichée ? (elle reste dans « Mes grilles » ; les classes et leurs listes restent connues de ce téléphone)")){ st=fresh(); save(); renderHead(); renderAll(); } return; }
 });
 el("filePhotos").addEventListener("change",function(ev){ var f=ev.target.files[0]; if(!f)return; var r=new FileReader();
   r.onload=function(){ var o=null; try{ o=JSON.parse(r.result); }catch(e){}
@@ -499,6 +655,9 @@ function importState(o){
     regMiroir(); st.classe=s.classe||st.classe; st.titre=s.titre||st.titre; st.date=s.date||st.date;
     autreGrille=(typeof s.cle==="string"&&s.cle&&s.cle!==st.cle);
     st.cle=(typeof s.cle==="string")?s.cle:(autreGrille?"":(st.cle||""));
+    if(autreGrille||st.cle) st.sid=(typeof s.sid==="string")?s.sid:"";   /* SYNCHRO_V157 : le n° d'une grille du PC vient de sa clé */
+    if(typeof s.annee==="string"&&typeof s.classe_id==="string"){ st.annee=s.annee; st.classe_id=s.classe_id; }
+    else if(autreGrille){ delete st.annee; delete st.classe_id; }
     if(Array.isArray(s.criteres))st.criteres=s.criteres; if(s.bareme)st.bareme=s.bareme;
     if(typeof s.groupe==="string") st.vue=s.groupe;   /* GROUPES_A_LA_VOLEE_V118 : le groupe du TP prérègle la vue */
     if(!Array.isArray(s.eleves)&&st.classe&&st.classe!==avantCl){ /* CLASSES_TELEPHONE_V118 : QR sans liste pour une AUTRE classe →
@@ -537,15 +696,34 @@ function paquetExport(){ /* RESULTATS_V145 : le paquet d'« Exporter », aussi e
     _classeLabel:st.classe||"", _eleves:eleves, baremeComp:st.bareme,
     evalComp:{ "__ACTIVE__":[ev] },
     _saisie:{ classe:st.classe, titre:st.titre, date:st.date, criteres:st.criteres, eleves:st.eleves, bareme:st.bareme } };
+  ["cle","sid","annee","classe_id"].forEach(function(x){ if(st[x]) payload._saisie[x]=st[x]; });   /* SYNCHRO_V157 */
   return payload; }
+/* PARTAGE_V157 (Laurent, 23/11 : « exporter/importer peut-il fonctionner directement avec mes mails car c'est laborieux
+   d'enregistrer sur téléphone et de retrouver ensuite les fichiers ? ») : là où le navigateur sait partager un fichier
+   (iPhone, Android), « Exporter » ouvre le PARTAGE (Mail, Messages…) avec la grille en pièce jointe ; sinon, ou si le
+   partage échoue, le fichier s'enregistre comme avant. Le paquet est pris tout de suite (« Exporter » d'une grille gardée
+   remet la grille affichée dès le retour). */
 function doExport(){ var payload=paquetExport();
   var name=("grille_"+(st.classe||"classe")+"_"+(st.titre||"tp")).replace(/[^\w\-]+/g,"_").toLowerCase()+".json";
-  var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  var texte=JSON.stringify(payload,null,2), quoi=(st.classe||"")+(st.titre?" — "+st.titre:"");
+  var f=fichierPartageable(texte,name);
+  if(f){ navigator.share({files:[f],title:name,text:"Grille "+quoi}).then(function(){
+      flash("Grille <b>"+esc(quoi||name)+"</b> partagée. Sur le PC : page <b>Résultats des TP</b> de la classe → <b>📄 Importer un fichier</b>."); },
+    function(e){ if(e&&e.name==="AbortError"){ flash("Partage annulé : rien n'est parti."); return; } telecharger(texte,name); });
+    return; }
+  telecharger(texte,name); }
+function fichierPartageable(texte,name){
+  if(!navigator.share||!navigator.canShare||typeof File!=="function") return null;
+  var types=["application/json","text/plain"];
+  for(var i=0;i<types.length;i++){ try{ var f=new File([texte],name,{type:types[i]}); if(navigator.canShare({files:[f]})) return f; }catch(e){} }
+  return null; }
+function telecharger(texte,name){
+  var blob=new Blob([texte],{type:"application/json"});
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
   flash("Exporté : <b>"+esc(name)+"</b>. Sur le PC : page <b>Résultats des TP</b> de la classe → <b>📄 Importer un fichier</b> (ou, plus direct, <b>📥 Recevoir du téléphone</b>).");
 }
 
-loadReg(); loadPhotos(); load(); loadGardees(); garder(); renderGardees();   /* GARDE_V153 */
+loadReg(); loadPhotos(); load(); loadGardees(); synCharger(); garder(); renderGardees();   /* GARDE_V153 ; SYNCHRO_V157 */
 /* CLASSES_TELEPHONE_V118 : une classe tapée avant la v118 (champ libre) entre au registre avec sa liste. */
 if(st.classe&&!reg.classes[st.classe]) regMiroir();
 renderHead(); renderAll();
@@ -562,6 +740,36 @@ renderHead(); renderAll();
     choisirClasse(lab);
   }catch(e){}
 })();
+/* SYNCHRO_V157 : la clé arrive par le QR du PC (#cle=…, effacée de l'adresse aussitôt lue) ; puis la synchro démarre. */
+(function(){
+  var m=/[#&]cle=([A-Za-z0-9_\-]{43})(?![A-Za-z0-9_\-])/.exec(location.hash||"");
+  if(m){
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+    if(!window.PCSynchro||!(window.crypto&&window.crypto.subtle)){ flash("La synchronisation n'a pas pu démarrer sur ce navigateur : recharge la page, puis rescanne le QR du PC."); }
+    else if(SYN.etat&&SYN.etat.cle===m[1]){ flash("🔄 Ce téléphone est déjà relié à la synchronisation."); }
+    else if(!SYN.etat&&!confirm("Relier ce téléphone à la synchronisation de ton PC ? Les grilles du PC y arriveront toutes seules (« Mes grilles ») et tes saisies repartiront au PC.")){ flash("Ce téléphone n'est pas relié : rien n'a changé."); }
+    else if(synAdopter(m[1])){
+      flash("🔄 <b>Ce téléphone est relié.</b> Les grilles ouvertes sur le PC (onglet Grilles TP) arrivent dans « Mes grilles », en haut de cette page ; chaque saisie repart toute seule au PC (page « Résultats des TP »)."); return; }
+  }
+  if(!SYN.etat) return;
+  synMontrer("ok"); synTirer(true).then(function(){ synPlanifier(0); });
+})();
+document.addEventListener("visibilitychange",function(){
+  if(document.visibilityState==="visible"){ synTirer(false); verifierVersion(false); }
+  else { garder(); clearTimeout(SYN.minuteur); synPousser(); }   /* la page passe en arrière-plan : ce qui attend part tout de suite */
+});
+window.addEventListener("online",function(){ synTirer(true); synPlanifier(0); });
+setInterval(function(){ if(document.visibilityState==="visible") synTirer(false); },30000);
+/* VERSION_PAGE_V157 (fragilité n° 2 du 19/11) : un onglet resté ouvert depuis une mise à jour garde un code ancien. La page
+   relit `saisie_version.txt` (au retour sur l'onglet, au plus une fois par 10 min) ; s'il ne dit pas PAGE_VERSION, une carte
+   le dit en haut et propose de recharger (la saisie est gardée d'abord). */
+var VERIF_V=0;
+function verifierVersion(force){ if(!force&&Date.now()-VERIF_V<600000) return; VERIF_V=Date.now();
+  fetch("saisie_version.txt?t="+Date.now(),{cache:"no-store",credentials:"omit"}).then(function(r){ return r.ok?r.text():""; })
+    .then(function(t){ t=String(t||"").trim(); if(/^v[0-9]+[a-z]?$/.test(t)&&t!==PAGE_VERSION) el("vieillePage").style.display="block"; })
+    .catch(function(){}); }
+el("recharger").addEventListener("click",function(){ garder(); try{ localStorage.setItem(LS,JSON.stringify(st)); }catch(e){} location.reload(); });
+setTimeout(function(){ verifierVersion(true); },4000);
 /* GRILLE_SANS_ANCIEN_V112 : cette page s'ouvre depuis le menu ＋ du service v2, dans un nouvel onglet. Le « ‹ » ne mène
    JAMAIS à l'ancien site : l'écran précédent s'il y en a un, sinon le service v2. */
 window.PCRetour = function(){
@@ -645,7 +853,7 @@ window.PCRetour = function(){
   var carte=document.createElement("div"); carte.className="card"; carte.id="envoiPC";
   carte.style.cssText="position:sticky;top:0;z-index:30;border:2px solid #2fa36b";
   carte.innerHTML='<div class="msg"><b>📤 Envoyer cette grille au PC ?</b><br>« '+esc(st.titre||"sans titre")+' » — '+esc(st.classe||"classe ?")+
-    ' : '+nb+' élève(s), '+notes+' noté(s), '+st.criteres.length+' critère(s).</div>'+
+    ' : '+nb+' élève(s), '+notes+' noté(s), '+st.criteres.length+' critère(s).'+(SYN.etat?'<br><span class="hint" style="margin:0">La clé de synchronisation part avec, chiffrée : ce PC sera relié.</span>':'')+'</div>'+
     '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn acc" id="envoiPCok">📤 Envoyer au PC</button><button class="btn" id="envoiPCnon">Annuler</button></div>';
   var tete=document.querySelector(".bar"); if(tete&&tete.parentNode) tete.parentNode.insertBefore(carte, tete.nextSibling); else document.body.insertBefore(carte, document.body.firstChild);
   try{ carte.scrollIntoView({block:"start"}); }catch(e){}
@@ -655,7 +863,7 @@ window.PCRetour = function(){
     if(!sub){ b.disabled=false; b.textContent="📤 Envoyer au PC"; carte.querySelector(".msg").innerHTML="Ce navigateur ne sait pas chiffrer : utilise « Exporter » puis « 📄 Importer un fichier » sur le PC."; return; }
     var cle=octets(m[2]), iv=window.crypto.getRandomValues(new Uint8Array(12));
     sub.importKey("raw",cle,{name:"AES-GCM"},false,["encrypt"]).then(function(k){
-      return sub.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(JSON.stringify(paquetExport())));
+      return sub.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(synAvecCle(JSON.stringify(paquetExport()))));
     }).then(function(buf){
       var c=new Uint8Array(buf), corps=new Uint8Array(12+c.length); corps.set(iv,0); corps.set(c,12);
       return fetch(SERVICE_BOITE+m[1],{method:"PUT",credentials:"omit",headers:{"Content-Type":"application/octet-stream"},body:corps});
@@ -665,7 +873,9 @@ window.PCRetour = function(){
       carte.style.borderColor="#4caf6d";
       carte.innerHTML='<div class="msg">✔ <b>Grille envoyée au PC</b> : elle apparaît dans la page Résultats. Elle reste aussi sur ce téléphone.</div>';
     }).catch(function(e){ b.disabled=false; b.textContent="📤 Réessayer";
-      carte.querySelector(".msg").innerHTML="Envoi non fait : "+esc(e&&e.message?e.message:String(e))+"."; });
+      var pourquoi=(e&&e.name==="TypeError")?"le service n'a pas répondu (pas de réseau ? essaie en Wi-Fi ou en 4G, puis « Réessayer »)"
+        :(e&&e.message?e.message:String(e));   /* FRAGILITE_V157 (n° 3) : la raison dite en clair ; sinon « Exporter » */
+      carte.querySelector(".msg").innerHTML="Envoi non fait : "+esc(pourquoi)+". La grille reste sur ce téléphone ; en dernier recours : « Exporter », puis « 📄 Importer un fichier » sur le PC."; });
   });
 })();
 </script>
