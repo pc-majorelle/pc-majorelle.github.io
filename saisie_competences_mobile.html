@@ -198,7 +198,7 @@
 <script src="grilles_synchro.js?v=157"></script>
 <script>
 "use strict";
-var PAGE_VERSION="v157";   /* VERSION_PAGE_V157 : le même mot que saisie_version.txt quand la page est à jour */
+var PAGE_VERSION="v157b";   /* VERSION_PAGE_V157 : le même mot que saisie_version.txt quand la page est à jour */
 var LS="grille_tp_competences_v19";
 var CATS=[["APP","APP"],["ANA","ANA"],["REA","RÉA"],["VAL","VAL"],["COM","COM"]];
 var CATCOL={APP:"#3b82c4",ANA:"#7c5cd0",REA:"#d97a2b",VAL:"#2fa36b",COM:"#c04f7a"};
@@ -740,15 +740,22 @@ renderHead(); renderAll();
     choisirClasse(lab);
   }catch(e){}
 })();
-/* SYNCHRO_V157 : la clé arrive par le QR du PC (#cle=…, effacée de l'adresse aussitôt lue) ; puis la synchro démarre. */
+/* SYNCHRO_V157 : la clé arrive par le QR du PC (#cle=…, effacée de l'adresse aussitôt lue) ; puis la synchro démarre.
+   ICI_V157B (23/11 ; Laurent : notée dans cette page ouverte SUR LE PC, la grille « est malheureusement vide » au
+   téléphone) : la clé arrive aussi AVEC la grille (#g=…&cle=…), par « Ouvrir sur cet appareil ↗ » de la page d'une grille
+   du PC : cette page est alors reliée comme le téléphone, et ce qui y était déjà noté part aussi. Seule la clé est ôtée de
+   l'adresse : la grille (#g=) est lue juste après (QR_GRILLE_V66), et c'est elle qui dit « reliée » (SYN.ici). */
 (function(){
   var m=/[#&]cle=([A-Za-z0-9_\-]{43})(?![A-Za-z0-9_\-])/.exec(location.hash||"");
   if(m){
-    try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+    var ici=/[#&]g=/.test(location.hash||""), reste=(location.hash||"").replace(/^#/,"").split("&").filter(function(x){ return x&&!/^cle=/.test(x); }).join("&");
+    try{ history.replaceState(null,"",location.pathname+location.search+(ici&&reste?"#"+reste:"")); }catch(e){}
     if(!window.PCSynchro||!(window.crypto&&window.crypto.subtle)){ flash("La synchronisation n'a pas pu démarrer sur ce navigateur : recharge la page, puis rescanne le QR du PC."); }
-    else if(SYN.etat&&SYN.etat.cle===m[1]){ flash("🔄 Ce téléphone est déjà relié à la synchronisation."); }
-    else if(!SYN.etat&&!confirm("Relier ce téléphone à la synchronisation de ton PC ? Les grilles du PC y arriveront toutes seules (« Mes grilles ») et tes saisies repartiront au PC.")){ flash("Ce téléphone n'est pas relié : rien n'a changé."); }
+    else if(SYN.etat&&SYN.etat.cle===m[1]){ if(ici) SYN.ici="deja"; else flash("🔄 Ce téléphone est déjà relié à la synchronisation."); }
+    else if(ici&&!SYN.etat&&!confirm("Relier cette page à la synchronisation de tes grilles ? Ce que tu y notes arrivera tout seul sur ton téléphone et dans « Résultats des TP » (ce qui est déjà noté ici aussi).")){ SYN.ici="refus"; }
+    else if(!ici&&!SYN.etat&&!confirm("Relier ce téléphone à la synchronisation de ton PC ? Les grilles du PC y arriveront toutes seules (« Mes grilles ») et tes saisies repartiront au PC.")){ flash("Ce téléphone n'est pas relié : rien n'a changé."); }
     else if(synAdopter(m[1])){
+      if(ici){ SYN.ici="relie"; return; }   /* le message vient avec la grille (#g=, lue juste après) */
       flash("🔄 <b>Ce téléphone est relié.</b> Les grilles ouvertes sur le PC (onglet Grilles TP) arrivent dans « Mes grilles », en haut de cette page ; chaque saisie repart toute seule au PC (page « Résultats des TP »)."); return; }
   }
   if(!SYN.etat) return;
@@ -790,7 +797,10 @@ window.PCRetour = function(){
     importState(o);
     try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
     var dejaDit=el("msg").innerHTML.replace(/^Grille importée\.\s*/,"");
-    flash("Grille <b>reçue du PC</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce téléphone."+(dejaDit?" "+dejaDit:""));
+    flash("Grille <b>reçue du PC</b> : "+esc(o._classeLabel||"")+" — "+esc(((o.evalComp||{}).__ACTIVE__||[{}])[0].titre||"")+". Elle est gardée dans ce "+(SYN.ici?"navigateur":"téléphone")+"."+(dejaDit?" "+dejaDit:"")+
+      (SYN.ici==="relie"?" 🔄 <b>Cette page est reliée</b> : ce que tu notes ici part tout seul vers ton téléphone et « Résultats des TP » (ce qui était déjà noté ici aussi).":   /* ICI_V157B */
+       SYN.ici==="deja"?" 🔄 Reliée : ce que tu notes ici part tout seul vers ton téléphone et « Résultats des TP ».":
+       SYN.ici==="refus"?" Cette page n'est pas reliée : ce que tu y notes reste dans ce navigateur.":""));
   }catch(e){ flash("Grille reçue illisible : "+(e&&e.message?e.message:e)); }
 })();
 </script>
