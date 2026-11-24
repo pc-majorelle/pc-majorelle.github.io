@@ -83,6 +83,19 @@
   body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
   #pcRetourBtn,.themebtn{bottom:calc(76px + env(safe-area-inset-bottom))!important}
   .themepop{bottom:calc(130px + env(safe-area-inset-bottom))!important}
+  /* VALIDER_V157C (Laurent, 24/11 : « qu'on puisse forcer par un bouton valider, l'envoi des données ») : « ✓ Valider » dans la
+     barre du bas, et au-dessus de ses boutons, où en est l'envoi (⏳ à envoyer · ✓ tout est envoyé (heure) · ⚠ pas envoyé).
+     La barre grandit d'une ligne : les ronds flottants et la place sous le dernier bouton suivent. */
+  .foot{flex-wrap:wrap;row-gap:6px}
+  .foot .btn{white-space:nowrap;padding:9px 6px}
+  .foot .envoi{flex:1 1 100%;font-size:12.5px;line-height:1.3;color:var(--muted);margin:0 2px}
+  .foot .envoi:empty{display:none}
+  .foot .envoi.ok,.foot .envoi.erreur{color:var(--ink);font-weight:600}
+  body{padding-bottom:calc(175px + env(safe-area-inset-bottom))}
+  #pcRetourBtn,#pcAideBtn{bottom:calc(100px + env(safe-area-inset-bottom))!important}
+  .themebtn,#pcThemeBtn{bottom:calc(152px + env(safe-area-inset-bottom))!important}
+  #pcAidePop{bottom:calc(154px + env(safe-area-inset-bottom))!important}
+  .themepop,#pcThemePop{bottom:calc(206px + env(safe-area-inset-bottom))!important}
 </style>
 <style id="pctheme-css">
   .thsw{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:10px;padding:6px 9px;margin:5px 6px 0 0;cursor:pointer;font:inherit;font-size:12px;background:var(--card);color:var(--ink);line-height:1;transition:transform .08s}
@@ -187,7 +200,9 @@
 </div>
 
 <div class="foot">
-  <button class="btn acc" id="exp">Exporter</button>
+  <div class="envoi" id="envoi" role="status" aria-live="polite"></div>
+  <button class="btn acc" id="valider" title="Envoyer tout de suite ce qui attend (sinon ça part tout seul)">✓ Valider</button>
+  <button class="btn" id="exp">Exporter</button>
   <button class="btn" id="imp">Importer</button>
   <button class="btn" id="clr">Effacer</button>
   <input type="file" id="file" accept=".json,application/json,text/plain" style="display:none">
@@ -198,7 +213,7 @@
 <script src="grilles_synchro.js?v=157"></script>
 <script>
 "use strict";
-var PAGE_VERSION="v157b";   /* VERSION_PAGE_V157 : le même mot que saisie_version.txt quand la page est à jour */
+var PAGE_VERSION="v157c";   /* VERSION_PAGE_V157 : le même mot que saisie_version.txt quand la page est à jour */
 var LS="grille_tp_competences_v19";
 var CATS=[["APP","APP"],["ANA","ANA"],["REA","RÉA"],["VAL","VAL"],["COM","COM"]];
 var CATCOL={APP:"#3b82c4",ANA:"#7c5cd0",REA:"#d97a2b",VAL:"#2fa36b",COM:"#c04f7a"};
@@ -215,7 +230,7 @@ function fresh(){ return { classe:"", titre:"", date:"", vue:"",
 function load(){ try{var s=localStorage.getItem(LS); st=s?JSON.parse(s):fresh();}catch(e){st=fresh();}
   if(!st||typeof st!=="object")st=fresh(); assainir(st);   /* SURETE_V152 (relecture C2 : un « null » range dans localStorage ne casse plus la page) */
   if(!Array.isArray(st.criteres))st.criteres=[]; if(!Array.isArray(st.eleves))st.eleves=[]; if(!st.bareme)st.bareme={A:1,B:0.75,C:0.5,D:0.25}; }
-function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); garder(); }
+function save(){ try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); garder(); envoiMontrer(); }
 
 /* GARDE_V153 (Laurent, 11/11 : « il m'est arrivé de perdre des données ») : chaque grille NOTÉE est gardée dans ce téléphone,
    à chaque saisie — { "<classe>§<clé>": {classe, cle, titre, date, criteres, bareme, eleves:[{nom,prenom,groupe,niv}], maj} }.
@@ -304,23 +319,43 @@ function rouvrir(k){ var g=gardees[k]; if(!g)return; garder();
    reste ici et repart au retour du réseau. État : localStorage « grille_tp_coffre_v157 » = {cle, depuis, vers, sales,
    oubliees, h} ; la clé n'en sort que chiffrée, vers un PC à relier (« 📤 Envoyer au PC »). */
 var LSY="grille_tp_coffre_v157", SERVICE_COFFRE="https://pcmajorelle.alwaysdata.net/api/coffre";
-var SYN={etat:null,k:null,coffre:null,minuteur:null,enPousse:false,enTirage:false,dernierTirage:0,quand:"",aRedessiner:false};
+var SYN={etat:null,k:null,coffre:null,minuteur:null,enPousse:false,enTirage:false,dernierTirage:0,quand:"",aRedessiner:false,
+  promesse:null,erreur:null,envoye:""};   /* VALIDER_V157C : l'envoi en cours (le bouton l'attend), sa dernière erreur, l'heure du dernier envoi réussi */
 function synCharger(){ try{ var x=JSON.parse(localStorage.getItem(LSY)||"null"); SYN.etat=(x&&typeof x==="object"&&/^[A-Za-z0-9_\-]{43}$/.test(x.cle||""))?x:null; }catch(e){ SYN.etat=null; }
   if(SYN.etat){ ["vers","sales","oubliees"].forEach(function(k){ if(!SYN.etat[k]||typeof SYN.etat[k]!=="object") SYN.etat[k]={}; });
     if(window.PCSynchro) PCSynchro.voir(SYN.etat.h||0); } }
 function synSauver(){ if(!SYN.etat)return; if(window.PCSynchro) SYN.etat.h=PCSynchro.voir(0); try{ localStorage.setItem(LSY,JSON.stringify(SYN.etat)); }catch(e){} }
-function synAPousser(k){ if(!SYN.etat)return; SYN.etat.sales[k]=1; synSauver(); synPlanifier(); }
+function synAPousser(k){ if(!SYN.etat)return; SYN.etat.sales[k]=1; synSauver(); synPlanifier(); synMontrer("ok"); }   /* VALIDER_V157C : l'attente se dit aussitôt */
 function synOublier(g){ if(!SYN.etat||!g)return; if(g.sid) SYN.etat.oubliees[g.sid]=SYN.etat.vers[g.sid]||0;
   Object.keys(SYN.etat.sales).forEach(function(k){ if(gardees[k]===g) delete SYN.etat.sales[k]; }); synSauver(); }
 function synPlanifier(ms){ if(!SYN.etat)return; clearTimeout(SYN.minuteur); SYN.minuteur=setTimeout(synPousser, ms==null?1500:ms); }
-function synHeure(){ var d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); }
-function synMontrer(quoi,e){ var z=el("synchro"); if(!z)return;
+function synHeure(sec){ var d=new Date(); return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+(sec?":"+("0"+d.getSeconds()).slice(-2):""); }
+/* VALIDER_V157C : la ligne de la barre du bas — où en est l'envoi, à chaque instant. */
+function envoiMontrer(quoi){ var z=el("envoi"); if(!z)return;
+  var n=SYN.etat?Object.keys(SYN.etat.sales).length:0, t="", c="";
+  if(!SYN.etat) t=(st&&notes(st))?"Page non reliée : ce que tu notes reste sur cet appareil.":"";
+  else if(quoi==="envoi"||SYN.enPousse) t="⏳ Envoi en cours…";
+  else if(SYN.erreur&&n){ t=SYN.erreur.reseau?"⚠ Pas envoyé (pas de réseau) : gardé ici, partira tout seul."
+      :"⚠ Pas envoyé ("+esc(SYN.erreur.message||String(SYN.erreur))+") : gardé ici ; nouvel essai dans 30 s.";
+    c="erreur"; }
+  else if(n) t="⏳ "+(n>1?n+" grilles à envoyer — partent toutes seules":"À envoyer — part tout seul")+", ou « ✓ Valider ».";
+  else { t="✓ Tout est envoyé"+(SYN.envoye?" ("+SYN.envoye+")":"")+"."; c="ok"; }
+  z.innerHTML=t; z.className="envoi"+(c?" "+c:""); }
+/* VALIDER_V157C : « ✓ Valider » — garder, envoyer TOUT DE SUITE (jusqu'à ce que rien n'attende), dire le résultat. */
+function synValider(){ garder();
+  if(!SYN.etat){ envoiMontrer(); flash(notes(st)?"Cette page n'est pas reliée à la synchronisation : ce que tu y notes reste sur cet appareil. Pour la relier : sur le PC, page de la grille → « Ouvrir sur cet appareil ↗ » ; pour un téléphone, « 📱 Relier un téléphone » (une seule fois).":"Rien à envoyer : aucune saisie ici."); return Promise.resolve(false); }
+  clearTimeout(SYN.minuteur); var b=el("valider"); if(b) b.disabled=true; var tours=0;
+  function encore(){ return (SYN.enPousse&&SYN.promesse?SYN.promesse:Promise.resolve()).then(function(){ return synPousser(); }).then(function(ok){
+      var reste=Object.keys(SYN.etat.sales).length; if(ok&&reste&&tours++<3) return encore(); return !!ok&&!reste; }); }
+  return encore().then(function(ok){ if(b) b.disabled=false; envoiMontrer(); return ok; }); }
+function synMontrer(quoi,e){ var z=el("synchro"); envoiMontrer(quoi); if(!z)return;
   if(!SYN.etat){ z.style.display="none"; return; }
   var t;
   if(quoi==="envoi") t="🔄 Synchronisation : envoi en cours…";
   else if(quoi==="erreur") t=(e&&e.reseau)?"⚠ Pas de réseau : ta saisie est gardée sur ce téléphone et partira toute seule au retour du réseau."
     :"⚠ Synchronisation : "+esc(e&&e.message?e.message:String(e||"?"))+". Ta saisie est gardée sur ce téléphone ; nouvel essai dans 30 s.";
-  else t="🔄 Synchronisé avec tes autres appareils"+(SYN.quand?" — à jour ("+SYN.quand+")":"")+".";
+  else t=(Object.keys(SYN.etat.sales).length&&!SYN.enPousse)?"🔄 Synchronisation : envoi dans un instant…"   /* VALIDER_V157C */
+    :"🔄 Synchronisé avec tes autres appareils"+(SYN.quand?" — à jour ("+SYN.quand+")":"")+".";
   z.innerHTML=t; z.style.display="block"; }
 function synBrancher(){ if(!SYN.etat||!window.PCSynchro) return Promise.reject(new Error("synchronisation non activée"));
   if(SYN.k&&SYN.k.cle===SYN.etat.cle) return Promise.resolve(SYN.k);
@@ -345,11 +380,12 @@ function synIntegrer(k,doc){ /* une grille du coffre entre dans « Mes grilles �
     if(m.sid) st.sid=m.sid; if(m.annee&&m.classe_id&&!st.classe_id){ st.annee=m.annee; st.classe_id=m.classe_id; }
     assainir(st); try{localStorage.setItem(LS,JSON.stringify(st));}catch(e){} regMiroir(); synRedessiner(); }
   return true; }
-function synPousser(){
-  if(!SYN.etat||!window.PCSynchro||SYN.enPousse) return;
-  var ks=Object.keys(SYN.etat.sales); if(!ks.length){ synMontrer("ok"); return; }
+function synPousser(){   /* VALIDER_V157C : rend la promesse de l'envoi (true : tout est parti ; false : erreur, ça reste ici) */
+  if(!SYN.etat||!window.PCSynchro) return Promise.resolve(false);
+  if(SYN.enPousse) return SYN.promesse||Promise.resolve(false);
+  var ks=Object.keys(SYN.etat.sales); if(!ks.length){ synMontrer("ok"); return Promise.resolve(true); }
   SYN.enPousse=true; synMontrer("envoi");
-  synBrancher().then(function(){
+  return SYN.promesse=synBrancher().then(function(){
     var suite=Promise.resolve();
     ks.forEach(function(k){ suite=suite.then(function(){
       var g=gardees[k]; if(!g){ delete SYN.etat.sales[k]; return null; }
@@ -365,9 +401,9 @@ function synPousser(){
       });
     }); });
     return suite;
-  }).then(function(){ SYN.enPousse=false; SYN.quand=synHeure(); ecrireGardees(); synSauver(); renderGardees(); synMontrer("ok");
-      if(Object.keys(SYN.etat.sales).length) synPlanifier(); },
-    function(e){ SYN.enPousse=false; ecrireGardees(); synSauver(); synMontrer("erreur",e); synPlanifier(30000); });
+  }).then(function(){ SYN.enPousse=false; SYN.erreur=null; SYN.quand=synHeure(); SYN.envoye=synHeure(true); ecrireGardees(); synSauver(); renderGardees(); synMontrer("ok");
+      if(Object.keys(SYN.etat.sales).length) synPlanifier(); return true; },
+    function(e){ SYN.enPousse=false; SYN.erreur=e||new Error("?"); ecrireGardees(); synSauver(); synMontrer("erreur",e); synPlanifier(30000); return false; });
 }
 function synTirer(force){
   if(!SYN.etat||!window.PCSynchro||SYN.enTirage) return Promise.resolve();
@@ -605,6 +641,7 @@ document.addEventListener("click",function(ev){ var t=ev.target;
     el("paste").value=""; save(); renderGrid(); renderProf(); if(add)flash(add+" élève(s) ajouté(s)."); return; }
   if(t.id==="addOne"){ st.eleves.push({nom:"",prenom:"",niv:{}}); save(); renderGrid(); renderProf();
     var last=el("grid").querySelector("tbody tr:last-child .nom"); if(last)last.focus(); return; }
+  if(t.id==="valider"){ synValider(); return; }   /* VALIDER_V157C */
   if(t.id==="exp"){ doExport(); return; }
   if(t.dataset&&t.dataset.gardeOuvrir){ rouvrir(t.dataset.gardeOuvrir); return; }
   if(t.dataset&&t.dataset.gardeExp){ var gx=gardees[t.dataset.gardeExp]; if(gx){ var sv=st; st=gx; try{ doExport(); } finally { st=sv; } } return; }
@@ -766,6 +803,12 @@ document.addEventListener("visibilitychange",function(){
   else { garder(); clearTimeout(SYN.minuteur); synPousser(); }   /* la page passe en arrière-plan : ce qui attend part tout de suite */
 });
 window.addEventListener("online",function(){ synTirer(true); synPlanifier(0); });
+/* VALIDER_V157C (24/11 : « j'ai sans doute fermé mon PC trop tôt ») : fermer ou recharger la page alors que quelque chose
+   n'est pas parti -> l'envoi part tout de suite, et le navigateur demande d'abord (sur un PC ; le téléphone, lui, envoie
+   dès que la page passe en arrière-plan, et sinon à la prochaine ouverture). */
+window.addEventListener("beforeunload",function(e){ if(!SYN.etat) return; garder();
+  if(!SYN.enPousse&&!Object.keys(SYN.etat.sales).length) return;
+  clearTimeout(SYN.minuteur); synPousser(); e.preventDefault(); e.returnValue=""; return ""; });
 setInterval(function(){ if(document.visibilityState==="visible") synTirer(false); },30000);
 /* VERSION_PAGE_V157 (fragilité n° 2 du 19/11) : un onglet resté ouvert depuis une mise à jour garde un code ancien. La page
    relit `saisie_version.txt` (au retour sur l'onglet, au plus une fois par 10 min) ; s'il ne dit pas PAGE_VERSION, une carte
